@@ -1,4 +1,4 @@
-package errors
+package pkg
 
 type InternalServerError struct {
 	Message string

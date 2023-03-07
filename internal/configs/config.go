@@ -6,9 +6,10 @@ type Config struct {
 		Host string
 	}
 	Database struct {
-		Connection     string
-		DatabaseName   string
-		CollectionName string
+		Connection          string
+		DatabaseName        string
+		UserCollectionName  string
+		OrderCollectionName string
 	}
 }
 
@@ -22,13 +23,15 @@ var Configs = map[string]Config{
 			Host: "localhost",
 		},
 		Database: struct {
-			Connection     string
-			DatabaseName   string
-			CollectionName string
+			Connection          string
+			DatabaseName        string
+			UserCollectionName  string
+			OrderCollectionName string
 		}{
-			Connection:     "mongodb://localhost:27017",
-			DatabaseName:   "booksDB",
-			CollectionName: "books",
+			Connection:          "mongodb://localhost:27017",
+			DatabaseName:        "ProjectDB",
+			UserCollectionName:  "Users",
+			OrderCollectionName: "Orders",
 		},
 	},
 	"qa":   {},
@@ -39,5 +42,6 @@ func GetConfig(env string) Config {
 	if conf, ok := Configs[env]; ok {
 		return conf
 	}
+
 	return Configs["test"]
 }
