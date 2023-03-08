@@ -8,7 +8,7 @@ type User struct {
 	Email       string             `json:"email,omitempty"`
 	Password    string             `json:"password,omitempty"`
 	Address     string             `json:"address"`
-	Orders      []Order            `json:"orders"`
+	Orders      []string           `json:"orders"`
 	CreatedDate primitive.DateTime `json:"created_date,omitempty"`
 	UpdatedDate primitive.DateTime `json:"updated_date"`
 }
