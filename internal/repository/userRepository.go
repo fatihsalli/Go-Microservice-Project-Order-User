@@ -4,7 +4,6 @@ import (
 	"OrderUserProject/internal/models"
 	"context"
 	"errors"
-	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"time"
@@ -14,18 +13,10 @@ type UserRepository struct {
 	UserCollection *mongo.Collection
 }
 
-var singleInstanceRepo *UserRepository
-
 // TODO: singleton,scope ve transient olaylarına bakılacak
-func GetSingleInstancesRepository(mongoCollection *mongo.Collection) *UserRepository {
-	if singleInstanceRepo == nil {
-		fmt.Println("Creating single repository instance now.")
-		singleInstanceRepo = &UserRepository{UserCollection: mongoCollection}
-	} else {
-		fmt.Println("Single repository instance already created.")
-	}
-
-	return singleInstanceRepo
+func NewUserRepository(mongoCollection *mongo.Collection) *UserRepository {
+	userRepository := &UserRepository{UserCollection: mongoCollection}
+	return userRepository
 }
 
 // IUserRepository to use for test or

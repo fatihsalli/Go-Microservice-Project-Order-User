@@ -32,11 +32,8 @@ func main() {
 	mongoUserCollection := configs.ConnectDB(config.Database.Connection).
 		Database(config.Database.DatabaseName).Collection(config.Database.UserCollectionName)
 
-	// to create new repository with singleton pattern
-	UserRepository := repository.GetSingleInstancesRepository(mongoUserCollection)
-
-	// to create new service with singleton pattern
-	UserService := user_api.GetSingleInstancesService(UserRepository)
+	UserRepository := repository.NewUserRepository(mongoUserCollection)
+	UserService := user_api.NewUserService(*UserRepository)
 
 	// to create new app
 	handler.NewUserHandler(e, UserService)

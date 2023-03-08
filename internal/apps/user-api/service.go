@@ -3,7 +3,6 @@ package user_api
 import (
 	"OrderUserProject/internal/models"
 	"OrderUserProject/internal/repository"
-	"fmt"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
@@ -13,20 +12,9 @@ type UserService struct {
 	Repository repository.IUserRepository
 }
 
-// With singleton pattern to create just one Service we have to write like this or using once.
-// => Otherwise, every thread will create new Service.
-// var lock = &sync.Mutex{}
-var singleInstanceService *UserService
-
-func GetSingleInstancesService(repository repository.IUserRepository) *UserService {
-	if singleInstanceService == nil {
-		fmt.Println("Creating single service instance now.")
-		singleInstanceService = &UserService{Repository: repository}
-	} else {
-		fmt.Println("Single service instance already created.")
-	}
-
-	return singleInstanceService
+func NewUserService(repository repository.IUserRepository) *UserService {
+	userService := &UserService{Repository: repository}
+	return userService
 }
 
 type IUserService interface {
