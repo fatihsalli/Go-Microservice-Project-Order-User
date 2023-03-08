@@ -1,4 +1,4 @@
-package service
+package user_api
 
 import (
 	"OrderUserProject/internal/models"

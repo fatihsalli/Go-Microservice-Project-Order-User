@@ -1,8 +1,8 @@
-package controller
+package handler
 
 import (
+	"OrderUserProject/internal/apps/user-api"
 	"OrderUserProject/internal/models"
-	"OrderUserProject/internal/service"
 	"OrderUserProject/pkg"
 	"fmt"
 	"github.com/labstack/echo/v4"
@@ -11,10 +11,10 @@ import (
 )
 
 type UserHandler struct {
-	Service service.IUserService
+	Service user_api.IUserService
 }
 
-func NewUserHandler(e *echo.Echo, service service.IUserService) *UserHandler {
+func NewUserHandler(e *echo.Echo, service user_api.IUserService) *UserHandler {
 	router := e.Group("api/users")
 	b := &UserHandler{Service: service}
 

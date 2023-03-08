@@ -2,10 +2,10 @@ package main
 
 import (
 	"OrderUserProject/docs"
+	"OrderUserProject/internal/apps/user-api"
+	"OrderUserProject/internal/apps/user-api/handler"
 	"OrderUserProject/internal/configs"
-	"OrderUserProject/internal/controller"
 	"OrderUserProject/internal/repository"
-	"OrderUserProject/internal/service"
 	"github.com/labstack/echo/v4"
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
@@ -36,10 +36,10 @@ func main() {
 	UserRepository := repository.GetSingleInstancesRepository(mongoUserCollection)
 
 	// to create new service with singleton pattern
-	UserService := service.GetSingleInstancesService(UserRepository)
+	UserService := user_api.GetSingleInstancesService(UserRepository)
 
 	// to create new app
-	controller.NewUserHandler(e, UserService)
+	handler.NewUserHandler(e, UserService)
 
 	// if we don't use this swagger give an error
 	docs.SwaggerInfo.Host = "localhost:8080"
