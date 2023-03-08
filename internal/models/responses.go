@@ -1,4 +1,4 @@
-package app
+package models
 
 type JSONSuccessResultData struct {
 	TotalItemCount int         `json:"total_item_count"`

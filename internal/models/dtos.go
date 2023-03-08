@@ -1,4 +1,4 @@
-package app
+package models
 
 type UserCreateRequest struct {
 	Name     string `json:"name"`
