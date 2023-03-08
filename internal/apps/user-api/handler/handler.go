@@ -45,8 +45,8 @@ func (h UserHandler) GetAllUsers(c echo.Context) error {
 	}
 
 	// we can use automapper, but it will cause performance loss.
-	var userResponse models.UserResponse
-	var usersResponse []models.UserResponse
+	var userResponse user_api.UserResponse
+	var usersResponse []user_api.UserResponse
 
 	for _, user := range userList {
 		userResponse.ID = user.ID
@@ -82,7 +82,7 @@ func (h UserHandler) GetAllUsers(c echo.Context) error {
 // @Router /users [post]
 func (h UserHandler) CreateUser(c echo.Context) error {
 
-	var userRequest models.UserCreateRequest
+	var userRequest user_api.UserCreateRequest
 
 	// We parse the data as json into the struct
 	if err := c.Bind(&userRequest); err != nil {
