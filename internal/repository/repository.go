@@ -37,3 +37,12 @@ func (r *Repository) GetAll(ctx context.Context) ([]interface{}, error) {
 
 	return result, nil
 }
+
+func (r *Repository) Create(ctx context.Context, obj interface{}) error {
+	_, err := r.collection.InsertOne(ctx, obj)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
