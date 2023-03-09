@@ -2,10 +2,10 @@ package main
 
 import (
 	"OrderUserProject/docs"
-	order_api "OrderUserProject/internal/apps/order-api"
-	handler2 "OrderUserProject/internal/apps/order-api/handler"
+	"OrderUserProject/internal/apps/order-api"
+	handler_order "OrderUserProject/internal/apps/order-api/handler"
 	"OrderUserProject/internal/apps/user-api"
-	"OrderUserProject/internal/apps/user-api/handler"
+	handler_user "OrderUserProject/internal/apps/user-api/handler"
 	"OrderUserProject/internal/configs"
 	"OrderUserProject/internal/repository"
 	"github.com/labstack/echo/v4"
@@ -44,8 +44,8 @@ func main() {
 	OrderService := order_api.NewOrderService(*OrderRepository, *UserRepository)
 
 	// to create new app
-	handler.NewUserHandler(e, UserService)
-	handler2.NewOrderHandler(e, OrderService)
+	handler_user.NewUserHandler(e, UserService)
+	handler_order.NewOrderHandler(e, OrderService)
 
 	// if we don't use this swagger give an error
 	docs.SwaggerInfo.Host = "localhost:8080"
