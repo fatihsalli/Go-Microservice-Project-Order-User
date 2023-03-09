@@ -63,7 +63,7 @@ func (b UserRepository) Update(user models.User) (bool, error) {
 	// => if we have to chance more than one parameter we have to write like this
 	update := bson.D{{"$set", bson.D{{"name", user.Name},
 		{"email", user.Email}, {"password", user.Password}, {"address", user.Address},
-		{"orders", user.Orders}, {"updated_date", user.UpdatedDate}}}}
+		{"updateddate", user.UpdatedDate}}}}
 
 	// mongodb.driver
 	result, err := b.UserCollection.UpdateOne(ctx, filter, update)

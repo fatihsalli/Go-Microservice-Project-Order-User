@@ -45,3 +45,9 @@ func main() {
 
 	e.Logger.Fatal(e.Start(config.Server.Port))
 }
+
+// TODO: business
+// TODO: logrus loglama
+// TODO: middleware
+// TODO: graceful shutdown
+// TODO: kalan repo,service,controller vs.

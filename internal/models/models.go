@@ -9,8 +9,8 @@ type User struct {
 	Password    string             `json:"password,omitempty"`
 	Address     string             `json:"address"`
 	Orders      []string           `json:"orders"`
-	CreatedDate primitive.DateTime `json:"created_date,omitempty"`
-	UpdatedDate primitive.DateTime `json:"updated_date"`
+	CreatedDate primitive.DateTime `json:"createddate,omitempty"`
+	UpdatedDate primitive.DateTime `json:"updateddate"`
 }
 
 type Order struct {
@@ -22,6 +22,6 @@ type Order struct {
 		Price    float64 `json:"price"`
 	}
 	Total       float64            `json:"total"`
-	CreatedDate primitive.DateTime `json:"created_date,omitempty"`
-	UpdatedDate primitive.DateTime `json:"updated_date"`
+	CreatedDate primitive.DateTime `json:"createddate,omitempty"`
+	UpdatedDate primitive.DateTime `json:"updateddate"`
 }
