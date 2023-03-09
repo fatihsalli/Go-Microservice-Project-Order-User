@@ -21,6 +21,7 @@ func NewOrderHandler(e *echo.Echo, service order_api.IOrderService) *OrderHandle
 	//Routes
 	router.GET("", b.GetAllOrders)
 	router.POST("", b.CreateOrder)
+	router.DELETE("/:id", b.DeleteOrder)
 
 	return b
 }
@@ -110,4 +111,34 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 
 	log.Printf("{%v} with id is created.", jsonSuccessResultId.ID)
 	return c.JSON(http.StatusCreated, jsonSuccessResultId)
+}
+
+// DeleteOrder godoc
+// @Summary delete a order item by ID
+// @ID delete-order-by-id
+// @Produce json
+// @Param id path string true "order ID"
+// @Success 200 {object} models.JSONSuccessResultId
+// @Success 404 {object} pkg.NotFoundError
+// @Router /orders/{id} [delete]
+func (h OrderHandler) DeleteOrder(c echo.Context) error {
+	query := c.Param("id")
+
+	result, err := h.Service.Delete(query)
+
+	if err != nil || result == false {
+		log.Printf("Not found exception: {%v} with id not found!", query)
+		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
+			Message: fmt.Sprintf("Not found exception: {%v} with id not found!", query),
+		})
+	}
+
+	// to response id and success boolean
+	jsonSuccessResultId := models.JSONSuccessResultId{
+		ID:      query,
+		Success: result,
+	}
+
+	log.Printf("{%v} with id is deleted.", jsonSuccessResultId.ID)
+	return c.JSON(http.StatusOK, jsonSuccessResultId)
 }
