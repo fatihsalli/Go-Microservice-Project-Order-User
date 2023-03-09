@@ -18,11 +18,32 @@ func NewUserService(repository repository.IUserRepository) *UserService {
 }
 
 type IUserService interface {
-	Insert(user models.User) (models.User, error)
 	GetAll() ([]models.User, error)
-	GetBookById(id string) (models.User, error)
+	GetUserById(id string) (models.User, error)
+	Insert(user models.User) (models.User, error)
 	Update(user models.User) (bool, error)
 	Delete(id string) (bool, error)
+}
+
+func (b UserService) GetAll() ([]models.User, error) {
+	result, err := b.Repository.GetAll()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (b UserService) GetUserById(id string) (models.User, error) {
+
+	result, err := b.Repository.GetUserById(id)
+
+	if err != nil {
+		return result, err
+	}
+
+	return result, nil
 }
 
 func (b UserService) Insert(user models.User) (models.User, error) {
@@ -38,27 +59,6 @@ func (b UserService) Insert(user models.User) (models.User, error) {
 	}
 
 	return user, nil
-}
-
-func (b UserService) GetAll() ([]models.User, error) {
-	result, err := b.Repository.GetAll()
-
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
-func (b UserService) GetBookById(id string) (models.User, error) {
-
-	result, err := b.Repository.GetUserById(id)
-
-	if err != nil {
-		return result, err
-	}
-
-	return result, nil
 }
 
 func (b UserService) Update(user models.User) (bool, error) {

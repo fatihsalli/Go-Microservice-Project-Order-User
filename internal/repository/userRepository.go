@@ -26,7 +26,9 @@ type IUserRepository interface {
 	GetUserById(id string) (models.User, error)
 	Insert(user models.User) (bool, error)
 	Update(user models.User) (bool, error)
+	UpdateOrder(orderId string, userId string) (bool, error)
 	Delete(id string) (bool, error)
+	DeleteOrder(orderId string, userId string) (bool, error)
 }
 
 // GetAll Method => to list every user
@@ -130,7 +132,23 @@ func (b UserRepository) UpdateOrder(orderId string, userId string) (bool, error)
 		return false, err
 	}
 
-	user.Orders = append(user.Orders, orderId)
+	// to open connection
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// opt := options.Update().SetUpsert(true)
+	filter := bson.D{{"_id", user.ID}}
+
+	// => if we have to chance more than one parameter we have to write like this
+	update := bson.D{{"$set", bson.D{{"name", append(user.Orders, orderId)}}}}
+
+	// mongodb.driver
+	result, err := b.UserCollection.UpdateOne(ctx, filter, update)
+
+	if result.ModifiedCount <= 0 || err != nil {
+		return false, err
+	}
+
 	return true, nil
 }
 
@@ -144,6 +162,42 @@ func (b UserRepository) Delete(id string) (bool, error) {
 	result, err := b.UserCollection.DeleteOne(ctx, bson.M{"_id": id})
 
 	if err != nil || result.DeletedCount <= 0 {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// DeleteOrder method => to delete exist []string => Orders
+func (b UserRepository) DeleteOrder(orderId string, userId string) (bool, error) {
+	user, err := b.GetUserById(userId)
+
+	if err != nil {
+		return false, err
+	}
+
+	var newOrders []string
+
+	for _, existOrderId := range user.Orders {
+		if existOrderId != orderId {
+			newOrders = append(newOrders, existOrderId)
+		}
+	}
+
+	// to open connection
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// opt := options.Update().SetUpsert(true)
+	filter := bson.D{{"_id", user.ID}}
+
+	// => if we have to chance more than one parameter we have to write like this
+	update := bson.D{{"$set", bson.D{{"orders", newOrders}}}}
+
+	// mongodb.driver
+	result, err := b.UserCollection.UpdateOne(ctx, filter, update)
+
+	if result.ModifiedCount <= 0 || err != nil {
 		return false, err
 	}
 

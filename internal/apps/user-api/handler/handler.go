@@ -83,7 +83,7 @@ func (h UserHandler) GetAllUsers(c echo.Context) error {
 func (h UserHandler) GetUserById(c echo.Context) error {
 	query := c.Param("id")
 
-	user, err := h.Service.GetBookById(query)
+	user, err := h.Service.GetUserById(query)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -186,7 +186,7 @@ func (h UserHandler) UpdateUser(c echo.Context) error {
 		})
 	}
 
-	if _, err := h.Service.GetBookById(userUpdateRequest.ID); err != nil {
+	if _, err := h.Service.GetUserById(userUpdateRequest.ID); err != nil {
 		log.Printf("Not found exception: {%v} with id not found!", userUpdateRequest.ID)
 		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
 			Message: fmt.Sprintf("Not found exception: {%v} with id not found!", userUpdateRequest.ID),

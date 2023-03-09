@@ -2,6 +2,7 @@ package main
 
 import (
 	"OrderUserProject/docs"
+	order_api "OrderUserProject/internal/apps/order-api"
 	"OrderUserProject/internal/apps/user-api"
 	"OrderUserProject/internal/apps/user-api/handler"
 	"OrderUserProject/internal/configs"
@@ -37,7 +38,9 @@ func main() {
 
 	OrderRepository := repository.NewOrderRepository(mongoOrderCollection)
 	UserRepository := repository.NewUserRepository(mongoUserCollection)
+
 	UserService := user_api.NewUserService(*UserRepository)
+	OrderService := order_api.NewOrderService(*OrderRepository, *UserRepository)
 
 	// to create new app
 	handler.NewUserHandler(e, UserService)
