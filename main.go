@@ -3,6 +3,7 @@ package main
 import (
 	"OrderUserProject/docs"
 	order_api "OrderUserProject/internal/apps/order-api"
+	handler2 "OrderUserProject/internal/apps/order-api/handler"
 	"OrderUserProject/internal/apps/user-api"
 	"OrderUserProject/internal/apps/user-api/handler"
 	"OrderUserProject/internal/configs"
@@ -44,6 +45,7 @@ func main() {
 
 	// to create new app
 	handler.NewUserHandler(e, UserService)
+	handler2.NewOrderHandler(e, OrderService)
 
 	// if we don't use this swagger give an error
 	docs.SwaggerInfo.Host = "localhost:8080"

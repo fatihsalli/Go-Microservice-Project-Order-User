@@ -132,6 +132,8 @@ func (b UserRepository) UpdateOrder(orderId string, userId string) (bool, error)
 		return false, err
 	}
 
+	user.Orders = append(user.Orders, orderId)
+
 	// to open connection
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -140,7 +142,7 @@ func (b UserRepository) UpdateOrder(orderId string, userId string) (bool, error)
 	filter := bson.D{{"_id", user.ID}}
 
 	// => if we have to chance more than one parameter we have to write like this
-	update := bson.D{{"$set", bson.D{{"name", append(user.Orders, orderId)}}}}
+	update := bson.D{{"$set", bson.D{{"orders", user.Orders}}}}
 
 	// mongodb.driver
 	result, err := b.UserCollection.UpdateOne(ctx, filter, update)
