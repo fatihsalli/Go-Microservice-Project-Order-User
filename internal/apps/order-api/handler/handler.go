@@ -192,7 +192,6 @@ func (h OrderHandler) UpdateOrder(c echo.Context) error {
 
 	// we can use automapper, but it will cause performance loss.
 	order.ID = orderUpdateRequest.ID
-	order.UserId = orderUpdateRequest.UserId
 	order.Product = orderUpdateRequest.Product
 	order.Total = orderUpdateRequest.Total
 
