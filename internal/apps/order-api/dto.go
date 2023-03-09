@@ -12,6 +12,7 @@ type OrderCreateRequest struct {
 
 type OrderUpdateRequest struct {
 	ID      string `json:"id"`
+	UserId  string `json:"user_id"`
 	Product []struct {
 		Name     string  `json:"name"`
 		Quantity int     `json:"quantity"`

@@ -10,13 +10,11 @@ import (
 
 type OrderService struct {
 	OrderRepository repository.IOrderRepository
-	UserRepository  repository.IUserRepository
 }
 
-func NewOrderService(orderRepository repository.IOrderRepository, userRepository repository.IUserRepository) *OrderService {
+func NewOrderService(orderRepository repository.IOrderRepository) *OrderService {
 	orderService := &OrderService{
 		OrderRepository: orderRepository,
-		UserRepository:  userRepository,
 	}
 	return orderService
 }
@@ -62,12 +60,6 @@ func (b OrderService) Insert(order models.Order) (models.Order, error) {
 		return order, err
 	}
 
-	addUserOrders, err := b.UserRepository.UpdateOrder(order.ID, order.UserId)
-
-	if err != nil || addUserOrders == false {
-		return order, err
-	}
-
 	return order, nil
 }
 
@@ -85,18 +77,9 @@ func (b OrderService) Update(order models.Order) (bool, error) {
 }
 
 func (b OrderService) Delete(id string) (bool, error) {
-	// to find userId => if we use jwt, we can find token payload
-	order, err := b.OrderRepository.GetOrderById(id)
-
 	result, err := b.OrderRepository.Delete(id)
 
 	if err != nil || result == false {
-		return false, err
-	}
-
-	updateUser, err := b.UserRepository.DeleteOrder(id, order.UserId)
-
-	if err != nil || updateUser == false {
 		return false, err
 	}
 

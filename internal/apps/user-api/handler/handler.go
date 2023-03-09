@@ -56,7 +56,6 @@ func (h UserHandler) GetAllUsers(c echo.Context) error {
 		userResponse.Email = user.Email
 		userResponse.Password = user.Password
 		userResponse.Address = user.Address
-		userResponse.Orders = user.Orders
 
 		usersResponse = append(usersResponse, userResponse)
 	}
@@ -105,7 +104,6 @@ func (h UserHandler) GetUserById(c echo.Context) error {
 	userResponse.Email = user.Email
 	userResponse.Password = user.Password
 	userResponse.Address = user.Address
-	userResponse.Orders = user.Orders
 
 	// to response success result data => single one
 	jsonSuccessResultData := models.JSONSuccessResultData{

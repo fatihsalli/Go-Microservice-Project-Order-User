@@ -31,17 +31,15 @@ func main() {
 
 	config := configs.GetConfig("test")
 
-	mongoUserCollection := configs.ConnectDB(config.Database.Connection).
-		Database(config.Database.DatabaseName).Collection(config.Database.UserCollectionName)
+	mongoUserCollection := configs.ConnectDB(config.Database.Connection).Database(config.Database.DatabaseName).Collection(config.Database.UserCollectionName)
 
-	mongoOrderCollection := configs.ConnectDB(config.Database.Connection).
-		Database(config.Database.DatabaseName).Collection(config.Database.OrderCollectionName)
+	mongoOrderCollection := configs.ConnectDB(config.Database.Connection).Database(config.Database.DatabaseName).Collection(config.Database.OrderCollectionName)
 
 	OrderRepository := repository.NewOrderRepository(mongoOrderCollection)
 	UserRepository := repository.NewUserRepository(mongoUserCollection)
 
 	UserService := user_api.NewUserService(*UserRepository)
-	OrderService := order_api.NewOrderService(*OrderRepository, *UserRepository)
+	OrderService := order_api.NewOrderService(*OrderRepository)
 
 	// to create new app
 	handler_user.NewUserHandler(e, UserService)
@@ -55,8 +53,6 @@ func main() {
 	e.Logger.Fatal(e.Start(config.Server.Port))
 }
 
-// TODO: business
-// TODO: logrus loglama
-// TODO: middleware
-// TODO: graceful shutdown
-// TODO: kalan repo,service,controller vs.
+// TODO: Echo loglaması ezilerek logrus kullanılacak
+// TODO: Middleware
+// TODO: Graceful shutdown araştırılacak

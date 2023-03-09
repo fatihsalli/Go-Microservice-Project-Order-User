@@ -194,6 +194,7 @@ func (h OrderHandler) UpdateOrder(c echo.Context) error {
 	order.ID = orderUpdateRequest.ID
 	order.Product = orderUpdateRequest.Product
 	order.Total = orderUpdateRequest.Total
+	order.UserId = orderUpdateRequest.UserId
 
 	result, err := h.Service.Update(order)
 

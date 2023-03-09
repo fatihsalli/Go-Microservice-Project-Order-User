@@ -8,14 +8,13 @@ type User struct {
 	Email       string             `json:"email,omitempty"`
 	Password    string             `json:"password,omitempty"`
 	Address     string             `json:"address"`
-	Orders      []string           `json:"orders"`
 	CreatedDate primitive.DateTime `json:"createddate,omitempty"`
 	UpdatedDate primitive.DateTime `json:"updateddate"`
 }
 
 type Order struct {
 	ID      string `json:"_id,omitempty" bson:"_id,omitempty"`
-	UserId  string `json:"user_id,omitempty"`
+	UserId  string `json:"userid,omitempty"`
 	Product []struct {
 		Name     string  `json:"name"`
 		Quantity int     `json:"quantity"`
