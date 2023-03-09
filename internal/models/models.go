@@ -20,7 +20,7 @@ type Order struct {
 		Name     string  `json:"name"`
 		Quantity int     `json:"quantity"`
 		Price    float64 `json:"price"`
-	}
+	} `json:"product"`
 	Total       float64            `json:"total"`
 	CreatedDate primitive.DateTime `json:"createddate,omitempty"`
 	UpdatedDate primitive.DateTime `json:"updateddate"`

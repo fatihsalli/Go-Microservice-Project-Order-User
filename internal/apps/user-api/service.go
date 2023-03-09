@@ -52,7 +52,7 @@ func (b UserService) GetAll() ([]models.User, error) {
 
 func (b UserService) GetBookById(id string) (models.User, error) {
 
-	result, err := b.Repository.GetBookById(id)
+	result, err := b.Repository.GetUserById(id)
 
 	if err != nil {
 		return result, err

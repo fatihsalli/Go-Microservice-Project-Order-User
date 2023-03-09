@@ -32,6 +32,10 @@ func main() {
 	mongoUserCollection := configs.ConnectDB(config.Database.Connection).
 		Database(config.Database.DatabaseName).Collection(config.Database.UserCollectionName)
 
+	mongoOrderCollection := configs.ConnectDB(config.Database.Connection).
+		Database(config.Database.DatabaseName).Collection(config.Database.OrderCollectionName)
+
+	OrderRepository := repository.NewOrderRepository(mongoOrderCollection)
 	UserRepository := repository.NewUserRepository(mongoUserCollection)
 	UserService := user_api.NewUserService(*UserRepository)
 
