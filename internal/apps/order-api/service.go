@@ -4,7 +4,6 @@ import (
 	"OrderUserProject/internal/models"
 	"OrderUserProject/internal/repository"
 	"github.com/google/uuid"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
 )
 
@@ -52,7 +51,7 @@ func (b OrderService) Insert(order models.Order) (models.Order, error) {
 
 	// to create id and created date value
 	order.ID = uuid.New().String()
-	order.CreatedDate = primitive.NewDateTimeFromTime(time.Now())
+	order.CreatedDate = time.Now()
 
 	result, err := b.OrderRepository.Insert(order)
 
@@ -65,7 +64,7 @@ func (b OrderService) Insert(order models.Order) (models.Order, error) {
 
 func (b OrderService) Update(order models.Order) (bool, error) {
 	// to create updated date value
-	order.UpdatedDate = primitive.NewDateTimeFromTime(time.Now())
+	order.UpdatedDate = time.Now()
 
 	result, err := b.OrderRepository.Update(order)
 

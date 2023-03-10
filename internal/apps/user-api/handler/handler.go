@@ -55,7 +55,6 @@ func (h UserHandler) GetAllUsers(c echo.Context) error {
 		userResponse.Name = user.Name
 		userResponse.Email = user.Email
 		userResponse.Password = user.Password
-		userResponse.Address = user.Address
 
 		usersResponse = append(usersResponse, userResponse)
 	}
@@ -103,16 +102,9 @@ func (h UserHandler) GetUserById(c echo.Context) error {
 	userResponse.Name = user.Name
 	userResponse.Email = user.Email
 	userResponse.Password = user.Password
-	userResponse.Address = user.Address
-
-	// to response success result data => single one
-	jsonSuccessResultData := models.JSONSuccessResultData{
-		TotalItemCount: 1,
-		Data:           userResponse,
-	}
 
 	log.Printf("{%v} with id is listed.", userResponse.ID)
-	return c.JSON(http.StatusOK, jsonSuccessResultData)
+	return c.JSON(http.StatusOK, userResponse)
 }
 
 // CreateUser godoc
@@ -142,7 +134,6 @@ func (h UserHandler) CreateUser(c echo.Context) error {
 	user.Name = userRequest.Name
 	user.Email = userRequest.Email
 	user.Password = userRequest.Password
-	user.Address = userRequest.Address
 
 	result, err := h.Service.Insert(user)
 
@@ -198,7 +189,6 @@ func (h UserHandler) UpdateUser(c echo.Context) error {
 	user.Name = userUpdateRequest.Name
 	user.Email = userUpdateRequest.Email
 	user.Password = userUpdateRequest.Password
-	user.Address = userUpdateRequest.Address
 
 	result, err := h.Service.Update(user)
 

@@ -53,6 +53,6 @@ func main() {
 	e.Logger.Fatal(e.Start(config.Server.Port))
 }
 
-// TODO: Echo loglaması ezilerek logrus kullanılacak
+// TODO: Logrus - echo framework
 // TODO: Middleware
-// TODO: Graceful shutdown araştırılacak
+// TODO: Graceful shutdown
