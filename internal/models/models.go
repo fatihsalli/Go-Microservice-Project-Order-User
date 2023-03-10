@@ -8,7 +8,7 @@ type User struct {
 	ID        string    `json:"_id" bson:"_id"`
 	Name      string    `json:"name" bson:"name"`
 	Email     string    `json:"email" bson:"email"`
-	Password  string    `json:"password" bson:"password"`
+	Password  []byte    `json:"password" bson:"password"`
 	Addresses []Address `json:"addresses" bson:"addresses"`
 	CreatedAt time.Time `json:"createdAt" bson:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt" bson:"updatedAt"`
@@ -45,3 +45,5 @@ type Address struct {
 // Tüm defaultları kaldırmamalı en son 1 tane değer kaldığında default olarak kalmalı kaldıramamalı
 
 // TODO: Order change (Update-Create) Kafka ile topic e full body basılacak. Consumer okuyup elastic search e datayı basacak
+
+// Password bcrypt
