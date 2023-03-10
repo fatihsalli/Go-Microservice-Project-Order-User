@@ -193,7 +193,7 @@ func (h UserHandler) UpdateUser(c echo.Context) error {
 		})
 	}
 
-	// using 'bcrypt' to check password
+	// using 'bcrypt' to check password (tested)
 	err = bcrypt.CompareHashAndPassword(user.Password, []byte(userUpdateRequest.Password))
 	if err != nil {
 		log.Print("Password is wrong. Please put correct password!")
