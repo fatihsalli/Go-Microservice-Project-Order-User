@@ -52,7 +52,3 @@ func main() {
 
 	e.Logger.Fatal(e.Start(config.Server.Port))
 }
-
-// TODO: Logrus - echo framework
-// TODO: Middleware
-// TODO: Graceful shutdown

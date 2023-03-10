@@ -51,7 +51,7 @@ func (b OrderService) Insert(order models.Order) (models.Order, error) {
 
 	// to create id and created date value
 	order.ID = uuid.New().String()
-	order.CreatedDate = time.Now()
+	order.CreatedAt = time.Now()
 
 	result, err := b.OrderRepository.Insert(order)
 
@@ -64,7 +64,7 @@ func (b OrderService) Insert(order models.Order) (models.Order, error) {
 
 func (b OrderService) Update(order models.Order) (bool, error) {
 	// to create updated date value
-	order.UpdatedDate = time.Now()
+	order.UpdatedAt = time.Now()
 
 	result, err := b.OrderRepository.Update(order)
 

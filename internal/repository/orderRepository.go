@@ -108,7 +108,7 @@ func (b OrderRepository) Update(order models.Order) (bool, error) {
 	//update := bson.D{{"$set", bson.D{{"title", book.Title}}}}
 
 	// => if we have to chance more than one parameter we have to write like this
-	update := bson.D{{"$set", bson.D{{"product", order.Product}, {"total", order.Total}, {"userid", order.UserId}, {"updateddate", order.UpdatedDate}}}}
+	update := bson.D{{"$set", bson.D{{"product", order.Product}, {"total", order.Total}, {"userId", order.UserId}, {"updatedAt", order.UpdatedAt}}}}
 
 	// mongodb.driver
 	result, err := b.OrderCollection.UpdateOne(ctx, filter, update)
