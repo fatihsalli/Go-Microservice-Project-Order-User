@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net/http"
 )
@@ -54,7 +55,6 @@ func (h UserHandler) GetAllUsers(c echo.Context) error {
 		userResponse.ID = user.ID
 		userResponse.Name = user.Name
 		userResponse.Email = user.Email
-		userResponse.Password = user.Password
 
 		usersResponse = append(usersResponse, userResponse)
 	}
@@ -101,7 +101,6 @@ func (h UserHandler) GetUserById(c echo.Context) error {
 	userResponse.ID = user.ID
 	userResponse.Name = user.Name
 	userResponse.Email = user.Email
-	userResponse.Password = user.Password
 
 	log.Printf("{%v} with id is listed.", userResponse.ID)
 	return c.JSON(http.StatusOK, userResponse)
@@ -133,7 +132,17 @@ func (h UserHandler) CreateUser(c echo.Context) error {
 	// we can use automapper, but it will cause performance loss.
 	user.Name = userRequest.Name
 	user.Email = userRequest.Email
-	user.Password = userRequest.Password
+
+	// using 'bcrypt' to hash password
+	password := []byte(userRequest.Password)
+	hashedPassword, err := bcrypt.GenerateFromPassword(password, bcrypt.DefaultCost)
+	if err != nil {
+		log.Printf("Bad Request. It cannot be hashing! %v", err.Error())
+		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
+			Message: fmt.Sprintf("Bad Request. It cannot be hashing! %v", err.Error()),
+		})
+	}
+	user.Password = hashedPassword
 
 	result, err := h.Service.Insert(user)
 
@@ -175,20 +184,27 @@ func (h UserHandler) UpdateUser(c echo.Context) error {
 		})
 	}
 
-	if _, err := h.Service.GetUserById(userUpdateRequest.ID); err != nil {
+	// to find user
+	user, err := h.Service.GetUserById(userUpdateRequest.ID)
+	if err != nil {
 		log.Printf("Not found exception: {%v} with id not found!", userUpdateRequest.ID)
 		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
 			Message: fmt.Sprintf("Not found exception: {%v} with id not found!", userUpdateRequest.ID),
 		})
 	}
 
-	var user models.User
+	// using 'bcrypt' to check password
+	err = bcrypt.CompareHashAndPassword(user.Password, []byte(userUpdateRequest.Password))
+	if err != nil {
+		log.Print("Password is wrong. Please put correct password!")
+		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
+			Message: fmt.Sprint("Password is wrong. Please put correct password!"),
+		})
+	}
 
 	// we can use automapper, but it will cause performance loss.
-	user.ID = userUpdateRequest.ID
 	user.Name = userUpdateRequest.Name
 	user.Email = userUpdateRequest.Email
-	user.Password = userUpdateRequest.Password
 
 	result, err := h.Service.Update(user)
 

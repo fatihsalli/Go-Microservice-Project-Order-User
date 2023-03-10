@@ -49,7 +49,7 @@ func (b UserService) Insert(user models.User) (models.User, error) {
 
 	// to create id and created date value
 	user.ID = uuid.New().String()
-	user.CreatedDate = time.Now()
+	user.CreatedAt = time.Now()
 
 	result, err := b.Repository.Insert(user)
 
@@ -62,7 +62,7 @@ func (b UserService) Insert(user models.User) (models.User, error) {
 
 func (b UserService) Update(user models.User) (bool, error) {
 	// to create updated date value
-	user.UpdatedDate = time.Now()
+	user.UpdatedAt = time.Now()
 
 	result, err := b.Repository.Update(user)
 
