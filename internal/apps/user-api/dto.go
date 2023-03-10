@@ -15,6 +15,7 @@ type UserUpdateRequest struct {
 	Address  string `json:"address"`
 }
 
+// Password bcrypt
 type UserResponse struct {
 	ID       string `json:"id"`
 	Name     string `json:"name"`
