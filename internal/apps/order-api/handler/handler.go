@@ -160,7 +160,7 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 		log.Printf("There was a problem when convert to byte format: %v", err.Error())
 	}
 
-	err = kafka.SendToKafka("order-create-event", orderInBytes)
+	err = kafka.SendToKafka("order-create-elastic", orderInBytes)
 
 	if err != nil {
 		log.Printf("There was a problem when sending message: %v", err.Error())
@@ -168,7 +168,7 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 
 	log.Printf("Order (%v) Pushed Successfully.", result.ID)
 
-	kafka.ListenFromKafka("order-create-event")
+	kafka.ListenFromKafka("order-create-elastic")
 
 	// to response id and success boolean
 	jsonSuccessResultId := models.JSONSuccessResultId{
