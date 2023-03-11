@@ -7,15 +7,9 @@ import (
 	"OrderUserProject/internal/apps/user-api"
 	handler_user "OrderUserProject/internal/apps/user-api/handler"
 	"OrderUserProject/internal/configs"
-	"OrderUserProject/internal/kafka"
 	"OrderUserProject/internal/repository"
-	"fmt"
-	"github.com/Shopify/sarama"
 	"github.com/labstack/echo/v4"
 	echoSwagger "github.com/swaggo/echo-swagger"
-	"log"
-	"os"
-	"os/signal"
 )
 
 // @title           Echo Restful API
@@ -55,52 +49,6 @@ func main() {
 	docs.SwaggerInfo.Host = "localhost:8080"
 	// add swagger
 	e.GET("/swagger/*any", echoSwagger.WrapHandler)
-
-	producer, err := kafka.ConnectProducer()
-
-	if err != nil {
-		log.Print("Hata meydana geldi")
-	}
-
-	consumer, err := kafka.ConnectConsumer()
-
-	if err != nil {
-		log.Print("Hata meydana geldi")
-	}
-
-	// SIGINT (Ctrl+C) yakalamak için kanal oluşturma
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, os.Interrupt)
-
-	// Producer example
-	go func() {
-		for {
-			message := &sarama.ProducerMessage{Topic: "test-topic", Value: sarama.StringEncoder("test message-11.03.2023")}
-			partition, offset, err := producer.SendMessage(message)
-			if err != nil {
-				log.Fatalf("Error sending message to Kafka: %s", err.Error())
-			}
-			fmt.Printf("Message sent to partition %d at offset %d\n", partition, offset)
-		}
-	}()
-
-	// Consumer example
-	go func() {
-		partitionConsumer, err := consumer.ConsumePartition("test-topic", 0, sarama.OffsetNewest)
-		if err != nil {
-			log.Fatalf("Error creating partition consumer: %s", err.Error())
-		}
-		defer partitionConsumer.Close()
-
-		for {
-			select {
-			case msg := <-partitionConsumer.Messages():
-				fmt.Printf("Received message from partition %d at offset %d: %s\n", msg.Partition, msg.Offset, string(msg.Value))
-			case <-signals:
-				return
-			}
-		}
-	}()
 
 	e.Logger.Fatal(e.Start(config.Server.Port))
 }

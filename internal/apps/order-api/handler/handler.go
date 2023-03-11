@@ -2,8 +2,11 @@ package handler
 
 import (
 	order_api "OrderUserProject/internal/apps/order-api"
+	"OrderUserProject/internal/elasticsearch"
+	"OrderUserProject/internal/kafka"
 	"OrderUserProject/internal/models"
 	"OrderUserProject/pkg"
+	"encoding/json"
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -152,9 +155,9 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 
 	// publish event
 	// convert body into bytes and send it to kafka
-	//orderInBytes, err := json.Marshal(result)
-	//kafka.PushCommentToQueue("order-create", orderInBytes)
-	//log.Printf("Order (%v) Pushed Successfully.", result.ID)
+	orderInBytes, err := json.Marshal(result)
+	kafka.PushCommentToQueue("order-create", orderInBytes)
+	log.Printf("Order (%v) Pushed Successfully.", result.ID)
 
 	// to response id and success boolean
 	jsonSuccessResultId := models.JSONSuccessResultId{
@@ -162,7 +165,7 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 		Success: true,
 	}
 
-	//elasticsearch.ListenTopic()
+	elasticsearch.ListenTopic()
 
 	log.Printf("{%v} with id is created.", jsonSuccessResultId.ID)
 	return c.JSON(http.StatusCreated, jsonSuccessResultId)

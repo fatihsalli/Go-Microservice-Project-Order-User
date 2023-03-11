@@ -1,23 +1,14 @@
 package kafka
 
-import (
-	"github.com/Shopify/sarama"
-	"log"
-)
+import "github.com/Shopify/sarama"
 
-func ConnectConsumer() (sarama.Consumer, error) {
-	// Kafka broker address
-	brokerList := []string{"localhost:9092"}
-
+func ConnectConsumer(brokersUrl []string) (sarama.Consumer, error) {
 	config := sarama.NewConfig()
 	config.Consumer.Return.Errors = true
-
-	// Kafka consumer
-	consumer, err := sarama.NewConsumer(brokerList, config)
+	// NewConsumer creates a new consumer using the given broker addresses and configuration
+	conn, err := sarama.NewConsumer(brokersUrl, config)
 	if err != nil {
-		log.Printf("Error creating Kafka consumer: %s", err.Error())
+		return nil, err
 	}
-	defer consumer.Close()
-
-	return consumer, nil
+	return conn, nil
 }
