@@ -74,7 +74,7 @@ func (h UserHandler) GetAllUsers(c echo.Context) error {
 // @ID get-user-by-id
 // @Produce json
 // @Param id path string true "user ID"
-// @Success 200 {object} models.JSONSuccessResultData
+// @Success 200 {object} user_api.UserResponse
 // @Success 404 {object} pkg.NotFoundError
 // @Success 500 {object} pkg.InternalServerError
 // @Router /users/{id} [get]

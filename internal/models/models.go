@@ -45,5 +45,3 @@ type Address struct {
 // Tüm defaultları kaldırmamalı en son 1 tane değer kaldığında default olarak kalmalı kaldıramamalı
 
 // TODO: Order change (Update-Create) Kafka ile topic e full body basılacak. Consumer okuyup elastic search e datayı basacak
-
-// Password bcrypt
