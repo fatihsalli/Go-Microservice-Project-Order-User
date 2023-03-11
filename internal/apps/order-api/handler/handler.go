@@ -2,7 +2,6 @@ package handler
 
 import (
 	order_api "OrderUserProject/internal/apps/order-api"
-	"OrderUserProject/internal/elasticsearch"
 	"OrderUserProject/internal/kafka"
 	"OrderUserProject/internal/models"
 	"OrderUserProject/pkg"
@@ -156,16 +155,26 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 	// publish event
 	// convert body into bytes and send it to kafka
 	orderInBytes, err := json.Marshal(result)
-	kafka.PushCommentToQueue("order-create", orderInBytes)
+
+	if err != nil {
+		log.Printf("There was a problem when convert to byte format: %v", err.Error())
+	}
+
+	err = kafka.SendToKafka("order-create-event", orderInBytes)
+
+	if err != nil {
+		log.Printf("There was a problem when sending message: %v", err.Error())
+	}
+
 	log.Printf("Order (%v) Pushed Successfully.", result.ID)
+
+	kafka.ListenFromKafka("order-create-event")
 
 	// to response id and success boolean
 	jsonSuccessResultId := models.JSONSuccessResultId{
 		ID:      result.ID,
 		Success: true,
 	}
-
-	elasticsearch.ListenTopic()
 
 	log.Printf("{%v} with id is created.", jsonSuccessResultId.ID)
 	return c.JSON(http.StatusCreated, jsonSuccessResultId)
