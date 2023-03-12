@@ -160,7 +160,7 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 	}
 
 	// create topic name
-	topic := "order-create-list"
+	topic := "order-test-v01"
 
 	// sending data
 	err = kafka.SendToKafka(topic, orderInBytes)
@@ -170,11 +170,7 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 	log.Printf("Order (%v) Pushed Successfully.", result.ID)
 
 	// listening data
-	orderList := kafka.ListenFromKafka(topic)
-
-	for _, order := range orderList {
-		fmt.Println(order.ID, order.UserId)
-	}
+	kafka.ListenFromKafka(topic)
 
 	// to response id and success boolean
 	jsonSuccessResultId := models.JSONSuccessResultId{

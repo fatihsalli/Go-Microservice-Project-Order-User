@@ -5,9 +5,12 @@ import (
 	"encoding/json"
 	"github.com/Shopify/sarama"
 	"log"
+	"os"
+	"os/signal"
+	"time"
 )
 
-func ListenFromKafka(topic string) []models.Order {
+func ListenFromKafka(topic string) {
 	// TODO: brokersUrl have to come config file
 	// Kafka broker address
 	brokersUrl := []string{"localhost:9092"}
@@ -27,39 +30,30 @@ func ListenFromKafka(topic string) []models.Order {
 		}
 	}()
 
-	partitionConsumer, err := consumer.ConsumePartition(topic, 0, sarama.OffsetNewest)
+	// listen to signal of Ctrl+C
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, os.Interrupt)
+
+	partitionConsumer, err := consumer.ConsumePartition(topic, 0, sarama.OffsetOldest)
 	if err != nil {
 		log.Printf("Failed to create partition consumer: %v ", err)
 	}
-	defer partitionConsumer.Close()
+	defer func() {
+		if err := partitionConsumer.Close(); err != nil {
+			log.Print(err)
+		}
+	}()
 
+	time.Sleep(5000)
 	var orderList []models.Order
 	var order models.Order
 
-	// Kafka listen from topic
-	partitionList, err := consumer.Partitions(topic)
-	if err != nil {
-		log.Print(err)
-	}
-	initialOffset := sarama.OffsetNewest
-	for _, partition := range partitionList {
-		pc, err := consumer.ConsumePartition(topic, partition, initialOffset)
-		if err != nil {
+	for msg := range partitionConsumer.Messages() {
+		if err := json.Unmarshal(msg.Value, &order); err != nil {
 			log.Print(err)
 		}
 
-		go func(pc sarama.PartitionConsumer) {
-			for message := range pc.Messages() {
-				log.Printf("Message topic:%s partition:%d offset:%d value:%s\n", message.Topic, message.Partition, message.Offset, message.Value)
-
-				if err := json.Unmarshal(message.Value, &order); err != nil {
-					log.Printf("Error unmarshalling message: %s", err)
-				}
-				orderList = append(orderList, order)
-			}
-		}(pc)
+		orderList = append(orderList, order)
+		log.Printf("Received order: %+v\n", order)
 	}
-
-	return orderList
-
 }
