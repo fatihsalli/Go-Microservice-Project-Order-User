@@ -2,6 +2,7 @@ package handler
 
 import (
 	order_api "OrderUserProject/internal/apps/order-api"
+	"OrderUserProject/internal/elasticsearch"
 	"OrderUserProject/internal/kafka"
 	"OrderUserProject/internal/models"
 	"OrderUserProject/pkg"
@@ -160,15 +161,21 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 		log.Printf("There was a problem when convert to byte format: %v", err.Error())
 	}
 
-	err = kafka.SendToKafka("order-create-elastic", orderInBytes)
+	// sending data
+	topic := "order-create-elastic"
 
+	err = kafka.SendToKafka(topic, orderInBytes)
 	if err != nil {
 		log.Printf("There was a problem when sending message: %v", err.Error())
 	}
-
 	log.Printf("Order (%v) Pushed Successfully.", result.ID)
 
-	kafka.ListenFromKafka("order-create-elastic")
+	// listening data
+	//consumer := kafka.ListenFromKafka(topic)
+
+	//elasticsearch.SaveElastic(topic)
+
+	elasticsearch.ElasticSave()
 
 	// to response id and success boolean
 	jsonSuccessResultId := models.JSONSuccessResultId{
