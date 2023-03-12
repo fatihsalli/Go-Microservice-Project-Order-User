@@ -7,7 +7,6 @@ import (
 	"OrderUserProject/internal/apps/user-api"
 	handler_user "OrderUserProject/internal/apps/user-api/handler"
 	"OrderUserProject/internal/configs"
-	"OrderUserProject/internal/elasticsearch"
 	"OrderUserProject/internal/repository"
 	"github.com/labstack/echo/v4"
 	echoSwagger "github.com/swaggo/echo-swagger"
@@ -45,8 +44,6 @@ func main() {
 	// to create new app
 	handler_user.NewUserHandler(e, UserService)
 	handler_order.NewOrderHandler(e, OrderService)
-
-	elasticsearch.ElasticSave()
 
 	// if we don't use this swagger give an error
 	docs.SwaggerInfo.Host = "localhost:8080"

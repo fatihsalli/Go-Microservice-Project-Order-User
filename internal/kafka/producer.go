@@ -5,14 +5,16 @@ import (
 	"log"
 )
 
+// SendToKafka take a topic name and message
 func SendToKafka(topic string, message []byte) error {
+	// TODO: brokersUrl have to come config file
 	// Kafka broker address
 	brokersUrl := []string{"localhost:9092"}
 
-	// Sarama set-up
+	// Kafka configuration
 	config := sarama.NewConfig()
 	config.Producer.RequiredAcks = sarama.WaitForAll
-	config.Producer.Retry.Max = 3
+	config.Producer.Retry.Max = 5
 	config.Producer.Return.Successes = true
 
 	// Connect Kafka
@@ -29,7 +31,7 @@ func SendToKafka(topic string, message []byte) error {
 	// Send message to Kafka
 	msg := &sarama.ProducerMessage{
 		Topic: topic,
-		Value: sarama.StringEncoder(message),
+		Value: sarama.ByteEncoder(message),
 	}
 	_, _, err = producer.SendMessage(msg)
 	if err != nil {
