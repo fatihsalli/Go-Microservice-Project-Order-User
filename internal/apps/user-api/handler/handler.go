@@ -50,12 +50,20 @@ func (h UserHandler) GetAllUsers(c echo.Context) error {
 	// we can use automapper, but it will cause performance loss.
 	var userResponse user_api.UserResponse
 	var usersResponse []user_api.UserResponse
+	var addressResponse user_api.AddressResponse
 
 	for _, user := range userList {
 		userResponse.ID = user.ID
 		userResponse.Name = user.Name
 		userResponse.Email = user.Email
-
+		for _, address := range user.Addresses {
+			addressResponse.Address = address.Address
+			addressResponse.City = address.City
+			addressResponse.District = address.District
+			addressResponse.Type = address.Type
+			addressResponse.Default = address.Default
+			userResponse.Addresses = append(userResponse.Addresses, addressResponse)
+		}
 		usersResponse = append(usersResponse, userResponse)
 	}
 
@@ -98,9 +106,19 @@ func (h UserHandler) GetUserById(c echo.Context) error {
 
 	// mapping
 	var userResponse user_api.UserResponse
+	var addressResponse user_api.AddressResponse
+
 	userResponse.ID = user.ID
 	userResponse.Name = user.Name
 	userResponse.Email = user.Email
+	for _, address := range user.Addresses {
+		addressResponse.Address = address.Address
+		addressResponse.City = address.City
+		addressResponse.District = address.District
+		addressResponse.Type = address.Type
+		addressResponse.Default = address.Default
+		userResponse.Addresses = append(userResponse.Addresses, addressResponse)
+	}
 
 	log.Printf("{%v} with id is listed.", userResponse.ID)
 	return c.JSON(http.StatusOK, userResponse)
@@ -128,10 +146,19 @@ func (h UserHandler) CreateUser(c echo.Context) error {
 	}
 
 	var user models.User
+	var address models.Address
 
 	// we can use automapper, but it will cause performance loss.
 	user.Name = userRequest.Name
 	user.Email = userRequest.Email
+	for _, addressRequest := range userRequest.Addresses {
+		address.Address = addressRequest.Address
+		address.City = addressRequest.City
+		address.District = addressRequest.District
+		address.Type = addressRequest.Type
+		address.Default = addressRequest.Default
+		user.Addresses = append(user.Addresses, address)
+	}
 
 	// using 'bcrypt' to hash password
 	password := []byte(userRequest.Password)
@@ -185,26 +212,36 @@ func (h UserHandler) UpdateUser(c echo.Context) error {
 	}
 
 	// to find user
-	user, err := h.Service.GetUserById(userUpdateRequest.ID)
-	if err != nil {
+	if _, err := h.Service.GetUserById(userUpdateRequest.ID); err != nil {
 		log.Printf("Not found exception: {%v} with id not found!", userUpdateRequest.ID)
 		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
 			Message: fmt.Sprintf("Not found exception: {%v} with id not found!", userUpdateRequest.ID),
 		})
 	}
 
+	var user models.User
+	var address models.Address
+
+	// we can use automapper, but it will cause performance loss.
+	user.Name = userUpdateRequest.Name
+	user.Email = userUpdateRequest.Email
+	for _, addressRequest := range userUpdateRequest.Addresses {
+		address.Address = addressRequest.Address
+		address.City = addressRequest.City
+		address.District = addressRequest.District
+		address.Type = addressRequest.Type
+		address.Default = addressRequest.Default
+		user.Addresses = append(user.Addresses, address)
+	}
+
 	// using 'bcrypt' to check password (tested)
-	err = bcrypt.CompareHashAndPassword(user.Password, []byte(userUpdateRequest.Password))
+	err := bcrypt.CompareHashAndPassword(user.Password, []byte(userUpdateRequest.Password))
 	if err != nil {
 		log.Print("Password is wrong. Please put correct password!")
 		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
 			Message: fmt.Sprint("Password is wrong. Please put correct password!"),
 		})
 	}
-
-	// we can use automapper, but it will cause performance loss.
-	user.Name = userUpdateRequest.Name
-	user.Email = userUpdateRequest.Email
 
 	result, err := h.Service.Update(user)
 
