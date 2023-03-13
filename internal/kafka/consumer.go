@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"github.com/Shopify/sarama"
 	"log"
-	"os"
-	"os/signal"
 	"time"
 )
 
@@ -29,10 +27,6 @@ func ListenFromKafka(topic string) {
 			log.Print(err)
 		}
 	}()
-
-	// listen to signal of Ctrl+C
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, os.Interrupt)
 
 	partitionConsumer, err := consumer.ConsumePartition(topic, 0, sarama.OffsetOldest)
 	if err != nil {

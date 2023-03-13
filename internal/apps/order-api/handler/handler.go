@@ -72,7 +72,7 @@ func (h OrderHandler) GetAllOrders(c echo.Context) error {
 }
 
 // GetOrderById godoc
-// @Summary get a order item by ID
+// @Summary get an order item by ID
 // @ID get-order-by-id
 // @Produce json
 // @Param id path string true "order ID"
