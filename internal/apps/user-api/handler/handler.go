@@ -212,7 +212,8 @@ func (h UserHandler) UpdateUser(c echo.Context) error {
 	}
 
 	// to find user
-	if _, err := h.Service.GetUserById(userUpdateRequest.ID); err != nil {
+	userPasswordCheck, err := h.Service.GetUserById(userUpdateRequest.ID)
+	if err != nil {
 		log.Printf("Not found exception: {%v} with id not found!", userUpdateRequest.ID)
 		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
 			Message: fmt.Sprintf("Not found exception: {%v} with id not found!", userUpdateRequest.ID),
@@ -223,6 +224,7 @@ func (h UserHandler) UpdateUser(c echo.Context) error {
 	var address models.Address
 
 	// we can use automapper, but it will cause performance loss.
+	user.ID = userUpdateRequest.ID
 	user.Name = userUpdateRequest.Name
 	user.Email = userUpdateRequest.Email
 	for _, addressRequest := range userUpdateRequest.Addresses {
@@ -235,7 +237,7 @@ func (h UserHandler) UpdateUser(c echo.Context) error {
 	}
 
 	// using 'bcrypt' to check password (tested)
-	err := bcrypt.CompareHashAndPassword(user.Password, []byte(userUpdateRequest.Password))
+	err = bcrypt.CompareHashAndPassword(userPasswordCheck.Password, []byte(userUpdateRequest.Password))
 	if err != nil {
 		log.Print("Password is wrong. Please put correct password!")
 		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{

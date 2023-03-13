@@ -108,8 +108,10 @@ func (b UserRepository) Update(user models.User) (bool, error) {
 	//update := bson.D{{"$set", bson.D{{"title", book.Title}}}}
 
 	// => if we have to chance more than one parameter we have to write like this
-	update := bson.D{{"$set", bson.D{{"name", user.Name},
-		{"email", user.Email}, {"addresses", user.Addresses},
+	update := bson.D{{"$set", bson.D{
+		{"name", user.Name},
+		{"email", user.Email},
+		{"addresses", user.Addresses},
 		{"updatedAt", user.UpdatedAt}}}}
 
 	// mongodb.driver
