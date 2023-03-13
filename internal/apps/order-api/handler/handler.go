@@ -37,10 +37,11 @@ func NewOrderHandler(e *echo.Echo, service order_api.IOrderService) *OrderHandle
 // @Success 500 {object} pkg.InternalServerError
 // @Router /orders [get]
 func (h OrderHandler) GetAllOrders(c echo.Context) error {
+
 	orderList, err := h.Service.GetAll()
 
 	if err != nil {
-		log.Printf("StatusInternalServerError: %v", err)
+		c.Logger().Errorf("StatusInternalServerError: %v", err)
 		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
 			Message: "Something went wrong!",
 		})
@@ -77,7 +78,7 @@ func (h OrderHandler) GetAllOrders(c echo.Context) error {
 		Data:           ordersResponse,
 	}
 
-	log.Print("All books are listed.")
+	c.Logger().Info("All books are successfully listed.")
 	return c.JSON(http.StatusOK, jsonSuccessResultData)
 }
 
@@ -97,12 +98,12 @@ func (h OrderHandler) GetOrderById(c echo.Context) error {
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			log.Printf("Not found exception: {%v} with id not found!", query)
+			c.Logger().Errorf("Not found exception: {%v} with id not found!", query)
 			return c.JSON(http.StatusNotFound, pkg.NotFoundError{
 				Message: fmt.Sprintf("Not found exception: {%v} with id not found!", query),
 			})
 		}
-		log.Printf("StatusInternalServerError: %v", err.Error())
+		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
 		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
 			Message: "Something went wrong!",
 		})
@@ -127,7 +128,7 @@ func (h OrderHandler) GetOrderById(c echo.Context) error {
 	orderResponse.Product = order.Product
 	orderResponse.Total = order.Total
 
-	log.Printf("{%v} with id is listed.", orderResponse.ID)
+	c.Logger().Info("{%v} with id is listed.", orderResponse.ID)
 	return c.JSON(http.StatusOK, orderResponse)
 }
 

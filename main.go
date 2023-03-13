@@ -3,13 +3,19 @@ package main
 import (
 	"OrderUserProject/docs"
 	"OrderUserProject/internal/apps/order-api"
-	handler_order "OrderUserProject/internal/apps/order-api/handler"
+	handlerOrder "OrderUserProject/internal/apps/order-api/handler"
 	"OrderUserProject/internal/apps/user-api"
-	handler_user "OrderUserProject/internal/apps/user-api/handler"
+	handlerUser "OrderUserProject/internal/apps/user-api/handler"
 	"OrderUserProject/internal/configs"
 	"OrderUserProject/internal/repository"
+	"OrderUserProject/pkg"
 	"github.com/labstack/echo/v4"
+	echoLog "github.com/labstack/gommon/log"
+	"github.com/neko-neko/echo-logrus/v2/log"
+	"github.com/sirupsen/logrus"
 	echoSwagger "github.com/swaggo/echo-swagger"
+	"os"
+	"time"
 )
 
 // @title           Echo Monolithic Microservice Project
@@ -29,6 +35,16 @@ import (
 func main() {
 	e := echo.New()
 
+	// Logger
+	log.Logger().SetOutput(os.Stdout)
+	log.Logger().SetLevel(echoLog.INFO)
+	log.Logger().SetFormatter(&logrus.JSONFormatter{
+		TimestampFormat: time.RFC3339,
+	})
+	e.Logger = log.Logger()
+	e.Use(pkg.Logger())
+	log.Info("Logger enabled!!")
+
 	config := configs.GetConfig("test")
 
 	mongoUserCollection := configs.ConnectDB(config.Database.Connection).Database(config.Database.DatabaseName).Collection(config.Database.UserCollectionName)
@@ -42,8 +58,8 @@ func main() {
 	OrderService := order_api.NewOrderService(*OrderRepository)
 
 	// to create new app
-	handler_user.NewUserHandler(e, UserService)
-	handler_order.NewOrderHandler(e, OrderService)
+	handlerUser.NewUserHandler(e, UserService)
+	handlerOrder.NewOrderHandler(e, OrderService)
 
 	// if we don't use this swagger give an error
 	docs.SwaggerInfo.Host = "localhost:8080"
