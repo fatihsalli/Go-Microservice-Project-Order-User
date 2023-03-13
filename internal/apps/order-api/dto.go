@@ -10,7 +10,6 @@ type OrderCreateRequest struct {
 		Quantity int     `json:"quantity" bson:"quantity"`
 		Price    float64 `json:"price" bson:"price"`
 	} `json:"product" bson:"product"`
-	Total float64 `json:"total" bson:"total"`
 }
 
 type OrderUpdateRequest struct {
@@ -24,7 +23,6 @@ type OrderUpdateRequest struct {
 		Quantity int     `json:"quantity" bson:"quantity"`
 		Price    float64 `json:"price" bson:"price"`
 	} `json:"product" bson:"product"`
-	Total float64 `json:"total" bson:"total"`
 }
 
 type OrderResponse struct {

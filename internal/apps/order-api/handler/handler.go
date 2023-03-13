@@ -2,10 +2,8 @@ package handler
 
 import (
 	order_api "OrderUserProject/internal/apps/order-api"
-	"OrderUserProject/internal/kafka"
 	"OrderUserProject/internal/models"
 	"OrderUserProject/pkg"
-	"encoding/json"
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -62,6 +60,11 @@ func (h OrderHandler) GetAllOrders(c echo.Context) error {
 		orderResponse.Address.District = order.Address.District
 		orderResponse.Address.Type = order.Address.Type
 		orderResponse.Address.Default = order.Address.Default
+		orderResponse.InvoiceAddress.Address = order.InvoiceAddress.Address
+		orderResponse.InvoiceAddress.City = order.InvoiceAddress.City
+		orderResponse.InvoiceAddress.District = order.InvoiceAddress.District
+		orderResponse.InvoiceAddress.Type = order.InvoiceAddress.Type
+		orderResponse.InvoiceAddress.Default = order.InvoiceAddress.Default
 		orderResponse.Product = order.Product
 		orderResponse.Total = order.Total
 
@@ -116,6 +119,11 @@ func (h OrderHandler) GetOrderById(c echo.Context) error {
 	orderResponse.Address.District = order.Address.District
 	orderResponse.Address.Type = order.Address.Type
 	orderResponse.Address.Default = order.Address.Default
+	orderResponse.InvoiceAddress.Address = order.InvoiceAddress.Address
+	orderResponse.InvoiceAddress.City = order.InvoiceAddress.City
+	orderResponse.InvoiceAddress.District = order.InvoiceAddress.District
+	orderResponse.InvoiceAddress.Type = order.InvoiceAddress.Type
+	orderResponse.InvoiceAddress.Default = order.InvoiceAddress.Default
 	orderResponse.Product = order.Product
 	orderResponse.Total = order.Total
 
@@ -149,18 +157,24 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 	// we can use automapper, but it will cause performance loss.
 	order.UserId = orderRequest.UserId
 	order.Status = orderRequest.Status
+	// mapping from AddressResponse to Address
 	order.Address.Address = orderRequest.Address.Address
 	order.Address.City = orderRequest.Address.City
 	order.Address.District = orderRequest.Address.District
 	order.Address.Type = orderRequest.Address.Type
 	order.Address.Default = orderRequest.Address.Default
-	order.UserId = orderRequest.UserId
-	order.UserId = orderRequest.UserId
-	order.UserId = orderRequest.UserId
-	order.UserId = orderRequest.UserId
-
+	order.InvoiceAddress.Address = orderRequest.InvoiceAddress.Address
+	order.InvoiceAddress.City = orderRequest.InvoiceAddress.City
+	order.InvoiceAddress.District = orderRequest.InvoiceAddress.District
+	order.InvoiceAddress.Type = orderRequest.InvoiceAddress.Type
+	order.InvoiceAddress.Default = orderRequest.InvoiceAddress.Default
 	order.Product = orderRequest.Product
-	order.Total = orderRequest.Total
+
+	var total float64
+	for _, product := range order.Product {
+		total = product.Price * float64(product.Quantity)
+		order.Total += total
+	}
 
 	result, err := h.Service.Insert(order)
 
@@ -171,25 +185,25 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 		})
 	}
 
-	// publish event
-	// convert body into bytes and send it to kafka
-	orderInBytes, err := json.Marshal(result)
-	if err != nil {
-		log.Printf("There was a problem when convert to byte format: %v", err.Error())
-	}
+	/*	// publish event
+		// convert body into bytes and send it to kafka
+		orderInBytes, err := json.Marshal(result)
+		if err != nil {
+			log.Printf("There was a problem when convert to byte format: %v", err.Error())
+		}
 
-	// create topic name
-	topic := "order-test-v01"
+		// create topic name
+		topic := "order-test-v01"
 
-	// sending data
-	err = kafka.SendToKafka(topic, orderInBytes)
-	if err != nil {
-		log.Printf("There was a problem when sending message: %v", err.Error())
-	}
-	log.Printf("Order (%v) Pushed Successfully.", result.ID)
+		// sending data
+		err = kafka.SendToKafka(topic, orderInBytes)
+		if err != nil {
+			log.Printf("There was a problem when sending message: %v", err.Error())
+		}
+		log.Printf("Order (%v) Pushed Successfully.", result.ID)
 
-	// listening data
-	kafka.ListenFromKafka(topic)
+		// listening data
+		kafka.ListenFromKafka(topic)*/
 
 	// to response id and success boolean
 	jsonSuccessResultId := models.JSONSuccessResultId{
@@ -233,9 +247,26 @@ func (h OrderHandler) UpdateOrder(c echo.Context) error {
 
 	// we can use automapper, but it will cause performance loss.
 	order.ID = orderUpdateRequest.ID
-	order.Product = orderUpdateRequest.Product
-	order.Total = orderUpdateRequest.Total
 	order.UserId = orderUpdateRequest.UserId
+	order.Status = orderUpdateRequest.Status
+	// mapping from AddressResponse to Address
+	order.Address.Address = orderUpdateRequest.Address.Address
+	order.Address.City = orderUpdateRequest.Address.City
+	order.Address.District = orderUpdateRequest.Address.District
+	order.Address.Type = orderUpdateRequest.Address.Type
+	order.Address.Default = orderUpdateRequest.Address.Default
+	order.InvoiceAddress.Address = orderUpdateRequest.InvoiceAddress.Address
+	order.InvoiceAddress.City = orderUpdateRequest.InvoiceAddress.City
+	order.InvoiceAddress.District = orderUpdateRequest.InvoiceAddress.District
+	order.InvoiceAddress.Type = orderUpdateRequest.InvoiceAddress.Type
+	order.InvoiceAddress.Default = orderUpdateRequest.InvoiceAddress.Default
+	order.Product = orderUpdateRequest.Product
+
+	var total float64
+	for _, product := range order.Product {
+		total = product.Price * float64(product.Quantity)
+		order.Total += total
+	}
 
 	result, err := h.Service.Update(order)
 
