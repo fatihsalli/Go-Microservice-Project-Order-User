@@ -56,6 +56,13 @@ func (h OrderHandler) GetAllOrders(c echo.Context) error {
 		orderResponse.ID = order.ID
 		orderResponse.UserId = order.UserId
 		orderResponse.Product = order.Product
+		// mapping from Address to AddressResponse
+		orderResponse.Address.Address = order.Address.Address
+		orderResponse.Address.City = order.Address.City
+		orderResponse.Address.District = order.Address.District
+		orderResponse.Address.Type = order.Address.Type
+		orderResponse.Address.Default = order.Address.Default
+		orderResponse.Product = order.Product
 		orderResponse.Total = order.Total
 
 		ordersResponse = append(ordersResponse, orderResponse)
@@ -76,7 +83,7 @@ func (h OrderHandler) GetAllOrders(c echo.Context) error {
 // @ID get-order-by-id
 // @Produce json
 // @Param id path string true "order ID"
-// @Success 200 {object} models.JSONSuccessResultData
+// @Success 200 {object} order_api.OrderResponse
 // @Success 404 {object} pkg.NotFoundError
 // @Success 500 {object} pkg.InternalServerError
 // @Router /orders/{id} [get]
@@ -103,16 +110,17 @@ func (h OrderHandler) GetOrderById(c echo.Context) error {
 	orderResponse.ID = order.ID
 	orderResponse.UserId = order.UserId
 	orderResponse.Product = order.Product
+	// mapping from Address to AddressResponse
+	orderResponse.Address.Address = order.Address.Address
+	orderResponse.Address.City = order.Address.City
+	orderResponse.Address.District = order.Address.District
+	orderResponse.Address.Type = order.Address.Type
+	orderResponse.Address.Default = order.Address.Default
+	orderResponse.Product = order.Product
 	orderResponse.Total = order.Total
 
-	// to response success result data => single one
-	jsonSuccessResultData := models.JSONSuccessResultData{
-		TotalItemCount: 1,
-		Data:           orderResponse,
-	}
-
 	log.Printf("{%v} with id is listed.", orderResponse.ID)
-	return c.JSON(http.StatusOK, jsonSuccessResultData)
+	return c.JSON(http.StatusOK, orderResponse)
 }
 
 // CreateOrder godoc
@@ -140,6 +148,17 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 
 	// we can use automapper, but it will cause performance loss.
 	order.UserId = orderRequest.UserId
+	order.Status = orderRequest.Status
+	order.Address.Address = orderRequest.Address.Address
+	order.Address.City = orderRequest.Address.City
+	order.Address.District = orderRequest.Address.District
+	order.Address.Type = orderRequest.Address.Type
+	order.Address.Default = orderRequest.Address.Default
+	order.UserId = orderRequest.UserId
+	order.UserId = orderRequest.UserId
+	order.UserId = orderRequest.UserId
+	order.UserId = orderRequest.UserId
+
 	order.Product = orderRequest.Product
 	order.Total = orderRequest.Total
 
