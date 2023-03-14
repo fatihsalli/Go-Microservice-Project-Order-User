@@ -8,7 +8,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
-	"log"
 	"net/http"
 )
 
@@ -41,7 +40,7 @@ func (h UserHandler) GetAllUsers(c echo.Context) error {
 	userList, err := h.Service.GetAll()
 
 	if err != nil {
-		log.Printf("StatusInternalServerError: %v", err)
+		c.Logger().Errorf("StatusInternalServerError: %v", err)
 		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
 			Message: "Something went wrong!",
 		})
@@ -73,7 +72,7 @@ func (h UserHandler) GetAllUsers(c echo.Context) error {
 		Data:           usersResponse,
 	}
 
-	log.Print("All books are listed.")
+	c.Logger().Info("All books are listed.")
 	return c.JSON(http.StatusOK, jsonSuccessResultData)
 }
 
@@ -93,12 +92,12 @@ func (h UserHandler) GetUserById(c echo.Context) error {
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			log.Printf("Not found exception: {%v} with id not found!", query)
+			c.Logger().Errorf("Not found exception: {%v} with id not found!", query)
 			return c.JSON(http.StatusNotFound, pkg.NotFoundError{
 				Message: fmt.Sprintf("Not found exception: {%v} with id not found!", query),
 			})
 		}
-		log.Printf("StatusInternalServerError: %v", err.Error())
+		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
 		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
 			Message: "Something went wrong!",
 		})
@@ -120,7 +119,7 @@ func (h UserHandler) GetUserById(c echo.Context) error {
 		userResponse.Addresses = append(userResponse.Addresses, addressResponse)
 	}
 
-	log.Printf("{%v} with id is listed.", userResponse.ID)
+	c.Logger().Infof("{%v} with id is listed.", userResponse.ID)
 	return c.JSON(http.StatusOK, userResponse)
 }
 
@@ -139,7 +138,7 @@ func (h UserHandler) CreateUser(c echo.Context) error {
 
 	// We parse the data as json into the struct
 	if err := c.Bind(&userRequest); err != nil {
-		log.Printf("Bad Request. It cannot be binding! %v", err.Error())
+		c.Logger().Errorf("Bad Request. It cannot be binding! %v", err.Error())
 		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
 			Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", err.Error()),
 		})
@@ -164,7 +163,7 @@ func (h UserHandler) CreateUser(c echo.Context) error {
 	password := []byte(userRequest.Password)
 	hashedPassword, err := bcrypt.GenerateFromPassword(password, bcrypt.DefaultCost)
 	if err != nil {
-		log.Printf("Bad Request. It cannot be hashing! %v", err.Error())
+		c.Logger().Errorf("Bad Request. It cannot be hashing! %v", err.Error())
 		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
 			Message: fmt.Sprintf("Bad Request. It cannot be hashing! %v", err.Error()),
 		})
@@ -174,7 +173,7 @@ func (h UserHandler) CreateUser(c echo.Context) error {
 	result, err := h.Service.Insert(user)
 
 	if err != nil {
-		log.Printf("StatusInternalServerError: %v", err.Error())
+		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
 		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
 			Message: "Book cannot create! Something went wrong.",
 		})
@@ -186,7 +185,7 @@ func (h UserHandler) CreateUser(c echo.Context) error {
 		Success: true,
 	}
 
-	log.Printf("{%v} with id is created.", jsonSuccessResultId.ID)
+	c.Logger().Infof("{%v} with id is created.", jsonSuccessResultId.ID)
 	return c.JSON(http.StatusCreated, jsonSuccessResultId)
 }
 
@@ -205,7 +204,7 @@ func (h UserHandler) UpdateUser(c echo.Context) error {
 
 	// we parse the data as json into the struct
 	if err := c.Bind(&userUpdateRequest); err != nil {
-		log.Printf("Bad Request! %v", err)
+		c.Logger().Errorf("Bad Request! %v", err)
 		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
 			Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", err.Error()),
 		})
@@ -214,7 +213,7 @@ func (h UserHandler) UpdateUser(c echo.Context) error {
 	// to find user
 	userPasswordCheck, err := h.Service.GetUserById(userUpdateRequest.ID)
 	if err != nil {
-		log.Printf("Not found exception: {%v} with id not found!", userUpdateRequest.ID)
+		c.Logger().Errorf("Not found exception: {%v} with id not found!", userUpdateRequest.ID)
 		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
 			Message: fmt.Sprintf("Not found exception: {%v} with id not found!", userUpdateRequest.ID),
 		})
@@ -239,7 +238,7 @@ func (h UserHandler) UpdateUser(c echo.Context) error {
 	// using 'bcrypt' to check password (tested)
 	err = bcrypt.CompareHashAndPassword(userPasswordCheck.Password, []byte(userUpdateRequest.Password))
 	if err != nil {
-		log.Print("Password is wrong. Please put correct password!")
+		c.Logger().Error("Password is wrong. Please put correct password!")
 		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
 			Message: fmt.Sprint("Password is wrong. Please put correct password!"),
 		})
@@ -248,7 +247,7 @@ func (h UserHandler) UpdateUser(c echo.Context) error {
 	result, err := h.Service.Update(user)
 
 	if err != nil || result == false {
-		log.Printf("StatusInternalServerError: {%v} ", err.Error())
+		c.Logger().Errorf("StatusInternalServerError: {%v} ", err.Error())
 		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
 			Message: "Book cannot create! Something went wrong.",
 		})
@@ -260,7 +259,7 @@ func (h UserHandler) UpdateUser(c echo.Context) error {
 		Success: result,
 	}
 
-	log.Printf("{%v} with id is updated.", jsonSuccessResultId.ID)
+	c.Logger().Infof("{%v} with id is updated.", jsonSuccessResultId.ID)
 	return c.JSON(http.StatusOK, jsonSuccessResultId)
 }
 
@@ -278,7 +277,7 @@ func (h UserHandler) DeleteUser(c echo.Context) error {
 	result, err := h.Service.Delete(query)
 
 	if err != nil || result == false {
-		log.Printf("Not found exception: {%v} with id not found!", query)
+		c.Logger().Errorf("Not found exception: {%v} with id not found!", query)
 		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
 			Message: fmt.Sprintf("Not found exception: {%v} with id not found!", query),
 		})
@@ -290,6 +289,6 @@ func (h UserHandler) DeleteUser(c echo.Context) error {
 		Success: result,
 	}
 
-	log.Printf("{%v} with id is deleted.", jsonSuccessResultId.ID)
+	c.Logger().Infof("{%v} with id is deleted.", jsonSuccessResultId.ID)
 	return c.JSON(http.StatusOK, jsonSuccessResultId)
 }
