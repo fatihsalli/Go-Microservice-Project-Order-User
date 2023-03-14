@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/mongo"
-	"log"
 	"net/http"
 )
 
@@ -147,7 +146,7 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 
 	// We parse the data as json into the struct
 	if err := c.Bind(&orderRequest); err != nil {
-		log.Printf("Bad Request. It cannot be binding! %v", err.Error())
+		c.Logger().Errorf("Bad Request. It cannot be binding! %v", err.Error())
 		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
 			Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", err.Error()),
 		})
@@ -180,7 +179,7 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 	result, err := h.Service.Insert(order)
 
 	if err != nil {
-		log.Printf("StatusInternalServerError: %v", err.Error())
+		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
 		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
 			Message: "Book cannot create! Something went wrong.",
 		})
@@ -212,7 +211,7 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 		Success: true,
 	}
 
-	log.Printf("{%v} with id is created.", jsonSuccessResultId.ID)
+	c.Logger().Infof("{%v} with id is created.", jsonSuccessResultId.ID)
 	return c.JSON(http.StatusCreated, jsonSuccessResultId)
 }
 
@@ -231,14 +230,14 @@ func (h OrderHandler) UpdateOrder(c echo.Context) error {
 
 	// we parse the data as json into the struct
 	if err := c.Bind(&orderUpdateRequest); err != nil {
-		log.Printf("Bad Request! %v", err)
+		c.Logger().Errorf("Bad Request! %v", err)
 		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
 			Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", err.Error()),
 		})
 	}
 
 	if _, err := h.Service.GetOrderById(orderUpdateRequest.ID); err != nil {
-		log.Printf("Not found exception: {%v} with id not found!", orderUpdateRequest.ID)
+		c.Logger().Errorf("Not found exception: {%v} with id not found!", orderUpdateRequest.ID)
 		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
 			Message: fmt.Sprintf("Not found exception: {%v} with id not found!", orderUpdateRequest.ID),
 		})
@@ -272,7 +271,7 @@ func (h OrderHandler) UpdateOrder(c echo.Context) error {
 	result, err := h.Service.Update(order)
 
 	if err != nil || result == false {
-		log.Printf("StatusInternalServerError: {%v} ", err.Error())
+		c.Logger().Errorf("StatusInternalServerError: {%v} ", err.Error())
 		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
 			Message: "Book cannot create! Something went wrong.",
 		})
@@ -284,7 +283,7 @@ func (h OrderHandler) UpdateOrder(c echo.Context) error {
 		Success: result,
 	}
 
-	log.Printf("{%v} with id is updated.", jsonSuccessResultId.ID)
+	c.Logger().Infof("{%v} with id is updated.", jsonSuccessResultId.ID)
 	return c.JSON(http.StatusOK, jsonSuccessResultId)
 }
 
@@ -302,7 +301,7 @@ func (h OrderHandler) DeleteOrder(c echo.Context) error {
 	result, err := h.Service.Delete(query)
 
 	if err != nil || result == false {
-		log.Printf("Not found exception: {%v} with id not found!", query)
+		c.Logger().Errorf("Not found exception: {%v} with id not found!", query)
 		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
 			Message: fmt.Sprintf("Not found exception: {%v} with id not found!", query),
 		})
@@ -314,6 +313,6 @@ func (h OrderHandler) DeleteOrder(c echo.Context) error {
 		Success: result,
 	}
 
-	log.Printf("{%v} with id is deleted.", jsonSuccessResultId.ID)
+	c.Logger().Infof("{%v} with id is deleted.", jsonSuccessResultId.ID)
 	return c.JSON(http.StatusOK, jsonSuccessResultId)
 }
