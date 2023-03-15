@@ -37,6 +37,9 @@ func NewOrderHandler(e *echo.Echo, service order_api.IOrderService) *OrderHandle
 // @Router /orders [get]
 func (h OrderHandler) GetAllOrders(c echo.Context) error {
 
+	// to test GracefulShutdown
+	// time.Sleep(5 * time.Second)
+
 	orderList, err := h.Service.GetAll()
 
 	if err != nil {
