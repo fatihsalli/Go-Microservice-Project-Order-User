@@ -17,11 +17,12 @@ type AggregatorHandler struct {
 }
 
 func NewGatewayHandler(e *echo.Echo) *AggregatorHandler {
-	router := e.Group("api/CreateOrder")
+	router := e.Group("api/")
+
 	b := &AggregatorHandler{}
 
 	//Routes
-	router.POST("", b.CreateOrder)
+	router.POST("CreateOrder", b.CreateOrder)
 
 	return b
 }
@@ -48,15 +49,15 @@ func (h AggregatorHandler) CreateOrder(c echo.Context) error {
 
 	// Create a new HTTP client with a timeout
 	client := http.Client{
-		Timeout: time.Second * 10,
+		Timeout: time.Second * 20,
 	}
 
 	// Send a GET request to the User service to retrieve user information
 	resp, err := client.Get("http://localhost:8082/api/users/" + orderRequest.UserId)
 	if err != nil || resp.StatusCode != http.StatusOK {
-		// c.Logger().Errorf("Not Found Error for User : %v", err.Error())
+		c.Logger().Errorf("User with id {%v} cannot find!", orderRequest.UserId)
 		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
-			Message: "User cannot find!",
+			Message: fmt.Sprintf("User with id {%v} cannot find!", orderRequest.UserId),
 		})
 	}
 	defer resp.Body.Close()
@@ -86,7 +87,7 @@ func (h AggregatorHandler) CreateOrder(c echo.Context) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusCreated {
 		// log
 	}
 
