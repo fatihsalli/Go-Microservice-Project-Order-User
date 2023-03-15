@@ -38,5 +38,5 @@ func StartUserAPI() {
 	// to create new app
 	handler.NewUserHandler(e, UserService)
 
-	e.Logger.Fatal(e.Start(":8082"))
+	e.Logger.Fatal(e.Start(":8012"))
 }

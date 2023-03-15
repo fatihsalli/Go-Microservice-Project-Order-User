@@ -2,6 +2,7 @@ package handler
 
 import (
 	order_api "OrderUserProject/internal/apps/order-api"
+	"OrderUserProject/internal/kafka"
 	"OrderUserProject/internal/models"
 	"OrderUserProject/pkg"
 	"bytes"
@@ -17,8 +18,8 @@ type AggregatorHandler struct {
 }
 
 var ClientBaseUrl = map[string]string{
-	"order": "http://localhost:8081/api/orders",
-	"user":  "http://localhost:8082/api/users",
+	"order": "http://localhost:8011/api/orders",
+	"user":  "http://localhost:8012/api/users",
 }
 
 func NewGatewayHandler(e *echo.Echo) *AggregatorHandler {
@@ -59,14 +60,18 @@ func (h AggregatorHandler) CreateOrder(c echo.Context) error {
 	}
 
 	// Send a GET request to the User service to retrieve user information
-	resp, err := client.Get(ClientBaseUrl["user"] + "/" + orderRequest.UserId)
-	if err != nil || resp.StatusCode != http.StatusOK {
+	respUser, err := client.Get(ClientBaseUrl["user"] + "/" + orderRequest.UserId)
+	if err != nil || respUser.StatusCode != http.StatusOK {
 		c.Logger().Errorf("User with id {%v} cannot find!", orderRequest.UserId)
 		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
 			Message: fmt.Sprintf("User with id {%v} cannot find!", orderRequest.UserId),
 		})
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := respUser.Body.Close(); err != nil {
+			c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
+		}
+	}()
 
 	// Convert the payload to JSON bytes
 	orderReqBytes, err := json.Marshal(orderRequest)
@@ -90,14 +95,18 @@ func (h AggregatorHandler) CreateOrder(c echo.Context) error {
 	req.Header.Set("Content-Type", "application/json")
 
 	// Send the request and get the response
-	resp, err = client.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
 		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
 			Message: "Cannot send the request. Please check the order service.",
 		})
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
+		}
+	}()
 
 	if resp.StatusCode != http.StatusCreated {
 		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
@@ -124,6 +133,11 @@ func (h AggregatorHandler) CreateOrder(c echo.Context) error {
 			Message: "Cannot convert to JSON format. Please check the logs.",
 		})
 	}
+
+	// Listen the event with Kafka
+	// create topic name
+	topic := "order-create-v01"
+	go kafka.ListenFromKafka(topic)
 
 	c.Logger().Infof("{%v} with id is successfully created.", data.ID)
 	return c.JSON(http.StatusCreated, data)

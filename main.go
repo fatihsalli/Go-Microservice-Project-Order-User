@@ -28,7 +28,7 @@ import (
 // @license.name  Apache 2.0
 // @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host      localhost:8080
+// @host      localhost:8010
 // @BasePath  /api
 func main() {
 	e := echo.New()
@@ -63,7 +63,7 @@ func main() {
 		handlerOrder.NewOrderHandler(e, OrderService)*/
 
 	// if we don't use this swagger give an error
-	docs.SwaggerInfo.Host = "localhost:8080"
+	docs.SwaggerInfo.Host = "localhost:8010"
 	// add swagger
 	e.GET("/swagger/*any", echoSwagger.WrapHandler)
 
@@ -73,7 +73,7 @@ func main() {
 	// Start server
 	go func() {
 		if err := e.Start(config.Server.Port); err != nil && err != http.ErrServerClosed {
-			e.Logger.Fatal("shutting down the server")
+			e.Logger.Fatal("Shutting down the server!")
 		}
 	}()
 

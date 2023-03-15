@@ -19,7 +19,7 @@ var Configs = map[string]Config{
 			Port string
 			Host string
 		}{
-			Port: ":8080",
+			Port: ":8010",
 			Host: "localhost",
 		},
 		Database: struct {

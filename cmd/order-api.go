@@ -37,5 +37,5 @@ func StartOrderAPI() {
 
 	handler.NewOrderHandler(e, OrderService)
 
-	e.Logger.Fatal(e.Start(":8081"))
+	e.Logger.Fatal(e.Start(":8011"))
 }

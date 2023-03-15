@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"github.com/Shopify/sarama"
 	"log"
-	"time"
 )
 
 func ListenFromKafka(topic string) {
@@ -38,7 +37,6 @@ func ListenFromKafka(topic string) {
 		}
 	}()
 
-	time.Sleep(5000)
 	var orderList []models.Order
 	var order models.Order
 

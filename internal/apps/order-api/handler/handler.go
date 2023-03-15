@@ -2,8 +2,10 @@ package handler
 
 import (
 	order_api "OrderUserProject/internal/apps/order-api"
+	"OrderUserProject/internal/kafka"
 	"OrderUserProject/internal/models"
 	"OrderUserProject/pkg"
+	"encoding/json"
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -188,25 +190,22 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 		})
 	}
 
-	/*	// publish event
-		// convert body into bytes and send it to kafka
-		orderInBytes, err := json.Marshal(result)
-		if err != nil {
-			log.Printf("There was a problem when convert to byte format: %v", err.Error())
-		}
+	// publish event
+	// convert body into bytes and send it to kafka
+	orderInBytes, err := json.Marshal(result)
+	if err != nil {
+		c.Logger().Errorf("There was a problem when convert to byte format: %v", err.Error())
+	}
 
-		// create topic name
-		topic := "order-test-v01"
+	// create topic name
+	topic := "order-create-v01"
 
-		// sending data
-		err = kafka.SendToKafka(topic, orderInBytes)
-		if err != nil {
-			log.Printf("There was a problem when sending message: %v", err.Error())
-		}
-		log.Printf("Order (%v) Pushed Successfully.", result.ID)
-
-		// listening data
-		kafka.ListenFromKafka(topic)*/
+	// sending data
+	err = kafka.SendToKafka(topic, orderInBytes)
+	if err != nil {
+		c.Logger().Errorf("There was a problem when sending message: %v", err.Error())
+	}
+	c.Logger().Infof("Order (%v) Pushed Successfully.", result.ID)
 
 	// to response id and success boolean
 	jsonSuccessResultId := models.JSONSuccessResultId{
