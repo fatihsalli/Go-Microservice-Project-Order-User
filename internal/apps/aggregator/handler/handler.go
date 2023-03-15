@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/labstack/echo/v4"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 )
@@ -54,7 +54,7 @@ func (h AggregatorHandler) CreateOrder(c echo.Context) error {
 	// Send a GET request to the User service to retrieve user information
 	resp, err := client.Get("http://localhost:8082/api/users/" + orderRequest.UserId)
 	if err != nil || resp.StatusCode != http.StatusOK {
-		c.Logger().Errorf("Not Found Error for User : %v", err.Error())
+		// c.Logger().Errorf("Not Found Error for User : %v", err.Error())
 		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
 			Message: "User cannot find!",
 		})
@@ -91,7 +91,7 @@ func (h AggregatorHandler) CreateOrder(c echo.Context) error {
 	}
 
 	// Read the response body
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		// log
 	}
