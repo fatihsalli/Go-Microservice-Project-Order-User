@@ -38,6 +38,7 @@ require (
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
 	github.com/neko-neko/echo-logrus/v2 v2.0.2 // indirect
+	github.com/olivere/elastic/v7 v7.0.32 // indirect
 	github.com/pierrec/lz4/v4 v4.1.17 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/plutov/echo-logrus v1.0.0 // indirect

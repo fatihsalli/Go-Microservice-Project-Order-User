@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"OrderUserProject/internal/configs"
+	"OrderUserProject/internal/elastic"
 	"OrderUserProject/internal/models"
 	"OrderUserProject/internal/repository"
 	"encoding/json"
@@ -46,12 +47,13 @@ func ListenFromKafka(topic string) {
 			log.Print(err)
 		}
 
-		SaveOrder(order)
+		elastic.SaveOrderElastic(order)
 
 		log.Printf("Received order: %+v\n", order)
 	}
 }
 
+// SaveOrder for test to consume event and write on MongoDB
 func SaveOrder(order models.Order) {
 	//for test
 	config := configs.GetConfig("test")
