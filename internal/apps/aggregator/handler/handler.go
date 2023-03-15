@@ -16,6 +16,11 @@ import (
 type AggregatorHandler struct {
 }
 
+var ClientBaseUrl = map[string]string{
+	"order": "http://localhost:8081/api/orders",
+	"user":  "http://localhost:8082/api/users",
+}
+
 func NewGatewayHandler(e *echo.Echo) *AggregatorHandler {
 	router := e.Group("api/")
 
@@ -37,6 +42,7 @@ func NewGatewayHandler(e *echo.Echo) *AggregatorHandler {
 // @Success 500 {object} pkg.InternalServerError
 // @Router /CreateOrder [post]
 func (h AggregatorHandler) CreateOrder(c echo.Context) error {
+
 	var orderRequest order_api.OrderCreateRequest
 
 	// We parse the data as json into the struct
@@ -53,7 +59,7 @@ func (h AggregatorHandler) CreateOrder(c echo.Context) error {
 	}
 
 	// Send a GET request to the User service to retrieve user information
-	resp, err := client.Get("http://localhost:8082/api/users/" + orderRequest.UserId)
+	resp, err := client.Get(ClientBaseUrl["user"] + "/" + orderRequest.UserId)
 	if err != nil || resp.StatusCode != http.StatusOK {
 		c.Logger().Errorf("User with id {%v} cannot find!", orderRequest.UserId)
 		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
@@ -72,9 +78,12 @@ func (h AggregatorHandler) CreateOrder(c echo.Context) error {
 	}
 
 	// Create a new request with the JSON payload
-	req, err := http.NewRequest("POST", "http://localhost:8081/api/orders", bytes.NewBuffer(orderReqBytes))
+	req, err := http.NewRequest("POST", ClientBaseUrl["order"], bytes.NewBuffer(orderReqBytes))
 	if err != nil {
-		// log
+		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
+		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
+			Message: "Cannot create a new request with the JSON Payload.",
+		})
 	}
 
 	// Set the request header
@@ -83,27 +92,39 @@ func (h AggregatorHandler) CreateOrder(c echo.Context) error {
 	// Send the request and get the response
 	resp, err = client.Do(req)
 	if err != nil {
-		// log
+		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
+		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
+			Message: "Cannot send the request. Please check the order service.",
+		})
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated {
-		// log
+		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
+		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
+			Message: "Cannot create a new order. Somethings happen. Please check the logs.",
+		})
 	}
 
 	// Read the response body
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		// log
+		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
+		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
+			Message: "Cannot read from response body. Please check the logs.",
+		})
 	}
 
 	// Unmarshal the response body into an Order struct
 	var data models.JSONSuccessResultId
 	err = json.Unmarshal(respBody, &data)
 	if err != nil {
-		// log
+		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
+		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
+			Message: "Cannot convert to JSON format. Please check the logs.",
+		})
 	}
 
-	c.Logger().Infof("{%v} with id is created.", data.ID)
+	c.Logger().Infof("{%v} with id is successfully created.", data.ID)
 	return c.JSON(http.StatusCreated, data)
 }
