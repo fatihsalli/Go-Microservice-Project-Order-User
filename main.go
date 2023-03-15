@@ -14,6 +14,7 @@ import (
 	"github.com/neko-neko/echo-logrus/v2/log"
 	"github.com/sirupsen/logrus"
 	echoSwagger "github.com/swaggo/echo-swagger"
+	"net/http"
 	"os"
 	"time"
 )
@@ -66,5 +67,12 @@ func main() {
 	// add swagger
 	e.GET("/swagger/*any", echoSwagger.WrapHandler)
 
-	e.Logger.Fatal(e.Start(config.Server.Port))
+	// Start server
+	go func() {
+		if err := e.Start(config.Server.Port); err != nil && err != http.ErrServerClosed {
+			e.Logger.Fatal("shutting down the server")
+		}
+	}()
+
+	pkg.GracefulShutdown(e, 10*time.Second)
 }
