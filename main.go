@@ -3,12 +3,8 @@ package main
 import (
 	"OrderUserProject/cmd"
 	"OrderUserProject/docs"
-	"OrderUserProject/internal/apps/order-api"
-	handlerOrder "OrderUserProject/internal/apps/order-api/handler"
-	"OrderUserProject/internal/apps/user-api"
-	handlerUser "OrderUserProject/internal/apps/user-api/handler"
+	"OrderUserProject/internal/apps/aggregator/handler"
 	"OrderUserProject/internal/configs"
-	"OrderUserProject/internal/repository"
 	"OrderUserProject/pkg"
 	"github.com/labstack/echo/v4"
 	echoLog "github.com/labstack/gommon/log"
@@ -49,19 +45,22 @@ func main() {
 
 	config := configs.GetConfig("test")
 
-	mongoUserCollection := configs.ConnectDB(config.Database.Connection).Database(config.Database.DatabaseName).Collection(config.Database.UserCollectionName)
-
-	mongoOrderCollection := configs.ConnectDB(config.Database.Connection).Database(config.Database.DatabaseName).Collection(config.Database.OrderCollectionName)
-
-	OrderRepository := repository.NewOrderRepository(mongoOrderCollection)
-	UserRepository := repository.NewUserRepository(mongoUserCollection)
-
-	UserService := user_api.NewUserService(*UserRepository)
-	OrderService := order_api.NewOrderService(*OrderRepository)
-
 	// to create new app
-	handlerUser.NewUserHandler(e, UserService)
-	handlerOrder.NewOrderHandler(e, OrderService)
+	handler.NewGatewayHandler(e)
+
+	/*	mongoUserCollection := configs.ConnectDB(config.Database.Connection).Database(config.Database.DatabaseName).Collection(config.Database.UserCollectionName)
+
+		mongoOrderCollection := configs.ConnectDB(config.Database.Connection).Database(config.Database.DatabaseName).Collection(config.Database.OrderCollectionName)
+
+		OrderRepository := repository.NewOrderRepository(mongoOrderCollection)
+		UserRepository := repository.NewUserRepository(mongoUserCollection)
+
+		UserService := user_api.NewUserService(*UserRepository)
+		OrderService := order_api.NewOrderService(*OrderRepository)
+
+		// to create new app
+		handlerUser.NewUserHandler(e, UserService)
+		handlerOrder.NewOrderHandler(e, OrderService)*/
 
 	// if we don't use this swagger give an error
 	docs.SwaggerInfo.Host = "localhost:8080"
