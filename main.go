@@ -1,6 +1,7 @@
 package main
 
 import (
+	"OrderUserProject/cmd"
 	"OrderUserProject/docs"
 	"OrderUserProject/internal/apps/order-api"
 	handlerOrder "OrderUserProject/internal/apps/order-api/handler"
@@ -66,6 +67,9 @@ func main() {
 	docs.SwaggerInfo.Host = "localhost:8080"
 	// add swagger
 	e.GET("/swagger/*any", echoSwagger.WrapHandler)
+
+	go cmd.StartOrderAPI()
+	go cmd.StartUserAPI()
 
 	// Start server
 	go func() {
