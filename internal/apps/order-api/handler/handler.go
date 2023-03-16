@@ -232,7 +232,6 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 			c.Logger().Errorf("There was a problem when sending message: %v", err.Error())
 		}
 		c.Logger().Infof("Order (%v) Pushed Successfully.", result.ID)
-
 	}()
 
 	// to response id and success boolean

@@ -1,43 +1,46 @@
 package kafka
 
 import (
-	"github.com/Shopify/sarama"
-	"log"
+	"fmt"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
+	"github.com/labstack/gommon/log"
 )
 
 // SendToKafka take a topic name and message with format of []byte
-func SendToKafka(topic string, message []byte) error {
-	// TODO: brokersUrl have to come config file
-	// Kafka broker address
-	brokersUrl := []string{"localhost:9092"}
-
-	// Kafka configuration
-	config := sarama.NewConfig()
-	config.Producer.RequiredAcks = sarama.WaitForAll
-	config.Producer.Retry.Max = 5
-	config.Producer.Return.Successes = true
-
-	// Connect Kafka
-	producer, err := sarama.NewSyncProducer(brokersUrl, config)
+func SendToKafka(topicName string, message []byte) error {
+	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": "localhost"})
 	if err != nil {
+		log.Errorf("Kafka Producer cannot create: %v", err)
 		return err
 	}
-	defer func() {
-		if err := producer.Close(); err != nil {
-			log.Print(err)
+
+	defer p.Close()
+
+	// Delivery report handler for produced messages
+	go func() {
+		for e := range p.Events() {
+			switch ev := e.(type) {
+			case *kafka.Message:
+				if ev.TopicPartition.Error != nil {
+					fmt.Printf("Delivery failed: %v\n", ev.TopicPartition)
+				} else {
+					fmt.Printf("Delivered message to %v\n", ev.TopicPartition)
+				}
+			}
 		}
 	}()
 
-	// Send message to Kafka
-	msg := &sarama.ProducerMessage{
-		Topic: topic,
-		Value: sarama.StringEncoder(message),
-	}
-	partition, offset, err := producer.SendMessage(msg)
+	// Produce messages to topic (asynchronously)
+	err = p.Produce(&kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &topicName, Partition: kafka.PartitionAny},
+		Value:          []byte(message),
+	}, nil)
 	if err != nil {
+		log.Errorf("Message cannot produce: %v", err)
 		return err
 	}
-	log.Printf("Message sent to partition %d at offset %d\n", partition, offset)
 
+	// Wait for message deliveries before shutting down
+	p.Flush(15 * 1000)
 	return nil
 }
