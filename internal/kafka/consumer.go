@@ -2,7 +2,6 @@ package kafka
 
 import (
 	"OrderUserProject/internal/configs"
-	"OrderUserProject/internal/elastic"
 	"OrderUserProject/internal/models"
 	"OrderUserProject/internal/repository"
 	"encoding/json"
@@ -47,7 +46,7 @@ func ListenFromKafka(topic string) {
 			log.Print(err)
 		}
 
-		elastic.SaveOrderElastic(order)
+		// elastic.SaveOrderElastic(order)
 
 		log.Printf("Received order: %+v\n", order)
 	}

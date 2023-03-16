@@ -2,7 +2,7 @@ package configs
 
 type Config struct {
 	Server struct {
-		Port string
+		Port map[string]string
 		Host string
 	}
 	Database struct {
@@ -16,10 +16,13 @@ type Config struct {
 var Configs = map[string]Config{
 	"test": {
 		Server: struct {
-			Port string
+			Port map[string]string
 			Host string
 		}{
-			Port: ":8010",
+			Port: map[string]string{
+				"orderAPI": ":8011",
+				"userAPI":  ":8012",
+			},
 			Host: "localhost",
 		},
 		Database: struct {

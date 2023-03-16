@@ -10,6 +10,7 @@ import (
 	echoLog "github.com/labstack/gommon/log"
 	"github.com/neko-neko/echo-logrus/v2/log"
 	"github.com/sirupsen/logrus"
+	"net/http"
 	"os"
 	"time"
 )
@@ -17,7 +18,7 @@ import (
 func StartOrderAPI() {
 	e := echo.New()
 
-	// Logger
+	// Logger instead of echo.log we use 'logrus' package
 	log.Logger().SetOutput(os.Stdout)
 	log.Logger().SetLevel(echoLog.INFO)
 	log.Logger().SetFormatter(&logrus.JSONFormatter{
@@ -37,5 +38,12 @@ func StartOrderAPI() {
 
 	handler.NewOrderHandler(e, OrderService)
 
-	e.Logger.Fatal(e.Start(":8011"))
+	// Start server
+	go func() {
+		if err := e.Start(config.Server.Port["orderAPI"]); err != nil && err != http.ErrServerClosed {
+			e.Logger.Fatal("Shutting down the server!")
+		}
+	}()
+
+	pkg.GracefulShutdown(e, 10*time.Second)
 }

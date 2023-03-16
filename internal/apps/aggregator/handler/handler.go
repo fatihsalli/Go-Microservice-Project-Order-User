@@ -2,7 +2,6 @@ package handler
 
 import (
 	order_api "OrderUserProject/internal/apps/order-api"
-	"OrderUserProject/internal/elastic"
 	"OrderUserProject/internal/kafka"
 	"OrderUserProject/internal/models"
 	"OrderUserProject/pkg"
@@ -140,7 +139,7 @@ func (h AggregatorHandler) CreateOrder(c echo.Context) error {
 	topic := "order-create-v01"
 	go kafka.ListenFromKafka(topic)
 
-	go elastic.ReadFromElastic()
+	// go elastic.ReadFromElastic()
 
 	c.Logger().Infof("{%v} with id is successfully created.", data.ID)
 	return c.JSON(http.StatusCreated, data)

@@ -190,6 +190,10 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 		})
 	}
 
+	// sadece id göndererek yapmalısın şablon var
+	// go function olarak yapmalısın endpointi hızlandırmak için
+
+	// TODO: updatedate create edilirken atanasın
 	// publish event
 	// convert body into bytes and send it to kafka
 	orderInBytes, err := json.Marshal(result)

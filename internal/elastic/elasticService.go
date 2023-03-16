@@ -2,65 +2,81 @@ package elastic
 
 import (
 	"OrderUserProject/internal/models"
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
+	"github.com/elastic/go-elasticsearch/v7"
+	"github.com/elastic/go-elasticsearch/v7/esapi"
 	"github.com/labstack/gommon/log"
-	"github.com/olivere/elastic/v7"
+	"strconv"
 )
 
 func SaveOrderElastic(order models.Order) {
-	// Elasticsearch configuration
-	esUrl := "http://localhost:9200"
-	esIndex := "orders-duplicate"
-
-	// Create Elasticsearch client
-	client, err := elastic.NewClient(
-		elastic.SetURL(esUrl),
-		elastic.SetSniff(false),
-	)
+	// Elasticsearch client
+	es, err := elasticsearch.NewDefaultClient()
 	if err != nil {
-		log.Printf("Failed to create Elasticsearch client: %v ", err)
-		return
+		log.Fatalf("Error creating the client: %s", err)
 	}
 
-	// Save order to Elasticsearch
-	_, err = client.Index().
-		Index(esIndex).
-		BodyJson(order).
-		Do(context.Background())
+	// Build the request body.
+	data, err := json.Marshal(order)
 	if err != nil {
-		log.Printf("Failed to save order to Elasticsearch: %v ", err)
-		return
+		log.Fatalf("Error marshaling document: %s", err)
 	}
 
-	log.Printf("Saved order to Elasticsearch: %+v\n", order)
-}
-
-func ReadFromElastic() {
-	// Create Elasticsearch client
-	client, err := elastic.NewClient(elastic.SetURL("http://localhost:9200"))
-	if err != nil {
-		log.Fatal(err)
+	// Set up the request object.
+	req := esapi.IndexRequest{
+		Index:      "order-duplicate",
+		DocumentID: strconv.Itoa(1),
+		Body:       bytes.NewReader(data),
+		Refresh:    "true",
 	}
 
-	ctx := context.Background()
-	searchResult, err := client.Search().
-		Index("orders-duplicate").
-		Do(ctx)
+	// Perform the request with the client.
+	res, err := req.Do(context.Background(), es)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error getting response: %s", err)
 	}
+	defer res.Body.Close()
 
-	var orders []models.Order
-	for _, hit := range searchResult.Hits.Hits {
-		var order models.Order
-		err := json.Unmarshal(hit.Source, &order)
-		if err != nil {
-			log.Printf("Failed to unmarshal order: %v", err)
+	if res.IsError() {
+		log.Printf("[%s] Error indexing document ID=%d", res.Status(), 1)
+	} else {
+		// Deserialize the response into a map.
+		var r map[string]interface{}
+		if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
+			log.Printf("Error parsing the response body: %s", err)
 		} else {
-			orders = append(orders, order)
+			// Print the response status and indexed document version.
+			log.Printf("[%s] %s; version=%d", res.Status(), r["result"], int(r["_version"].(float64)))
 		}
 	}
 
-	log.Printf("Elastic work successfully! Found %d orders", len(orders))
+}
+
+func ReadFromElastic(orderID string) {
+	// Elasticsearch client
+	es, err := elasticsearch.NewDefaultClient()
+	if err != nil {
+		log.Fatalf("Error creating the client: %s", err)
+	}
+
+	// Read from elasticsearch
+	res, err := es.Get("orders", orderID)
+	if err != nil {
+		log.Fatalf("Error getting order: %s", err)
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		log.Fatalf("Error getting order: %s", res.Status())
+	}
+
+	var result models.Order
+	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
+		log.Fatalf("Error parsing the response body: %s", err)
+	}
+
+	fmt.Printf("Order retrieved: %+v", result)
 }

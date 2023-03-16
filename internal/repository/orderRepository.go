@@ -10,7 +10,7 @@ import (
 )
 
 // TODO: Userid update edilmesi ayrı business
-
+// TODO: Kafka da configleri collection gibi al
 type OrderRepository struct {
 	OrderCollection *mongo.Collection
 }
