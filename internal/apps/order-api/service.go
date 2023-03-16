@@ -48,10 +48,11 @@ func (b OrderService) GetOrderById(id string) (models.Order, error) {
 }
 
 func (b OrderService) Insert(order models.Order) (models.Order, error) {
-
 	// to create id and created date value
 	order.ID = uuid.New().String()
 	order.CreatedAt = time.Now()
+	// we don't want to set null, so we put CreatedAt value.
+	order.UpdatedAt = order.CreatedAt
 
 	result, err := b.OrderRepository.Insert(order)
 

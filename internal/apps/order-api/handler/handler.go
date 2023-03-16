@@ -1,7 +1,7 @@
 package handler
 
 import (
-	order_api "OrderUserProject/internal/apps/order-api"
+	"OrderUserProject/internal/apps/order-api"
 	"OrderUserProject/internal/kafka"
 	"OrderUserProject/internal/models"
 	"OrderUserProject/pkg"
@@ -10,6 +10,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
+	"time"
 )
 
 type OrderHandler struct {
@@ -28,6 +29,10 @@ func NewOrderHandler(e *echo.Echo, service order_api.IOrderService) *OrderHandle
 	router.DELETE("/:id", b.DeleteOrder)
 
 	return b
+}
+
+var ClientBaseUrl = map[string]string{
+	"user": "http://localhost:8012/api/users",
 }
 
 // GetAllOrders godoc
@@ -143,6 +148,7 @@ func (h OrderHandler) GetOrderById(c echo.Context) error {
 // @Param data body order_api.OrderCreateRequest true "order data"
 // @Success 201 {object} models.JSONSuccessResultId
 // @Success 400 {object} pkg.BadRequestError
+// @Success 404 {object} pkg.NotFoundError
 // @Success 500 {object} pkg.InternalServerError
 // @Router /orders [post]
 func (h OrderHandler) CreateOrder(c echo.Context) error {
@@ -156,6 +162,25 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 			Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", err.Error()),
 		})
 	}
+
+	// Create a new HTTP client with a timeout (to check user)
+	client := http.Client{
+		Timeout: time.Second * 20,
+	}
+
+	// Send a GET request to the User service to retrieve user information
+	respUser, err := client.Get(ClientBaseUrl["user"] + "/" + orderRequest.UserId)
+	if err != nil || respUser.StatusCode != http.StatusOK {
+		c.Logger().Errorf("User with id {%v} cannot find!", orderRequest.UserId)
+		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
+			Message: fmt.Sprintf("User with id {%v} cannot find!", orderRequest.UserId),
+		})
+	}
+	defer func() {
+		if err := respUser.Body.Close(); err != nil {
+			c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
+		}
+	}()
 
 	var order models.Order
 
@@ -190,26 +215,25 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 		})
 	}
 
-	// sadece id göndererek yapmalısın şablon var
-	// go function olarak yapmalısın endpointi hızlandırmak için
-
-	// TODO: updatedate create edilirken atanasın
+	// using goroutine to fast response from this endpoint
 	// publish event
-	// convert body into bytes and send it to kafka
-	orderInBytes, err := json.Marshal(result)
-	if err != nil {
-		c.Logger().Errorf("There was a problem when convert to byte format: %v", err.Error())
-	}
+	go func() {
+		// convert body into bytes and send it to kafka
+		orderIdBytes, err := json.Marshal(result.ID)
+		if err != nil {
+			c.Logger().Errorf("There was a problem when convert to byte format: %v", err.Error())
+		}
+		// create topic name
+		topic := "order-elastic-v01"
 
-	// create topic name
-	topic := "order-create-v01"
+		// sending data
+		err = kafka.SendToKafka(topic, orderIdBytes)
+		if err != nil {
+			c.Logger().Errorf("There was a problem when sending message: %v", err.Error())
+		}
+		c.Logger().Infof("Order (%v) Pushed Successfully.", result.ID)
 
-	// sending data
-	err = kafka.SendToKafka(topic, orderInBytes)
-	if err != nil {
-		c.Logger().Errorf("There was a problem when sending message: %v", err.Error())
-	}
-	c.Logger().Infof("Order (%v) Pushed Successfully.", result.ID)
+	}()
 
 	// to response id and success boolean
 	jsonSuccessResultId := models.JSONSuccessResultId{
@@ -294,7 +318,7 @@ func (h OrderHandler) UpdateOrder(c echo.Context) error {
 }
 
 // DeleteOrder godoc
-// @Summary delete a order item by ID
+// @Summary delete an order item by ID
 // @ID delete-order-by-id
 // @Produce json
 // @Param id path string true "order ID"
