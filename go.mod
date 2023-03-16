@@ -44,6 +44,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/plutov/echo-logrus v1.0.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
+	github.com/segmentio/kafka-go v0.4.39 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/swaggo/echo-swagger v1.3.5 // indirect
 	github.com/swaggo/files v1.0.0 // indirect

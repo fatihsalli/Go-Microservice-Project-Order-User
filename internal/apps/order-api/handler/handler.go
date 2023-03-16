@@ -2,9 +2,9 @@ package handler
 
 import (
 	"OrderUserProject/internal/apps/order-api"
-	"OrderUserProject/internal/kafka"
 	"OrderUserProject/internal/models"
 	"OrderUserProject/pkg"
+	"OrderUserProject/pkg/kafka"
 	"encoding/json"
 	"fmt"
 	"github.com/labstack/echo/v4"
