@@ -224,14 +224,14 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 			c.Logger().Errorf("There was a problem when convert to byte format: %v", err.Error())
 		}
 		// create topic name
-		topic := "order-elastic-v01"
+		topic := "order-elasticsearch-v01"
 
 		// sending data
-		err = kafka.SendToKafka(topic, orderIdBytes)
-		if err != nil {
-			c.Logger().Errorf("There was a problem when sending message: %v", err.Error())
-		}
+		kafka.SendToKafka(topic, orderIdBytes)
 		c.Logger().Infof("Order (%v) Pushed Successfully.", result.ID)
+
+		// for testing
+		kafka.ListenFromKafka(topic)
 	}()
 
 	// to response id and success boolean

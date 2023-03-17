@@ -1,4 +1,4 @@
-package elastic
+package elasticsearch
 
 import (
 	"OrderUserProject/internal/models"
