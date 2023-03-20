@@ -224,7 +224,7 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 			c.Logger().Errorf("There was a problem when convert to byte format: %v", err.Error())
 		}
 		// create topic name
-		topic := "order-elasticsearch-v01"
+		topic := "order-created-v01"
 
 		// sending data
 		kafka.SendToKafka(topic, orderIdBytes)
