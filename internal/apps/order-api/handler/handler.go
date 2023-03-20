@@ -5,7 +5,6 @@ import (
 	"OrderUserProject/internal/models"
 	"OrderUserProject/pkg"
 	"OrderUserProject/pkg/kafka"
-	"encoding/json"
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -218,20 +217,13 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 	// using goroutine to fast response from this endpoint
 	// publish event
 	go func() {
-		// convert body into bytes and send it to kafka
-		orderIdBytes, err := json.Marshal(result.ID)
-		if err != nil {
-			c.Logger().Errorf("There was a problem when convert to byte format: %v", err.Error())
-		}
 		// create topic name
 		topic := "order-created-v01"
 
 		// sending data
-		kafka.SendToKafka(topic, orderIdBytes)
+		kafka.SendToKafka(topic, result.ID)
 		c.Logger().Infof("Order (%v) Pushed Successfully.", result.ID)
 
-		// for testing
-		kafka.ListenFromKafka(topic)
 	}()
 
 	// to response id and success boolean
