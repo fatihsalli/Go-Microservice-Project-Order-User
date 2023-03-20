@@ -272,6 +272,25 @@ func (h OrderHandler) UpdateOrder(c echo.Context) error {
 		})
 	}
 
+	// Create a new HTTP client with a timeout (to check user)
+	client := http.Client{
+		Timeout: time.Second * 20,
+	}
+
+	// Send a GET request to the User service to retrieve user information
+	respUser, err := client.Get(ClientBaseUrl["user"] + "/" + orderUpdateRequest.UserId)
+	if err != nil || respUser.StatusCode != http.StatusOK {
+		c.Logger().Errorf("User with id {%v} cannot find!", orderUpdateRequest.UserId)
+		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
+			Message: fmt.Sprintf("User with id {%v} cannot find!", orderUpdateRequest.UserId),
+		})
+	}
+	defer func() {
+		if err := respUser.Body.Close(); err != nil {
+			c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
+		}
+	}()
+
 	var order models.Order
 
 	// we can use automapper, but it will cause performance loss.
