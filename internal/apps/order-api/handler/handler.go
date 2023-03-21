@@ -224,6 +224,7 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 		kafka.SendToKafka(topic, result.ID)
 		c.Logger().Infof("Order (%v) Pushed Successfully.", result.ID)
 
+		go kafka.ListenFromKafka(topic)
 	}()
 
 	// to response id and success boolean
