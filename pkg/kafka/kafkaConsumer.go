@@ -6,7 +6,7 @@ import (
 	"github.com/labstack/gommon/log"
 )
 
-func ListenFromKafka(topic string) {
+func ListenFromKafka(topic string) string {
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": "localhost:9092",
 		"group.id":          "my-group",

@@ -218,7 +218,7 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 	// publish event
 	go func() {
 		// create topic name
-		topic := "order-created-v01"
+		topic := "orderID-created-v01"
 
 		// sending data
 		kafka.SendToKafka(topic, result.ID)

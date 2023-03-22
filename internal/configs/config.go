@@ -20,8 +20,9 @@ var Configs = map[string]Config{
 			Host string
 		}{
 			Port: map[string]string{
-				"orderAPI": ":8011",
-				"userAPI":  ":8012",
+				"orderAPI":     ":8011",
+				"userAPI":      ":8012",
+				"orderElastic": ":8013",
 			},
 			Host: "localhost",
 		},
