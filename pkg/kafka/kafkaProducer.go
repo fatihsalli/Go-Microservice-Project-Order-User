@@ -5,39 +5,40 @@ import (
 	"github.com/labstack/gommon/log"
 )
 
-// Kafka config
-func newKafkaConfig() *kafka.ConfigMap {
-	return &kafka.ConfigMap{
-		"bootstrap.servers": "localhost:9092",
-	}
-}
-
 // SendToKafka take a topic name and message with format of []byte
 func SendToKafka(topic string, message []byte) {
-	// Kafka configuration
-	config := newKafkaConfig()
 
 	// Producer
-	producer, err := kafka.NewProducer(config)
+	log.Print("Starting producer...")
+	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": "localhost:9092"})
 	if err != nil {
-		log.Errorf("error creating producer: %v", err)
+		panic(err)
 	}
+	defer p.Close()
 
-	// To prepare message
-	kafkaMessage := &kafka.Message{
-		TopicPartition: kafka.TopicPartition{
-			Topic:     &topic,
-			Partition: kafka.PartitionAny,
-		},
-		Value: message,
-	}
+	// Delivery report handler for produced messages
+	go func() {
+		for e := range p.Events() {
+			switch ev := e.(type) {
+			case *kafka.Message:
+				if ev.TopicPartition.Error != nil {
+					log.Errorf("Delivery failed: %v\n", ev.TopicPartition)
+				} else {
+					log.Printf("Delivered message to %v\n", ev.TopicPartition)
+				}
+			}
+		}
+	}()
 
-	// Send to message
-	err = producer.Produce(kafkaMessage, nil)
+	// Produce messages to topic (asynchronously)
+	err = p.Produce(&kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+		Value:          message,
+	}, nil)
 	if err != nil {
-		log.Errorf("error producing message: %v", err)
+		log.Errorf("Something went wrong: %v", err)
 	}
 
-	// Close producer
-	producer.Flush(15 * 1000)
+	// Wait for message deliveries before shutting down
+	p.Flush(15 * 1000)
 }

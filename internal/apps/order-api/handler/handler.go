@@ -31,7 +31,9 @@ func NewOrderHandler(e *echo.Echo, service order_api.IOrderService) *OrderHandle
 }
 
 var ClientBaseUrl = map[string]string{
-	"user": "http://localhost:8012/api/users",
+	"order":         "http://localhost:8011/api/orders",
+	"user":          "http://localhost:8012/api/users",
+	"order-elastic": "http://localhost:8013/api/orders-elastic",
 }
 
 // GetAllOrders godoc
@@ -214,17 +216,25 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 		})
 	}
 
-	// using goroutine to fast response from this endpoint
-	// publish event
-	go func() {
-		// create topic name
-		topic := "orderID-created-v01"
+	// => SEND MESSAGE
+	// create topic name
+	topic := "orderID-created-v01"
+	// sending data
+	kafka.SendToKafka(topic, []byte(result.ID))
+	c.Logger().Infof("Order (%v) Pushed Successfully.", result.ID)
 
-		// sending data
-		kafka.SendToKafka(topic, []byte(result.ID))
-		c.Logger().Infof("Order (%v) Pushed Successfully.", result.ID)
-
-		go kafka.ListenFromKafka(topic)
+	// Send a GET request to the start elastic service to save order
+	respOrderElastic, err := client.Get(ClientBaseUrl["order-elastic"])
+	if err != nil || respUser.StatusCode != http.StatusOK {
+		c.Logger().Errorf("User with id {%v} cannot find!", orderRequest.UserId)
+		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
+			Message: fmt.Sprintf("User with id {%v} cannot find!", orderRequest.UserId),
+		})
+	}
+	defer func() {
+		if err := respOrderElastic.Body.Close(); err != nil {
+			c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
+		}
 	}()
 
 	// to response id and success boolean

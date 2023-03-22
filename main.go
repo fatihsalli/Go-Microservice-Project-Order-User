@@ -13,6 +13,8 @@ func main() {
 		cmd.StartOrderAPI()
 	} else if project == "userAPI" {
 		cmd.StartUserAPI()
+	} else if project == "orderElastic" {
+		cmd.StartOrderElastic()
 	} else {
 		log.Fatal("Project cannot start!")
 	}
