@@ -25,7 +25,7 @@ var ClientBaseUrl = map[string]string{
 	"order-elastic": "http://localhost:8013/api/orders-elastic",
 }
 
-func NewOrderElasticHandler(e *echo.Echo, service order_elastic.IOrderElasticService) *OrderElasticHandler {
+func NewOrderElasticHandler(e *echo.Echo, service order_elastic.OrderElasticService) *OrderElasticHandler {
 	router := e.Group("api/orders-elastic")
 	b := &OrderElasticHandler{Service: service}
 
@@ -114,10 +114,22 @@ func (h OrderElasticHandler) CreateOrderElastic(c echo.Context) error {
 	c.Logger().Infof("Order (%v) Pushed Successfully.", order.ID)
 
 	go func() {
-		err = order_elastic.CreateOrderDuplicate()
+		order, err := h.Service.ConsumeOrderDuplicate(topicOrder)
 		if err != nil {
 			log.Errorf("Something went wrong:", err)
 		}
+
+		err = h.Service.SaveOrderToElasticsearch(order)
+		if err != nil {
+			log.Errorf("Something went wrong:", err)
+		}
+
+		result, err := h.Service.GetOrderFromElasticsearch(order.ID)
+		if err != nil {
+			log.Errorf("Something went wrong:", err)
+		}
+
+		log.Infof("This id (%v) successfully saved on elastic.", result.ID)
 	}()
 
 	return c.JSON(http.StatusOK, order.ID)

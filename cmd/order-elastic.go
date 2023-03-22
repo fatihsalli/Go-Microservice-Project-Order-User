@@ -31,7 +31,7 @@ func StartOrderElastic() {
 
 	OrderService := order_elastic.NewOrderElasticService()
 
-	handler.NewOrderElasticHandler(e, OrderService)
+	handler.NewOrderElasticHandler(e, *OrderService)
 
 	// Start server
 	go func() {
