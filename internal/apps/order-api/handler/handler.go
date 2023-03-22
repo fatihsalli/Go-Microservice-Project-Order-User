@@ -223,8 +223,8 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 	kafka.SendToKafka(topic, []byte(result.ID))
 	c.Logger().Infof("Order (%v) Pushed Successfully.", result.ID)
 
+	// Send a GET request to the start elastic service to save order (Asynchronous)
 	go func() {
-		// Send a GET request to the start elastic service to save order
 		respOrderElastic, err := client.Get(ClientBaseUrl["order-elastic"])
 		if err != nil || respOrderElastic.StatusCode != http.StatusOK {
 			c.Logger().Errorf("Elastic service did not work: {%v}", err)
