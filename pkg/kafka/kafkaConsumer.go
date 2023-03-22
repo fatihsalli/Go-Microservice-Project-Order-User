@@ -6,7 +6,7 @@ import (
 	"github.com/labstack/gommon/log"
 )
 
-func ListenFromKafka(topic string) {
+func ListenFromKafka(topic string) []byte {
 	fmt.Printf("Starting consumer...")
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": "localhost:9092",
@@ -23,7 +23,16 @@ func ListenFromKafka(topic string) {
 		log.Errorf("Something went wrong: %v", err)
 	}
 
-	for {
+	msg, err := c.ReadMessage(-1)
+	if err == nil {
+		data := string(msg.Value)
+		log.Printf("Message on %s: %s\n", msg.TopicPartition, data)
+	} else {
+		// The client will automatically try to recover from all errors.
+		log.Errorf("Consumer error: %v (%v)\n", err, msg)
+	}
+
+	/*	for {
 		msg, err := c.ReadMessage(-1)
 		if err == nil {
 			data := string(msg.Value)
@@ -32,10 +41,12 @@ func ListenFromKafka(topic string) {
 			// The client will automatically try to recover from all errors.
 			log.Errorf("Consumer error: %v (%v)\n", err, msg)
 		}
-	}
+	}*/
 
 	err = c.Close()
 	if err != nil {
 		log.Errorf("Something went wrong: %v", err)
 	}
+
+	return msg.Value
 }

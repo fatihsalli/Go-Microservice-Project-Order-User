@@ -32,8 +32,8 @@ func (h OrderElasticHandler) CreateOrderElastic(c echo.Context) error {
 	// create topic name
 	topic := "orderID-created-v01"
 
-	go kafka.ListenFromKafka(topic)
+	result := kafka.ListenFromKafka(topic)
 
-	c.Logger().Infof("{%v} with id is created.", topic)
-	return c.JSON(http.StatusOK, topic)
+	c.Logger().Infof("{%v} with id is created.", string(result))
+	return c.JSON(http.StatusOK, string(result))
 }
