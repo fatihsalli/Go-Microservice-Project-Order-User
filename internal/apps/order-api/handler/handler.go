@@ -221,7 +221,7 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 		topic := "orderID-created-v01"
 
 		// sending data
-		kafka.SendToKafka(topic, result.ID)
+		kafka.SendToKafka(topic, []byte(result.ID))
 		c.Logger().Infof("Order (%v) Pushed Successfully.", result.ID)
 
 		go kafka.ListenFromKafka(topic)

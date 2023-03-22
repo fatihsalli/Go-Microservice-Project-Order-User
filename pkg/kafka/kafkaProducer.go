@@ -13,7 +13,7 @@ func newKafkaConfig() *kafka.ConfigMap {
 }
 
 // SendToKafka take a topic name and message with format of []byte
-func SendToKafka(topic string, msg string) {
+func SendToKafka(topic string, message []byte) {
 	// Kafka configuration
 	config := newKafkaConfig()
 
@@ -24,16 +24,16 @@ func SendToKafka(topic string, msg string) {
 	}
 
 	// To prepare message
-	message := &kafka.Message{
+	kafkaMessage := &kafka.Message{
 		TopicPartition: kafka.TopicPartition{
 			Topic:     &topic,
 			Partition: kafka.PartitionAny,
 		},
-		Value: []byte(msg),
+		Value: message,
 	}
 
 	// Send to message
-	err = producer.Produce(message, nil)
+	err = producer.Produce(kafkaMessage, nil)
 	if err != nil {
 		log.Errorf("error producing message: %v", err)
 	}
