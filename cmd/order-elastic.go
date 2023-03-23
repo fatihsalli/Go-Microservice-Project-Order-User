@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	order_elastic "OrderUserProject/internal/apps/order-elastic"
+	"OrderUserProject/internal/apps/order-elastic"
 	"OrderUserProject/internal/apps/order-elastic/handler"
 	"OrderUserProject/internal/configs"
 	"OrderUserProject/pkg"

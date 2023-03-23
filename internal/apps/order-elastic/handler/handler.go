@@ -1,15 +1,13 @@
 package handler
 
 import (
-	order_api "OrderUserProject/internal/apps/order-api"
+	"OrderUserProject/internal/apps/order-api"
 	"OrderUserProject/internal/apps/order-elastic"
-	"OrderUserProject/internal/models"
 	"OrderUserProject/pkg"
 	"OrderUserProject/pkg/kafka"
 	"encoding/json"
 	"fmt"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/gommon/log"
 	"io"
 	"net/http"
 	"time"
@@ -71,8 +69,8 @@ func (h OrderElasticHandler) CreateOrderElastic(c echo.Context) error {
 	}
 
 	// Unmarshal the response body into an Order struct
-	var data order_api.OrderResponse
-	err = json.Unmarshal(respOrderBody, &data)
+	var orderResponse order_api.OrderResponse
+	err = json.Unmarshal(respOrderBody, &orderResponse)
 	if err != nil {
 		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
 		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
@@ -80,28 +78,9 @@ func (h OrderElasticHandler) CreateOrderElastic(c echo.Context) error {
 		})
 	}
 
-	var order models.Order
-
-	// we can use automapper, but it will cause performance loss.
-	order.ID = data.ID
-	order.UserId = data.UserId
-	order.Status = data.Status
-	// mapping from AddressResponse to Address
-	order.Address.Address = data.Address.Address
-	order.Address.City = data.Address.City
-	order.Address.District = data.Address.District
-	order.Address.Type = data.Address.Type
-	order.Address.Default = data.Address.Default
-	order.InvoiceAddress.Address = data.InvoiceAddress.Address
-	order.InvoiceAddress.City = data.InvoiceAddress.City
-	order.InvoiceAddress.District = data.InvoiceAddress.District
-	order.InvoiceAddress.Type = data.InvoiceAddress.Type
-	order.InvoiceAddress.Default = data.InvoiceAddress.Default
-	order.Product = data.Product
-
-	orderJSON, err := json.Marshal(order)
+	orderJSON, err := json.Marshal(orderResponse)
 	if err != nil {
-		log.Errorf("Error marshalling order:", err)
+		c.Logger().Errorf("Error marshalling order:", err)
 		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
 			Message: "Cannot convert to [] byte format. Please check the logs.",
 		})
@@ -112,26 +91,21 @@ func (h OrderElasticHandler) CreateOrderElastic(c echo.Context) error {
 	topicOrder := "orderDuplicate-created-v01"
 	// sending data
 	kafka.SendToKafka(topicOrder, orderJSON)
-	c.Logger().Infof("Order (%v) Pushed Successfully.", order.ID)
+	c.Logger().Infof("Order (%v) Pushed Successfully.", orderResponse.ID)
 
 	go func() {
 		order, err := h.Service.ConsumeOrderDuplicate(topicOrder)
 		if err != nil {
-			log.Errorf("Something went wrong:", err)
+			c.Logger().Errorf("Something went wrong:", err)
 		}
 
 		err = h.Service.SaveOrderToElasticsearch(order)
 		if err != nil {
-			log.Errorf("Something went wrong:", err)
+			c.Logger().Errorf("Something went wrong:", err)
 		}
 
-		result, err := h.Service.GetOrderFromElasticsearch(order.ID)
-		if err != nil {
-			log.Errorf("Something went wrong:", err)
-		}
-
-		log.Infof("This id (%v) successfully saved on elastic.", result.ID)
+		c.Logger().Infof("This id (%v) successfully saved on elastic.", order.ID)
 	}()
 
-	return c.JSON(http.StatusOK, order.ID)
+	return c.JSON(http.StatusOK, orderResponse.ID)
 }

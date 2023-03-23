@@ -1,15 +1,15 @@
 package order_elastic
 
 import (
-	"OrderUserProject/internal/models"
+	order_api "OrderUserProject/internal/apps/order-api"
 	"OrderUserProject/pkg/kafka"
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/elastic/go-elasticsearch/v7/esapi"
 	"github.com/labstack/gommon/log"
+	"strconv"
 )
 
 type OrderElasticService struct {
@@ -21,84 +21,59 @@ func NewOrderElasticService() *OrderElasticService {
 }
 
 type IOrderElasticService interface {
-	ConsumeOrderDuplicate(topic string) (models.Order, error)
-	SaveOrderToElasticsearch(order models.Order) error
-	GetOrderFromElasticsearch(orderID string) (models.Order, error)
+	ConsumeOrderDuplicate(topic string) (order_api.OrderResponse, error)
+	SaveOrderToElasticsearch(order order_api.OrderResponse) error
 }
 
-var (
-	esClient *elasticsearch.Client
-)
-
-func init() {
-	var err error
-	esClient, err = elasticsearch.NewClient(elasticsearch.Config{
-		Addresses: []string{"http://localhost:9200"},
-	})
-	if err != nil {
-		log.Errorf("Error creating the client: %s", err.Error())
-	}
-}
-
-func (b OrderElasticService) ConsumeOrderDuplicate(topic string) (models.Order, error) {
+func (b OrderElasticService) ConsumeOrderDuplicate(topic string) (order_api.OrderResponse, error) {
 	// => RECEIVE MESSAGE
 	result := kafka.ListenFromKafka(topic)
-	var order models.Order
+	var order order_api.OrderResponse
 
 	err := json.Unmarshal(result, &order)
 	if err != nil {
-		return models.Order{}, err
+		return order_api.OrderResponse{}, err
 	}
 
 	return order, nil
 }
 
-func (b OrderElasticService) SaveOrderToElasticsearch(order models.Order) error {
-	orderJSON, err := json.Marshal(order)
+func (b OrderElasticService) SaveOrderToElasticsearch(order order_api.OrderResponse) error {
+
+	//config and client
+	cfg := elasticsearch.Config{
+		Addresses: []string{
+			"http://localhost:9200",
+		},
+	}
+	esClient, err := elasticsearch.NewClient(cfg)
+
+	messageTest := "Order saved on elastic search!"
+
+	// Build the request body.
+	data, err := json.Marshal(messageTest)
 	if err != nil {
-		return fmt.Errorf("error marshalling order to JSON: %w", err)
+		log.Errorf("Error marshaling document: %s", err)
 	}
 
+	// Set up the request object.
 	req := esapi.IndexRequest{
-		Index:      "orders-duplicate",
-		DocumentID: order.ID,
-		Body:       bytes.NewReader(orderJSON),
+		Index:      "order-test-V01",
+		DocumentID: strconv.Itoa(10100),
+		Body:       bytes.NewReader(data),
 		Refresh:    "true",
 	}
 
+	// Perform the request with the client.
 	res, err := req.Do(context.Background(), esClient)
 	if err != nil {
-		return fmt.Errorf("error indexing document: %w", err)
+		log.Fatalf("Error getting response: %s", err)
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return fmt.Errorf("error indexing document: %s", res.Status())
+		log.Printf("[%s] Error indexing document ID=%d", res.Status(), order.ID)
 	}
 
 	return nil
-}
-
-func (b OrderElasticService) GetOrderFromElasticsearch(orderID string) (models.Order, error) {
-	req := esapi.GetRequest{
-		Index:      "orders-duplicate",
-		DocumentID: orderID,
-	}
-
-	res, err := req.Do(context.Background(), esClient)
-	if err != nil {
-		return models.Order{}, fmt.Errorf("error getting document: %w", err)
-	}
-	defer res.Body.Close()
-
-	if res.IsError() {
-		return models.Order{}, fmt.Errorf("error getting document: %s", res.Status())
-	}
-
-	var order models.Order
-	if err := json.NewDecoder(res.Body).Decode(&order); err != nil {
-		return models.Order{}, fmt.Errorf("error decoding document: %w", err)
-	}
-
-	return order, nil
 }
