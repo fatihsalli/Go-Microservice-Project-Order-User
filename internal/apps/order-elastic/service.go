@@ -9,7 +9,6 @@ import (
 	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/elastic/go-elasticsearch/v7/esapi"
 	"github.com/labstack/gommon/log"
-	"strconv"
 )
 
 type OrderElasticService struct {
@@ -48,18 +47,16 @@ func (b OrderElasticService) SaveOrderToElasticsearch(order order_api.OrderRespo
 	}
 	esClient, err := elasticsearch.NewClient(cfg)
 
-	messageTest := "Order saved on elastic search!"
-
 	// Build the request body.
-	data, err := json.Marshal(messageTest)
+	data, err := json.Marshal(order)
 	if err != nil {
 		log.Errorf("Error marshaling document: %s", err)
 	}
 
 	// Set up the request object.
-	req := esapi.IndexRequest{
-		Index:      "order-test-V01",
-		DocumentID: strconv.Itoa(10100),
+	req := esapi.CreateRequest{
+		Index:      "order-duplicate-V01",
+		DocumentID: order.ID,
 		Body:       bytes.NewReader(data),
 		Refresh:    "true",
 	}
@@ -67,7 +64,7 @@ func (b OrderElasticService) SaveOrderToElasticsearch(order order_api.OrderRespo
 	// Perform the request with the client.
 	res, err := req.Do(context.Background(), esClient)
 	if err != nil {
-		log.Fatalf("Error getting response: %s", err)
+		log.Errorf("Error getting response: %s", err)
 	}
 	defer res.Body.Close()
 
