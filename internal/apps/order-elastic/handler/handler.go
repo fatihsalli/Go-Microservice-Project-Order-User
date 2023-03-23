@@ -83,6 +83,7 @@ func (h OrderElasticHandler) CreateOrderElastic(c echo.Context) error {
 	var order models.Order
 
 	// we can use automapper, but it will cause performance loss.
+	order.ID = data.ID
 	order.UserId = data.UserId
 	order.Status = data.Status
 	// mapping from AddressResponse to Address

@@ -60,7 +60,7 @@ func (b OrderElasticService) SaveOrderToElasticsearch(order models.Order) error 
 	}
 
 	req := esapi.IndexRequest{
-		Index:      "orders",
+		Index:      "orders-duplicate",
 		DocumentID: order.ID,
 		Body:       bytes.NewReader(orderJSON),
 		Refresh:    "true",
@@ -81,7 +81,7 @@ func (b OrderElasticService) SaveOrderToElasticsearch(order models.Order) error 
 
 func (b OrderElasticService) GetOrderFromElasticsearch(orderID string) (models.Order, error) {
 	req := esapi.GetRequest{
-		Index:      "orders",
+		Index:      "orders-duplicate",
 		DocumentID: orderID,
 	}
 
