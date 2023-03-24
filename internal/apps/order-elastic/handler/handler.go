@@ -13,6 +13,8 @@ import (
 	"time"
 )
 
+// TODO: Elasticsearch delete and update with DeleteRequest-IndexRequest
+
 type OrderElasticHandler struct {
 	Service order_elastic.IOrderElasticService
 }

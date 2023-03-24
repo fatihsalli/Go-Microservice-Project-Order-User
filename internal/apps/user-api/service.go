@@ -50,6 +50,7 @@ func (b UserService) Insert(user models.User) (models.User, error) {
 	// to create id and created date value
 	user.ID = uuid.New().String()
 	user.CreatedAt = time.Now()
+	user.UpdatedAt = time.Now()
 
 	result, err := b.Repository.Insert(user)
 

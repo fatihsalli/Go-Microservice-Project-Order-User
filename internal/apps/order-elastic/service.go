@@ -1,7 +1,7 @@
 package order_elastic
 
 import (
-	order_api "OrderUserProject/internal/apps/order-api"
+	"OrderUserProject/internal/apps/order-api"
 	"OrderUserProject/pkg/kafka"
 	"bytes"
 	"context"
