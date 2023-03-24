@@ -170,6 +170,7 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 		})
 	}
 
+	// => HTTP.CLIENT FIND USER
 	// Create a new HTTP client with a timeout (to check user)
 	client := http.Client{
 		Timeout: time.Second * 20,
@@ -216,13 +217,14 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 		})
 	}
 
-	// => SEND MESSAGE
+	// => SEND MESSAGE (OrderID)
 	// create topic name
 	topic := "orderID-created-v01"
 	// sending data
 	kafka.SendToKafka(topic, []byte(result.ID))
 	c.Logger().Infof("Order (%v) Pushed Successfully.", result.ID)
 
+	// => HTTP.CLIENT FOR STARTING ELASTICSEARCH SERVICE
 	// Send a GET request to the start elastic service to save order (Asynchronous)
 	go func() {
 		respOrderElastic, err := client.Get(ClientBaseUrl["order-elastic"])

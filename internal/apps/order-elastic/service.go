@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/elastic/go-elasticsearch/v7/esapi"
 	"github.com/labstack/gommon/log"
@@ -70,7 +69,7 @@ func (b OrderElasticService) SaveOrderToElasticsearch(order OrderResponseElastic
 
 	esClient, err := elasticsearch.NewClient(cfg)
 	if err != nil {
-		fmt.Println("Error creating the client: ", err)
+		log.Errorf("Error creating the client: ", err)
 		return err
 	}
 
@@ -78,6 +77,7 @@ func (b OrderElasticService) SaveOrderToElasticsearch(order OrderResponseElastic
 	data, err := json.Marshal(order)
 	if err != nil {
 		log.Errorf("Error marshaling document: %s", err)
+		return err
 	}
 
 	// Set up the request object.
@@ -92,6 +92,7 @@ func (b OrderElasticService) SaveOrderToElasticsearch(order OrderResponseElastic
 	res, err := req.Do(context.Background(), esClient)
 	if err != nil {
 		log.Errorf("Error getting response: %s", err)
+		return err
 	}
 	defer res.Body.Close()
 
