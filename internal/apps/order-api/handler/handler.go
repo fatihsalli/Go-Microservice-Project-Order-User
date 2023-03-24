@@ -203,12 +203,6 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 	order.InvoiceAddress.Default = orderRequest.InvoiceAddress.Default
 	order.Product = orderRequest.Product
 
-	var total float64
-	for _, product := range order.Product {
-		total = product.Price * float64(product.Quantity)
-		order.Total += total
-	}
-
 	result, err := h.Service.Insert(order)
 
 	if err != nil {

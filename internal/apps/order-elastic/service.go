@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/elastic/go-elasticsearch/v7/esapi"
 	"github.com/labstack/gommon/log"
@@ -20,32 +21,55 @@ func NewOrderElasticService() *OrderElasticService {
 }
 
 type IOrderElasticService interface {
-	ConsumeOrderDuplicate(topic string) (order_api.OrderResponse, error)
-	SaveOrderToElasticsearch(order order_api.OrderResponse) error
+	ConsumeOrderDuplicate(topic string) (OrderResponseElastic, error)
+	SaveOrderToElasticsearch(order OrderResponseElastic) error
 }
 
-func (b OrderElasticService) ConsumeOrderDuplicate(topic string) (order_api.OrderResponse, error) {
+func (b OrderElasticService) ConsumeOrderDuplicate(topic string) (OrderResponseElastic, error) {
 	// => RECEIVE MESSAGE
 	result := kafka.ListenFromKafka(topic)
-	var order order_api.OrderResponse
+	var orderResponse order_api.OrderResponse
 
-	err := json.Unmarshal(result, &order)
+	err := json.Unmarshal(result, &orderResponse)
 	if err != nil {
-		return order_api.OrderResponse{}, err
+		return OrderResponseElastic{}, err
 	}
+
+	var order OrderResponseElastic
+
+	// we can use automapper, but it will cause performance loss.
+	order.ID = orderResponse.ID
+	order.UserId = orderResponse.UserId
+	order.Status = orderResponse.Status
+	// mapping from AddressResponse to Address
+	order.Address.Address = orderResponse.Address.Address
+	order.Address.City = orderResponse.Address.City
+	order.Address.District = orderResponse.Address.District
+	order.Address.Type = orderResponse.Address.Type
+	order.Address.Default = orderResponse.Address.Default
+	order.InvoiceAddress.Address = orderResponse.InvoiceAddress.Address
+	order.InvoiceAddress.City = orderResponse.InvoiceAddress.City
+	order.InvoiceAddress.District = orderResponse.InvoiceAddress.District
+	order.InvoiceAddress.Type = orderResponse.InvoiceAddress.Type
+	order.InvoiceAddress.Default = orderResponse.InvoiceAddress.Default
+	order.Product = orderResponse.Product
 
 	return order, nil
 }
 
-func (b OrderElasticService) SaveOrderToElasticsearch(order order_api.OrderResponse) error {
-
-	//config and client
+func (b OrderElasticService) SaveOrderToElasticsearch(order OrderResponseElastic) error {
+	// client with default config => http://localhost:9200
 	cfg := elasticsearch.Config{
 		Addresses: []string{
 			"http://localhost:9200",
 		},
 	}
+
 	esClient, err := elasticsearch.NewClient(cfg)
+	if err != nil {
+		fmt.Println("Error creating the client: ", err)
+		return err
+	}
 
 	// Build the request body.
 	data, err := json.Marshal(order)
@@ -54,8 +78,8 @@ func (b OrderElasticService) SaveOrderToElasticsearch(order order_api.OrderRespo
 	}
 
 	// Set up the request object.
-	req := esapi.CreateRequest{
-		Index:      "order-duplicate-V01",
+	req := esapi.IndexRequest{
+		Index:      "order_duplicate_v01",
 		DocumentID: order.ID,
 		Body:       bytes.NewReader(data),
 		Refresh:    "true",
@@ -69,7 +93,17 @@ func (b OrderElasticService) SaveOrderToElasticsearch(order order_api.OrderRespo
 	defer res.Body.Close()
 
 	if res.IsError() {
-		log.Printf("[%s] Error indexing document ID=%d", res.Status(), order.ID)
+		var e map[string]interface{}
+		if err := json.NewDecoder(res.Body).Decode(&e); err != nil {
+			log.Errorf("Error parsing the response body: %s", err)
+		} else {
+			// Print the error information.
+			log.Errorf("[%s] %s: %s",
+				res.Status(),
+				e["error"].(map[string]interface{})["type"],
+				e["error"].(map[string]interface{})["reason"],
+			)
+		}
 	}
 
 	return nil

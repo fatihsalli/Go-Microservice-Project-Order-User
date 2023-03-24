@@ -54,6 +54,12 @@ func (b OrderService) Insert(order models.Order) (models.Order, error) {
 	// we don't want to set null, so we put CreatedAt value.
 	order.UpdatedAt = order.CreatedAt
 
+	var total float64
+	for _, product := range order.Product {
+		total = product.Price * float64(product.Quantity)
+		order.Total += total
+	}
+
 	result, err := b.OrderRepository.Insert(order)
 
 	if err != nil || result == false {
