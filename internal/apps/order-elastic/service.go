@@ -52,7 +52,10 @@ func (b OrderElasticService) ConsumeOrderDuplicate(topic string) (OrderResponseE
 	order.InvoiceAddress.District = orderResponse.InvoiceAddress.District
 	order.InvoiceAddress.Type = orderResponse.InvoiceAddress.Type
 	order.InvoiceAddress.Default = orderResponse.InvoiceAddress.Default
+	order.Total = orderResponse.Total
 	order.Product = orderResponse.Product
+	order.CreatedAt = orderResponse.CreatedAt
+	order.UpdatedAt = orderResponse.UpdatedAt
 
 	return order, nil
 }

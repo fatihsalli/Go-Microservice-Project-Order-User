@@ -1,5 +1,7 @@
 package order_api
 
+import "time"
+
 type OrderCreateRequest struct {
 	UserId         string          `json:"userId" bson:"userId"`
 	Status         string          `json:"status" bson:"status"`
@@ -36,7 +38,9 @@ type OrderResponse struct {
 		Quantity int     `json:"quantity" bson:"quantity"`
 		Price    float64 `json:"price" bson:"price"`
 	} `json:"product" bson:"product"`
-	Total float64 `json:"total" bson:"total"`
+	Total     float64   `json:"total" bson:"total"`
+	CreatedAt time.Time `json:"createdAt" bson:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt" bson:"updatedAt"`
 }
 
 type AddressResponse struct {

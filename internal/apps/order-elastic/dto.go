@@ -1,17 +1,21 @@
 package order_elastic
 
+import "time"
+
 type OrderResponseElastic struct {
-	ID             string
-	UserId         string          `json:"userId" bson:"userId"`
-	Status         string          `json:"status" bson:"status"`
-	Address        AddressResponse `json:"address" bson:"address"`
-	InvoiceAddress AddressResponse `json:"invoiceAddress" bson:"invoiceAddress"`
+	ID             string          `json:"orderId"`
+	UserId         string          `json:"userId"`
+	Status         string          `json:"status"`
+	Address        AddressResponse `json:"address"`
+	InvoiceAddress AddressResponse `json:"invoiceAddress"`
 	Product        []struct {
 		Name     string  `json:"name" bson:"name"`
 		Quantity int     `json:"quantity" bson:"quantity"`
 		Price    float64 `json:"price" bson:"price"`
 	} `json:"product" bson:"product"`
-	Total float64 `json:"total" bson:"total"`
+	Total     float64   `json:"total"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 type AddressResponse struct {

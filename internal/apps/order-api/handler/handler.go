@@ -79,6 +79,8 @@ func (h OrderHandler) GetAllOrders(c echo.Context) error {
 		orderResponse.Product = order.Product
 		orderResponse.Total = order.Total
 		orderResponse.Status = order.Status
+		orderResponse.CreatedAt = order.CreatedAt
+		orderResponse.UpdatedAt = order.UpdatedAt
 
 		ordersResponse = append(ordersResponse, orderResponse)
 	}
@@ -139,6 +141,8 @@ func (h OrderHandler) GetOrderById(c echo.Context) error {
 	orderResponse.Product = order.Product
 	orderResponse.Total = order.Total
 	orderResponse.Status = order.Status
+	orderResponse.CreatedAt = order.CreatedAt
+	orderResponse.UpdatedAt = order.UpdatedAt
 
 	c.Logger().Info("{%v} with id is listed.", orderResponse.ID)
 	return c.JSON(http.StatusOK, orderResponse)

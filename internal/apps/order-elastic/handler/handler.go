@@ -24,6 +24,7 @@ var ClientBaseUrl = map[string]string{
 }
 
 func NewOrderElasticHandler(e *echo.Echo, service order_elastic.OrderElasticService) *OrderElasticHandler {
+
 	router := e.Group("api/orders-elastic")
 	b := &OrderElasticHandler{Service: service}
 
@@ -34,23 +35,23 @@ func NewOrderElasticHandler(e *echo.Echo, service order_elastic.OrderElasticServ
 }
 
 func (h OrderElasticHandler) CreateOrderElastic(c echo.Context) error {
-	// => RECEIVE MESSAGE
+	// => RECEIVE MESSAGE (OrderID)
 	// create topic name
 	topic := "orderID-created-v01"
-
 	result := kafka.ListenFromKafka(topic)
 
+	// => HTTP.CLIENT FIND ORDER
 	// Create a new HTTP client with a timeout
 	client := http.Client{
 		Timeout: time.Second * 20,
 	}
 
-	// Send a GET request to the User service to retrieve user information
+	// Send a GET request to the Order service to retrieve order information
 	respOrder, err := client.Get(ClientBaseUrl["order"] + "/" + string(result))
 	if err != nil || respOrder.StatusCode != http.StatusOK {
-		c.Logger().Errorf("User with id {%v} cannot find!", string(result))
+		c.Logger().Errorf("Order with id {%v} cannot find!", string(result))
 		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
-			Message: fmt.Sprintf("User with id {%v} cannot find!", string(result)),
+			Message: fmt.Sprintf("Order with id {%v} cannot find!", string(result)),
 		})
 	}
 	defer func() {
@@ -86,13 +87,14 @@ func (h OrderElasticHandler) CreateOrderElastic(c echo.Context) error {
 		})
 	}
 
-	// => SEND MESSAGE
+	// => SEND MESSAGE (Order Model)
 	// create topic name
 	topicOrder := "orderDuplicate-created-v01"
 	// sending data
 	kafka.SendToKafka(topicOrder, orderJSON)
 	c.Logger().Infof("Order (%v) Pushed Successfully.", orderResponse.ID)
 
+	// => RECEIVE MESSAGE AND SAVE ON ELASTICSEARCH (Asynchronous)
 	go func() {
 		order, err := h.Service.ConsumeOrderDuplicate(topicOrder)
 		if err != nil {
