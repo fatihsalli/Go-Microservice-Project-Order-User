@@ -176,6 +176,7 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 		Timeout: time.Second * 20,
 	}
 
+	// TODO : Servis katmanına alınacak
 	// Send a GET request to the User service to retrieve user information
 	respUser, err := client.Get(ClientBaseUrl["user"] + "/" + orderRequest.UserId)
 	if err != nil || respUser.StatusCode != http.StatusOK {
@@ -224,6 +225,7 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 	kafka.SendToKafka(topic, []byte(result.ID))
 	c.Logger().Infof("Order (%v) Pushed Successfully.", result.ID)
 
+	// TODO: silinecek
 	// => HTTP.CLIENT FOR STARTING ELASTICSEARCH SERVICE
 	// Send a GET request to the start elastic service to save order (Asynchronous)
 	go func() {

@@ -34,6 +34,7 @@ import (
 func StartOrderAPI() {
 	e := echo.New()
 
+	// TODO : Kafka producer içeri handlera paslanacak
 	// Logger instead of echo.log we use 'logrus' package
 	log.Logger().SetOutput(os.Stdout)
 	log.Logger().SetLevel(echoLog.INFO)

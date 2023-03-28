@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-// TODO: Elasticsearch delete and update with DeleteRequest-IndexRequest
+// TODO : Elasticsearch delete and update with DeleteRequest-IndexRequest
 
 type OrderElasticHandler struct {
 	Service order_elastic.IOrderElasticService
@@ -81,6 +81,7 @@ func (h OrderElasticHandler) CreateOrderElastic(c echo.Context) error {
 		})
 	}
 
+	// => SEND MESSAGE (Order Model)
 	orderJSON, err := json.Marshal(orderResponse)
 	if err != nil {
 		c.Logger().Errorf("Error marshalling order:", err)
@@ -89,7 +90,6 @@ func (h OrderElasticHandler) CreateOrderElastic(c echo.Context) error {
 		})
 	}
 
-	// => SEND MESSAGE (Order Model)
 	// create topic name
 	topicOrder := "orderDuplicate-created-v01"
 	// sending data

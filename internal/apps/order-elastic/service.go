@@ -80,6 +80,7 @@ func (b OrderElasticService) SaveOrderToElasticsearch(order OrderResponseElastic
 		return err
 	}
 
+	// TODO : versiyonlama araştırılacak
 	// Set up the request object.
 	req := esapi.IndexRequest{
 		Index:      "order_duplicate_v01",

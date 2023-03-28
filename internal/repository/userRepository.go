@@ -13,8 +13,6 @@ type UserRepository struct {
 	UserCollection *mongo.Collection
 }
 
-// TODO: singleton,scope ve transient olaylarına bakılacak
-
 func NewUserRepository(mongoCollection *mongo.Collection) *UserRepository {
 	userRepository := &UserRepository{UserCollection: mongoCollection}
 	return userRepository

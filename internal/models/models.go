@@ -5,7 +5,7 @@ import (
 )
 
 type User struct {
-	ID        string    `json:"_id" bson:"_id"`
+	ID        string    `json:"id" bson:"_id"`
 	Name      string    `json:"name" bson:"name"`
 	Email     string    `json:"email" bson:"email"`
 	Password  []byte    `json:"password" bson:"password"`
@@ -14,8 +14,10 @@ type User struct {
 	UpdatedAt time.Time `json:"updatedAt" bson:"updatedAt"`
 }
 
+// TODO : _id yerine id değeri girilmelidir.
+
 type Order struct {
-	ID             string  `json:"_id" bson:"_id"`
+	ID             string  `json:"id" bson:"_id"`
 	UserId         string  `json:"userId" bson:"userId"`
 	Status         string  `json:"status" bson:"status"`
 	Address        Address `json:"address" bson:"address"`
@@ -41,6 +43,4 @@ type Address struct {
 	} `json:"default" bson:"default"`
 }
 
-// Tüm defaultları kaldırmamalı en son 1 tane değer kaldığında default olarak kalmalı kaldıramamalı
-
-// TODO: Order change (Update-Create) Kafka ile topic e full body basılacak. Consumer okuyup elasticsearch search e datayı basacak
+// TODO: Tüm defaultları kaldırmamalı en son 1 tane değer kaldığında default olarak kalmalı kaldıramamalı

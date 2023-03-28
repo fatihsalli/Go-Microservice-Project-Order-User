@@ -17,6 +17,8 @@ import (
 func StartOrderElastic() {
 	e := echo.New()
 
+	// TODO : echo olmayacak, log normal log.
+
 	// Logger instead of echo.log we use 'logrus' package
 	log.Logger().SetOutput(os.Stdout)
 	log.Logger().SetLevel(echoLog.INFO)
@@ -33,6 +35,7 @@ func StartOrderElastic() {
 
 	handler.NewOrderElasticHandler(e, *OrderService)
 
+	// TODO : root servis olacak (while true)
 	// Start server
 	go func() {
 		if err := e.Start(config.Server.Port["orderElastic"]); err != nil && err != http.ErrServerClosed {
