@@ -25,14 +25,7 @@ func NewOrderHandler(e *echo.Echo, service order_api.IOrderService) *OrderHandle
 	router.POST("", b.CreateOrder)
 	router.PUT("", b.UpdateOrder)
 	router.DELETE("/:id", b.DeleteOrder)
-
 	return b
-}
-
-var ClientBaseUrl = map[string]string{
-	"order":         "http://localhost:8011/api/orders",
-	"user":          "http://localhost:8012/api/users",
-	"order-elastic": "http://localhost:8013/api/orders-elastic",
 }
 
 // GetAllOrders godoc
@@ -59,7 +52,6 @@ func (h OrderHandler) GetAllOrders(c echo.Context) error {
 	// we can use automapper, but it will cause performance loss.
 	var orderResponse order_api.OrderResponse
 	var ordersResponse []order_api.OrderResponse
-
 	for _, order := range orderList {
 		orderResponse.ID = order.ID
 		orderResponse.UserId = order.UserId

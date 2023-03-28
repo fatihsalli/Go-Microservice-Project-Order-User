@@ -50,7 +50,6 @@ func (h UserHandler) GetAllUsers(c echo.Context) error {
 	var userResponse user_api.UserResponse
 	var usersResponse []user_api.UserResponse
 	var addressResponse user_api.AddressResponse
-
 	for _, user := range userList {
 		userResponse.ID = user.ID
 		userResponse.Name = user.Name
@@ -103,10 +102,9 @@ func (h UserHandler) GetUserById(c echo.Context) error {
 		})
 	}
 
-	// mapping
+	// we can use automapper, but it will cause performance loss.
 	var userResponse user_api.UserResponse
 	var addressResponse user_api.AddressResponse
-
 	userResponse.ID = user.ID
 	userResponse.Name = user.Name
 	userResponse.Email = user.Email
@@ -144,10 +142,9 @@ func (h UserHandler) CreateUser(c echo.Context) error {
 		})
 	}
 
+	// we can use automapper, but it will cause performance loss.
 	var user models.User
 	var address models.Address
-
-	// we can use automapper, but it will cause performance loss.
 	user.Name = userRequest.Name
 	user.Email = userRequest.Email
 	for _, addressRequest := range userRequest.Addresses {
@@ -219,10 +216,9 @@ func (h UserHandler) UpdateUser(c echo.Context) error {
 		})
 	}
 
+	// we can use automapper, but it will cause performance loss.
 	var user models.User
 	var address models.Address
-
-	// we can use automapper, but it will cause performance loss.
 	user.ID = userUpdateRequest.ID
 	user.Name = userUpdateRequest.Name
 	user.Email = userUpdateRequest.Email
