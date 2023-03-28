@@ -1,7 +1,7 @@
 package order_elastic
 
 import (
-	"OrderUserProject/internal/apps/order-api"
+	"OrderUserProject/internal/models"
 	"OrderUserProject/pkg/kafka"
 	"bytes"
 	"context"
@@ -20,27 +20,26 @@ func NewOrderElasticService() *OrderElasticService {
 }
 
 type IOrderElasticService interface {
-	ConsumeOrderDuplicate(topic string) (OrderResponseElastic, error)
-	SaveOrderToElasticsearch(order OrderResponseElastic) error
+	ConsumeOrderDuplicate(topic string) (models.Order, error)
+	SaveOrderToElasticsearch(order models.Order) error
 }
 
-func (b OrderElasticService) ConsumeOrderDuplicate(topic string) (OrderResponseElastic, error) {
+func (b OrderElasticService) ConsumeOrderDuplicate(topic string) (models.Order, error) {
 	// => RECEIVE MESSAGE
 	result := kafka.ListenFromKafka(topic)
-	var orderResponse order_api.OrderResponse
+	var orderResponse OrderResponse
 
 	err := json.Unmarshal(result, &orderResponse)
 	if err != nil {
-		return OrderResponseElastic{}, err
+		return models.Order{}, err
 	}
 
-	var order OrderResponseElastic
+	var order models.Order
 
 	// we can use automapper, but it will cause performance loss.
 	order.ID = orderResponse.ID
 	order.UserId = orderResponse.UserId
 	order.Status = orderResponse.Status
-	// mapping from AddressResponse to Address
 	order.Address.Address = orderResponse.Address.Address
 	order.Address.City = orderResponse.Address.City
 	order.Address.District = orderResponse.Address.District
@@ -59,7 +58,7 @@ func (b OrderElasticService) ConsumeOrderDuplicate(topic string) (OrderResponseE
 	return order, nil
 }
 
-func (b OrderElasticService) SaveOrderToElasticsearch(order OrderResponseElastic) error {
+func (b OrderElasticService) SaveOrderToElasticsearch(order models.Order) error {
 	// client with default config => http://localhost:9200
 	cfg := elasticsearch.Config{
 		Addresses: []string{
