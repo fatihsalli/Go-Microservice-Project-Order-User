@@ -9,7 +9,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
-	"time"
 )
 
 type OrderHandler struct {
@@ -160,9 +159,8 @@ func (h OrderHandler) GetOrderById(c echo.Context) error {
 // @Router /orders [post]
 func (h OrderHandler) CreateOrder(c echo.Context) error {
 
-	var orderRequest order_api.OrderCreateRequest
-
 	// We parse the data as json into the struct
+	var orderRequest order_api.OrderCreateRequest
 	if err := c.Bind(&orderRequest); err != nil {
 		c.Logger().Errorf("Bad Request. It cannot be binding! %v", err.Error())
 		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
@@ -170,33 +168,19 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 		})
 	}
 
-	// => HTTP.CLIENT FIND USER
-	// Create a new HTTP client with a timeout (to check user)
-	client := http.Client{
-		Timeout: time.Second * 20,
-	}
-
-	// TODO : Servis katmanına alınacak
-	// Send a GET request to the User service to retrieve user information
-	respUser, err := client.Get(ClientBaseUrl["user"] + "/" + orderRequest.UserId)
-	if err != nil || respUser.StatusCode != http.StatusOK {
-		c.Logger().Errorf("User with id {%v} cannot find!", orderRequest.UserId)
+	// Check user with http.Client
+	err := h.Service.CheckUser(orderRequest.UserId)
+	if err != nil {
+		c.Logger().Errorf("Not Found Exception: %v", err.Error())
 		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
-			Message: fmt.Sprintf("User with id {%v} cannot find!", orderRequest.UserId),
+			Message: fmt.Sprintf("User with id (%v) cannot find!", orderRequest.UserId),
 		})
 	}
-	defer func() {
-		if err := respUser.Body.Close(); err != nil {
-			c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
-		}
-	}()
 
+	// Mapping => we can use automapper, but it will cause performance loss.
 	var order models.Order
-
-	// we can use automapper, but it will cause performance loss.
 	order.UserId = orderRequest.UserId
 	order.Status = orderRequest.Status
-	// mapping from AddressResponse to Address
 	order.Address.Address = orderRequest.Address.Address
 	order.Address.City = orderRequest.Address.City
 	order.Address.District = orderRequest.Address.District
@@ -209,33 +193,22 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 	order.InvoiceAddress.Default = orderRequest.InvoiceAddress.Default
 	order.Product = orderRequest.Product
 
+	// Service => Insert
 	result, err := h.Service.Insert(order)
 
-	if err != nil {
-		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
-		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
-			Message: "Book cannot create! Something went wrong.",
-		})
-	}
-
+	// TODO: order-api de producer ve orderId oluşturulacak buraya gönderilebilir.
 	// => SEND MESSAGE (OrderID)
 	// create topic name
 	topic := "orderID-created-v01"
 	// sending data
-	kafka.SendToKafka(topic, []byte(result.ID))
-	c.Logger().Infof("Order (%v) Pushed Successfully.", result.ID)
+	err = kafka.SendToKafka(topic, []byte(result.ID))
+	if err != nil {
+		c.Logger().Errorf("Something went wrong cannot pushed: %v", err)
+	} else {
+		c.Logger().Infof("Order (%v) Pushed Successfully.", result.ID)
+	}
 
-	// TODO: silinecek
-	// => HTTP.CLIENT FOR STARTING ELASTICSEARCH SERVICE
-	// Send a GET request to the start elastic service to save order (Asynchronous)
-	go func() {
-		respOrderElastic, err := client.Get(ClientBaseUrl["order-elastic"])
-		if err != nil || respOrderElastic.StatusCode != http.StatusOK {
-			c.Logger().Errorf("Elastic service did not work: {%v}", err)
-		}
-	}()
-
-	// to response id and success boolean
+	// To response id and success boolean
 	jsonSuccessResultId := models.JSONSuccessResultId{
 		ID:      result.ID,
 		Success: true,
@@ -256,9 +229,8 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 // @Router /orders [put]
 func (h OrderHandler) UpdateOrder(c echo.Context) error {
 
+	// We parse the data as json into the struct
 	var orderUpdateRequest order_api.OrderUpdateRequest
-
-	// we parse the data as json into the struct
 	if err := c.Bind(&orderUpdateRequest); err != nil {
 		c.Logger().Errorf("Bad Request! %v", err)
 		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
@@ -266,6 +238,7 @@ func (h OrderHandler) UpdateOrder(c echo.Context) error {
 		})
 	}
 
+	// Check order using with service
 	if _, err := h.Service.GetOrderById(orderUpdateRequest.ID); err != nil {
 		c.Logger().Errorf("Not found exception: {%v} with id not found!", orderUpdateRequest.ID)
 		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
@@ -273,32 +246,20 @@ func (h OrderHandler) UpdateOrder(c echo.Context) error {
 		})
 	}
 
-	// Create a new HTTP client with a timeout (to check user)
-	client := http.Client{
-		Timeout: time.Second * 20,
-	}
-
-	// Send a GET request to the User service to retrieve user information
-	respUser, err := client.Get(ClientBaseUrl["user"] + "/" + orderUpdateRequest.UserId)
-	if err != nil || respUser.StatusCode != http.StatusOK {
-		c.Logger().Errorf("User with id {%v} cannot find!", orderUpdateRequest.UserId)
+	// Check user with http.Client
+	err := h.Service.CheckUser(orderUpdateRequest.UserId)
+	if err != nil {
+		c.Logger().Errorf("Not Found Exception: %v", err.Error())
 		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
-			Message: fmt.Sprintf("User with id {%v} cannot find!", orderUpdateRequest.UserId),
+			Message: fmt.Sprintf("User with id (%v) cannot find!", orderUpdateRequest.UserId),
 		})
 	}
-	defer func() {
-		if err := respUser.Body.Close(); err != nil {
-			c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
-		}
-	}()
 
+	// Mapping => we can use automapper, but it will cause performance loss.
 	var order models.Order
-
-	// we can use automapper, but it will cause performance loss.
 	order.ID = orderUpdateRequest.ID
 	order.UserId = orderUpdateRequest.UserId
 	order.Status = orderUpdateRequest.Status
-	// mapping from AddressResponse to Address
 	order.Address.Address = orderUpdateRequest.Address.Address
 	order.Address.City = orderUpdateRequest.Address.City
 	order.Address.District = orderUpdateRequest.Address.District
@@ -310,13 +271,13 @@ func (h OrderHandler) UpdateOrder(c echo.Context) error {
 	order.InvoiceAddress.Type = orderUpdateRequest.InvoiceAddress.Type
 	order.InvoiceAddress.Default = orderUpdateRequest.InvoiceAddress.Default
 	order.Product = orderUpdateRequest.Product
-
 	var total float64
 	for _, product := range order.Product {
 		total = product.Price * float64(product.Quantity)
 		order.Total += total
 	}
 
+	// Service => Update
 	result, err := h.Service.Update(order)
 
 	if err != nil || result == false {
@@ -326,7 +287,7 @@ func (h OrderHandler) UpdateOrder(c echo.Context) error {
 		})
 	}
 
-	// to response id and success boolean
+	// To response id and success boolean
 	jsonSuccessResultId := models.JSONSuccessResultId{
 		ID:      order.ID,
 		Success: result,
@@ -356,7 +317,7 @@ func (h OrderHandler) DeleteOrder(c echo.Context) error {
 		})
 	}
 
-	// to response id and success boolean
+	// To response id and success boolean
 	jsonSuccessResultId := models.JSONSuccessResultId{
 		ID:      query,
 		Success: result,

@@ -14,8 +14,6 @@ type User struct {
 	UpdatedAt time.Time `json:"updatedAt" bson:"updatedAt"`
 }
 
-// TODO : _id yerine id değeri girilmelidir.
-
 type Order struct {
 	ID             string  `json:"id" bson:"_id"`
 	UserId         string  `json:"userId" bson:"userId"`

@@ -3,7 +3,10 @@ package order_api
 import (
 	"OrderUserProject/internal/models"
 	"OrderUserProject/internal/repository"
+	"errors"
 	"github.com/google/uuid"
+	"github.com/labstack/gommon/log"
+	"net/http"
 	"time"
 )
 
@@ -24,6 +27,7 @@ type IOrderService interface {
 	Insert(order models.Order) (models.Order, error)
 	Update(user models.Order) (bool, error)
 	Delete(id string) (bool, error)
+	CheckUser(userId string) error
 }
 
 func (b OrderService) GetAll() ([]models.Order, error) {
@@ -63,7 +67,7 @@ func (b OrderService) Insert(order models.Order) (models.Order, error) {
 	result, err := b.OrderRepository.Insert(order)
 
 	if err != nil || result == false {
-		return order, err
+		return models.Order{}, err
 	}
 
 	return order, nil
@@ -90,4 +94,25 @@ func (b OrderService) Delete(id string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (b OrderService) CheckUser(userId string) error {
+	// => HTTP.CLIENT FIND USER
+	// Create a new HTTP client with a timeout (to check user)
+	client := http.Client{
+		Timeout: time.Second * 20,
+	}
+
+	// Send a GET request to the User service to retrieve user information
+	respUser, err := client.Get("http://localhost:8012/api/users" + "/" + userId)
+	if err != nil || respUser.StatusCode != http.StatusOK {
+		return errors.New("user cannot find")
+	}
+	defer func() {
+		if err := respUser.Body.Close(); err != nil {
+			log.Errorf("Something went wrong: %v", err)
+		}
+	}()
+
+	return nil
 }

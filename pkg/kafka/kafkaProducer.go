@@ -6,13 +6,14 @@ import (
 )
 
 // SendToKafka take a topic name and message with format of []byte
-func SendToKafka(topic string, message []byte) {
+func SendToKafka(topic string, message []byte) error {
 
 	// Producer
 	log.Print("Starting producer...")
 	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": "localhost:9092"})
 	if err != nil {
-		panic(err)
+		log.Errorf("Cannot create a producer: %v", err)
+		return err
 	}
 	defer p.Close()
 
@@ -37,8 +38,11 @@ func SendToKafka(topic string, message []byte) {
 	}, nil)
 	if err != nil {
 		log.Errorf("Something went wrong: %v", err)
+		return err
 	}
 
 	// Wait for message deliveries before shutting down
 	p.Flush(15 * 1000)
+
+	return nil
 }
