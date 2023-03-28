@@ -5,18 +5,18 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type ProductSyncService struct {
+type OrderSyncService struct {
 	service  *OrderElasticService
 	consumer *kafka.KafkaConsumer
 	logger   *logrus.Logger
 }
 
-func NewProductSyncService(service *OrderElasticService, consumer *kafka.KafkaConsumer, logger *logrus.Logger) *ProductSyncService {
-	return &ProductSyncService{
+func NewProductSyncService(service *OrderElasticService, consumer *kafka.KafkaConsumer, logger *logrus.Logger) *OrderSyncService {
+	return &OrderSyncService{
 		service:  service,
 		consumer: consumer,
 		logger:   logger}
 }
-func (r ProductSyncService) Start() {
+func (r OrderSyncService) Start() {
 
 }
