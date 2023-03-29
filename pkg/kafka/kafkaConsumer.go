@@ -21,7 +21,11 @@ func (c *ConsumerKafka) SubscribeToTopics(topics []string) error {
 	return err
 }
 
-func (c *ConsumerKafka) ListenFromKafkaWithoutTopic() ([]byte, error) {
+func (c *ConsumerKafka) ListenFromKafkaWithoutTopic(topic string) ([]byte, error) {
+	err := c.consumer.SubscribeTopics([]string{topic}, nil)
+	if err != nil {
+		log.Errorf("Something went wrong: %v", err)
+	}
 
 	msg, err := c.consumer.ReadMessage(-1)
 	if err == nil {

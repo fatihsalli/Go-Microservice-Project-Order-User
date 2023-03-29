@@ -2,7 +2,6 @@ package order_elastic
 
 import (
 	"OrderUserProject/internal/configs"
-	"OrderUserProject/internal/models"
 	"OrderUserProject/pkg/kafka"
 	"bytes"
 	"context"
@@ -10,6 +9,9 @@ import (
 	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/elastic/go-elasticsearch/v7/esapi"
 	"github.com/labstack/gommon/log"
+	"io"
+	"net/http"
+	"time"
 )
 
 type OrderElasticService struct {
@@ -21,46 +23,69 @@ func NewOrderElasticService(config *configs.Config) *OrderElasticService {
 	return orderElasticService
 }
 
-type IOrderElasticService interface {
-	ConsumeOrderDuplicate() (models.Order, error)
-	SaveOrderToElasticsearch(order models.Order) error
+var ClientBaseUrl = map[string]string{
+	"order":         "http://localhost:8011/api/orders",
+	"user":          "http://localhost:8012/api/users",
+	"order-elastic": "http://localhost:8013/api/orders-elastic",
 }
 
-func (b *OrderElasticService) ConsumeOrderDuplicate() (models.Order, error) {
+type IOrderElasticService interface {
+	GetOrderWithHttpClient(orderID string) (OrderResponse, error)
+	ConsumeOrderDuplicate() (OrderResponse, error)
+	SaveOrderToElasticsearch(order OrderResponse) error
+}
+
+func (b *OrderElasticService) GetOrderWithHttpClient(orderID string) (OrderResponse, error) {
+	// => HTTP.CLIENT FIND ORDER
+	// Create a new HTTP client with a timeout
+	client := http.Client{
+		Timeout: time.Second * 20,
+	}
+
+	// Send a GET request to the Order service to retrieve order information
+	respOrder, err := client.Get(ClientBaseUrl["order"] + "/" + orderID)
+	if err != nil || respOrder.StatusCode != http.StatusOK {
+		log.Errorf("Order with id {%v} cannot find!", orderID)
+		return OrderResponse{}, err
+	}
+	defer func() {
+		if err := respOrder.Body.Close(); err != nil {
+			log.Errorf("StatusInternalServerError: %v", err.Error())
+		}
+	}()
+
+	// Read the response body
+	respOrderBody, err := io.ReadAll(respOrder.Body)
+	if err != nil {
+		log.Errorf("StatusInternalServerError: %v", err.Error())
+		return OrderResponse{}, err
+	}
+
+	// Unmarshal the response body into an Order struct
+	var orderResponse OrderResponse
+	err = json.Unmarshal(respOrderBody, &orderResponse)
+	if err != nil {
+		log.Errorf("StatusInternalServerError: %v", err.Error())
+		return OrderResponse{}, err
+	}
+
+	return orderResponse, nil
+}
+
+func (b *OrderElasticService) ConsumeOrderDuplicate() (OrderResponse, error) {
 	// => RECEIVE MESSAGE
 	result := kafka.ListenFromKafka(b.Config.Elasticsearch.TopicName["OrderModel"])
 	var orderResponse OrderResponse
 
 	err := json.Unmarshal(result, &orderResponse)
 	if err != nil {
-		return models.Order{}, err
+		return OrderResponse{}, err
 	}
 
-	var order models.Order
-
-	// we can use automapper, but it will cause performance loss.
-	order.ID = orderResponse.ID
-	order.UserId = orderResponse.UserId
-	order.Status = orderResponse.Status
-	order.Address.Address = orderResponse.Address.Address
-	order.Address.City = orderResponse.Address.City
-	order.Address.District = orderResponse.Address.District
-	order.Address.Type = orderResponse.Address.Type
-	order.Address.Default = orderResponse.Address.Default
-	order.InvoiceAddress.Address = orderResponse.InvoiceAddress.Address
-	order.InvoiceAddress.City = orderResponse.InvoiceAddress.City
-	order.InvoiceAddress.District = orderResponse.InvoiceAddress.District
-	order.InvoiceAddress.Type = orderResponse.InvoiceAddress.Type
-	order.InvoiceAddress.Default = orderResponse.InvoiceAddress.Default
-	order.Total = orderResponse.Total
-	order.Product = orderResponse.Product
-	order.CreatedAt = orderResponse.CreatedAt
-	order.UpdatedAt = orderResponse.UpdatedAt
-
-	return order, nil
+	return orderResponse, nil
 }
 
-func (b *OrderElasticService) SaveOrderToElasticsearch(order models.Order) error {
+func (b *OrderElasticService) SaveOrderToElasticsearch(order OrderResponse) error {
 	// client with default config => http://localhost:9200
 	cfg := elasticsearch.Config{
 		Addresses: []string{

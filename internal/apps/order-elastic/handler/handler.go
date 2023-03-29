@@ -1,5 +1,6 @@
 package handler
 
+/*
 import (
 	"OrderUserProject/internal/apps/order-api"
 	"OrderUserProject/internal/apps/order-elastic"
@@ -112,4 +113,4 @@ func (h OrderElasticHandler) CreateOrderElastic(c echo.Context) error {
 	}()
 
 	return c.JSON(http.StatusOK, orderResponse.ID)
-}
+}*/

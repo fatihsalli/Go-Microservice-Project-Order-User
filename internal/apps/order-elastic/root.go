@@ -1,24 +1,59 @@
 package order_elastic
 
 import (
-	kafkaConsumer "OrderUserProject/pkg/kafka"
-	"github.com/neko-neko/echo-logrus/v2/log"
+	"OrderUserProject/internal/configs"
+	kafkaPackage "OrderUserProject/pkg/kafka"
+	"encoding/json"
+	"github.com/labstack/gommon/log"
 )
 
 type OrderSyncService struct {
-	service  *OrderElasticService
-	consumer *kafkaConsumer.ConsumerKafka
+	Service  *OrderElasticService
+	Consumer *kafkaPackage.ConsumerKafka
+	Producer *kafkaPackage.ProducerKafka
+	Config   *configs.Config
 }
 
-func NewOrderSyncService(service *OrderElasticService, consumer *kafkaConsumer.ConsumerKafka) *OrderSyncService {
-	return &OrderSyncService{service: service, consumer: consumer}
+func NewOrderSyncService(service *OrderElasticService, consumer *kafkaPackage.ConsumerKafka, producer *kafkaPackage.ProducerKafka, config *configs.Config) *OrderSyncService {
+	return &OrderSyncService{Service: service, Consumer: consumer, Config: config, Producer: producer}
 }
 
 func (r OrderSyncService) Start(topic string) error {
-	log.Info("Order sync service started")
-	err := r.consumer.SubscribeToTopics([]string{topic})
+	result, err := r.Consumer.ListenFromKafkaWithoutTopic(r.Config.Elasticsearch.TopicName["OrderID"])
 	if err != nil {
-		log.Errorf("Kafka connection failed. | Error: %v\n", err)
+		log.Errorf("Something went wrong: %v", err)
+		return err
+	}
+
+	orderResponse, err := r.Service.GetOrderWithHttpClient(string(result))
+	if err != nil {
+		log.Errorf("Something went wrong: %v", err)
+		return err
+	}
+
+	// => SEND MESSAGE (Order Model)
+	orderJSON, err := json.Marshal(orderResponse)
+	if err != nil {
+		log.Errorf("Error marshalling order:", err)
+		return err
+	}
+
+	err = r.Producer.SendToKafkaWithMessage(orderJSON)
+	if err != nil {
+		log.Errorf("Something went wrong: %v", err)
+		return err
+	}
+
+	order, err := r.Service.ConsumeOrderDuplicate()
+	if err != nil {
+		log.Errorf("Something went wrong: %v", err)
+		return err
+	}
+
+	err = r.Service.SaveOrderToElasticsearch(order)
+	if err != nil {
+		log.Errorf("Something went wrong: %v", err)
+		return err
 	}
 
 	return nil
