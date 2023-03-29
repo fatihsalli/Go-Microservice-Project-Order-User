@@ -2,7 +2,6 @@ package order_elastic
 
 import (
 	"OrderUserProject/internal/configs"
-	"OrderUserProject/pkg/kafka"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -31,58 +30,46 @@ var ClientBaseUrl = map[string]string{
 
 type IOrderElasticService interface {
 	GetOrderWithHttpClient(orderID string) (OrderResponse, error)
-	ConsumeOrderDuplicate() (OrderResponse, error)
 	SaveOrderToElasticsearch(order OrderResponse) error
 }
 
-func (b *OrderElasticService) GetOrderWithHttpClient(orderID string) (OrderResponse, error) {
-	// => HTTP.CLIENT FIND ORDER
-	// Create a new HTTP client with a timeout
-	client := http.Client{
-		Timeout: time.Second * 20,
-	}
+func (b *OrderElasticService) GetOrderWithHttpClient(ordersID []string) ([]OrderResponse, error) {
 
-	// Send a GET request to the Order service to retrieve order information
-	respOrder, err := client.Get(ClientBaseUrl["order"] + "/" + orderID)
-	if err != nil || respOrder.StatusCode != http.StatusOK {
-		log.Errorf("Order with id {%v} cannot find!", orderID)
-		return OrderResponse{}, err
-	}
-	defer func() {
-		if err := respOrder.Body.Close(); err != nil {
-			log.Errorf("StatusInternalServerError: %v", err.Error())
+	var orders []OrderResponse
+
+	for _, orderID := range ordersID {
+		// => HTTP.CLIENT FIND ORDER
+		// Create a new HTTP client with a timeout
+		client := http.Client{
+			Timeout: time.Second * 20,
 		}
-	}()
 
-	// Read the response body
-	respOrderBody, err := io.ReadAll(respOrder.Body)
-	if err != nil {
-		log.Errorf("StatusInternalServerError: %v", err.Error())
-		return OrderResponse{}, err
+		// Send a GET request to the Order service to retrieve order information
+		respOrder, err := client.Get(ClientBaseUrl["order"] + "/" + orderID)
+		if err != nil || respOrder.StatusCode != http.StatusOK {
+			log.Errorf("Order with id {%v} cannot find!", orderID)
+			return []OrderResponse{}, err
+		}
+
+		// Read the response body
+		respOrderBody, err := io.ReadAll(respOrder.Body)
+		if err != nil {
+			log.Errorf("StatusInternalServerError: %v", err.Error())
+			return []OrderResponse{}, err
+		}
+
+		// Unmarshal the response body into an Order struct
+		var orderResponse OrderResponse
+		err = json.Unmarshal(respOrderBody, &orderResponse)
+		if err != nil {
+			log.Errorf("StatusInternalServerError: %v", err.Error())
+			return []OrderResponse{}, err
+		}
+
+		orders = append(orders, orderResponse)
 	}
 
-	// Unmarshal the response body into an Order struct
-	var orderResponse OrderResponse
-	err = json.Unmarshal(respOrderBody, &orderResponse)
-	if err != nil {
-		log.Errorf("StatusInternalServerError: %v", err.Error())
-		return OrderResponse{}, err
-	}
-
-	return orderResponse, nil
-}
-
-func (b *OrderElasticService) ConsumeOrderDuplicate() (OrderResponse, error) {
-	// => RECEIVE MESSAGE
-	result := kafka.ListenFromKafka(b.Config.Elasticsearch.TopicName["OrderModel"])
-	var orderResponse OrderResponse
-
-	err := json.Unmarshal(result, &orderResponse)
-	if err != nil {
-		return OrderResponse{}, err
-	}
-
-	return orderResponse, nil
+	return orders, nil
 }
 
 func (b *OrderElasticService) SaveOrderToElasticsearch(order OrderResponse) error {

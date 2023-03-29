@@ -15,46 +15,77 @@ type OrderSyncService struct {
 }
 
 func NewOrderSyncService(service *OrderElasticService, consumer *kafkaPackage.ConsumerKafka, producer *kafkaPackage.ProducerKafka, config *configs.Config) *OrderSyncService {
-	return &OrderSyncService{Service: service, Consumer: consumer, Config: config, Producer: producer}
+	return &OrderSyncService{
+		Service:  service,
+		Consumer: consumer,
+		Config:   config,
+		Producer: producer,
+	}
 }
 
-func (r OrderSyncService) Start(topic string) error {
-	result, err := r.Consumer.ListenFromKafkaWithoutTopic(r.Config.Elasticsearch.TopicName["OrderID"])
+func (r OrderSyncService) StartPushOrder() error {
+	log.Info("Order sync service started")
+	err := r.Consumer.SubscribeToTopics([]string{r.Config.Elasticsearch.TopicName["OrderID"]})
 	if err != nil {
-		log.Errorf("Something went wrong: %v", err)
-		return err
+		log.Errorf("Kafka connection failed. | Error: %v\n", err)
+	}
+	for {
+		ordersID := make([]string, 0)
+		fromTopics, err := r.Consumer.ConsumeFromTopics(3, 10, 2)
+		if err != nil {
+			log.Info("An error when consume from topic...")
+		}
+
+		for _, message := range fromTopics {
+			ordersID = append(ordersID, string(message.Value))
+		}
+
+		ordersModel, err := r.Service.GetOrderWithHttpClient(ordersID)
+		if err != nil {
+			log.Errorf("An error:%v", err)
+		} else {
+			r.Consumer.AckLastMessage()
+		}
+
+		for _, orderForPush := range ordersModel {
+			// => SEND MESSAGE (Order Model)
+			orderJSON, err := json.Marshal(orderForPush)
+			if err != nil {
+				log.Errorf("Error marshalling order:", err)
+			}
+
+			err = r.Producer.SendToKafkaWithMessage(orderJSON)
+			if err != nil {
+				log.Errorf("Something went wrong: %v", err)
+			}
+		}
+	}
+}
+
+func (r OrderSyncService) StartConsumeOrder() error {
+	log.Info("Order start to consume and save on elasticsearch!")
+	err := r.Consumer.SubscribeToTopics([]string{r.Config.Elasticsearch.TopicName["OrderModel"]})
+	if err != nil {
+		log.Errorf("Kafka connection failed. | Error: %v\n", err)
 	}
 
-	orderResponse, err := r.Service.GetOrderWithHttpClient(string(result))
-	if err != nil {
-		log.Errorf("Something went wrong: %v", err)
-		return err
-	}
+	for {
+		fromTopics, err := r.Consumer.ConsumeFromTopics(3, 10, 2)
+		if err != nil {
+			log.Info("An error when consume from topic...")
+		}
 
-	// => SEND MESSAGE (Order Model)
-	orderJSON, err := json.Marshal(orderResponse)
-	if err != nil {
-		log.Errorf("Error marshalling order:", err)
-		return err
+		for _, message := range fromTopics {
+			var orderResponse OrderResponse
+			jsonErr := json.Unmarshal(message.Value, &orderResponse)
+			if jsonErr == nil {
+				err = r.Service.SaveOrderToElasticsearch(orderResponse)
+				if err != nil {
+					log.Errorf("Something went wrong: %v", err)
+				}
+			} else {
+				log.Errorf(jsonErr.Error())
+			}
+		}
 	}
-
-	err = r.Producer.SendToKafkaWithMessage(orderJSON)
-	if err != nil {
-		log.Errorf("Something went wrong: %v", err)
-		return err
-	}
-
-	order, err := r.Service.ConsumeOrderDuplicate()
-	if err != nil {
-		log.Errorf("Something went wrong: %v", err)
-		return err
-	}
-
-	err = r.Service.SaveOrderToElasticsearch(order)
-	if err != nil {
-		log.Errorf("Something went wrong: %v", err)
-		return err
-	}
-
-	return nil
 }

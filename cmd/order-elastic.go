@@ -42,14 +42,15 @@ func StartOrderElastic() {
 		logger.Errorf("Kafka consumer didn't work. Error:%v", err)
 	}
 	consumer := kafkaPackage.NewConsumerKafka(c)
-
 	orderElasticSync := order_elastic.NewOrderSyncService(orderElasticService, consumer, producer, &config)
 
 	logger.Info("Order Elastic Service is starting.")
-
-	for {
-		if err := orderElasticSync.Start("test topic"); err != nil {
-			logger.Fatalf("Product sync service failed, shutting down the server. Error:%v", err)
-		}
+	if err := orderElasticSync.StartConsumeOrder(); err != nil {
+		logger.Fatalf("Order sync service failed, shutting down the server. Error:%v", err)
 	}
+	go func() {
+		if err := orderElasticSync.StartPushOrder(); err != nil {
+			logger.Fatalf("Order sync service failed, shutting down the server. Error:%v", err)
+		}
+	}()
 }
