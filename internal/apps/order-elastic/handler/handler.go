@@ -93,12 +93,12 @@ func (h OrderElasticHandler) CreateOrderElastic(c echo.Context) error {
 	// create topic name
 	topicOrder := "orderDuplicate-created-v01"
 	// sending data
-	kafka.SendToKafka(topicOrder, orderJSON)
+	// kafka.SendToKafka(topicOrder, orderJSON)
 	c.Logger().Infof("Order (%v) Pushed Successfully.", orderResponse.ID)
 
 	// => RECEIVE MESSAGE AND SAVE ON ELASTICSEARCH (Asynchronous)
 	go func() {
-		order, err := h.Service.ConsumeOrderDuplicate(topicOrder)
+		order, err := h.Service.ConsumeOrderDuplicate()
 		if err != nil {
 			c.Logger().Errorf("Something went wrong:", err)
 		}

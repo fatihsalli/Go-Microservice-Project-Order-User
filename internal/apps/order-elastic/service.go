@@ -1,6 +1,7 @@
 package order_elastic
 
 import (
+	"OrderUserProject/internal/configs"
 	"OrderUserProject/internal/models"
 	"OrderUserProject/pkg/kafka"
 	"bytes"
@@ -12,21 +13,22 @@ import (
 )
 
 type OrderElasticService struct {
+	Config *configs.Config
 }
 
-func NewOrderElasticService() *OrderElasticService {
-	orderService := &OrderElasticService{}
-	return orderService
+func NewOrderElasticService(config *configs.Config) *OrderElasticService {
+	orderElasticService := &OrderElasticService{Config: config}
+	return orderElasticService
 }
 
 type IOrderElasticService interface {
-	ConsumeOrderDuplicate(topic string) (models.Order, error)
+	ConsumeOrderDuplicate() (models.Order, error)
 	SaveOrderToElasticsearch(order models.Order) error
 }
 
-func (b OrderElasticService) ConsumeOrderDuplicate(topic string) (models.Order, error) {
+func (b *OrderElasticService) ConsumeOrderDuplicate() (models.Order, error) {
 	// => RECEIVE MESSAGE
-	result := kafka.ListenFromKafka(topic)
+	result := kafka.ListenFromKafka(b.Config.Elasticsearch.TopicName["OrderModel"])
 	var orderResponse OrderResponse
 
 	err := json.Unmarshal(result, &orderResponse)
@@ -58,11 +60,11 @@ func (b OrderElasticService) ConsumeOrderDuplicate(topic string) (models.Order, 
 	return order, nil
 }
 
-func (b OrderElasticService) SaveOrderToElasticsearch(order models.Order) error {
+func (b *OrderElasticService) SaveOrderToElasticsearch(order models.Order) error {
 	// client with default config => http://localhost:9200
 	cfg := elasticsearch.Config{
 		Addresses: []string{
-			"http://localhost:9200",
+			b.Config.Elasticsearch.Addresses["Address 1"],
 		},
 	}
 
@@ -82,7 +84,7 @@ func (b OrderElasticService) SaveOrderToElasticsearch(order models.Order) error 
 	// TODO : versiyonlama araştırılacak
 	// Set up the request object.
 	req := esapi.IndexRequest{
-		Index:      "order_duplicate_v01",
+		Index:      b.Config.Elasticsearch.IndexName["OrderSave"],
 		DocumentID: order.ID,
 		Body:       bytes.NewReader(data),
 		Refresh:    "true",

@@ -11,6 +11,11 @@ type Config struct {
 		UserCollectionName  string
 		OrderCollectionName string
 	}
+	Elasticsearch struct {
+		Addresses map[string]string
+		IndexName map[string]string
+		TopicName map[string]string
+	}
 }
 
 var Configs = map[string]Config{
@@ -36,6 +41,22 @@ var Configs = map[string]Config{
 			DatabaseName:        "ProjectDB",
 			UserCollectionName:  "Users",
 			OrderCollectionName: "Orders",
+		},
+		Elasticsearch: struct {
+			Addresses map[string]string
+			IndexName map[string]string
+			TopicName map[string]string
+		}{
+			Addresses: map[string]string{
+				"Address 1": "http://localhost:9200",
+			},
+			IndexName: map[string]string{
+				"OrderSave": "order_duplicate_v01",
+			},
+			TopicName: map[string]string{
+				"OrderID":    "orderID-created-v01",
+				"OrderModel": "orderDuplicate-created-v01",
+			},
 		},
 	},
 	"qa":   {},

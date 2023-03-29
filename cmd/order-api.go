@@ -54,7 +54,7 @@ func StartOrderAPI() {
 	if err != nil {
 		log.Errorf("Cannot create a producer: %v", err)
 	}
-	producer := kafka_Package.NewProducerKafka(p, "orderID-created-v01")
+	producer := kafka_Package.NewProducerKafka(p, config.Elasticsearch.TopicName["OrderID"])
 
 	// To create repo and service
 	mongoOrderCollection := configs.ConnectDB(config.Database.Connection).Database(config.Database.DatabaseName).Collection(config.Database.OrderCollectionName)
