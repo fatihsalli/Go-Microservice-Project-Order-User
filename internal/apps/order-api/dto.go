@@ -15,7 +15,7 @@ type OrderCreateRequest struct {
 }
 
 type OrderUpdateRequest struct {
-	ID             string          `json:"_id" bson:"_id"`
+	ID             string          `json:"id" bson:"_id"`
 	UserId         string          `json:"userId" bson:"userId"`
 	Status         string          `json:"status" bson:"status"`
 	Address        AddressResponse `json:"address" bson:"address"`
@@ -28,7 +28,7 @@ type OrderUpdateRequest struct {
 }
 
 type OrderResponse struct {
-	ID             string          `json:"_id" bson:"_id"`
+	ID             string          `json:"id" bson:"_id"`
 	UserId         string          `json:"userId" bson:"userId"`
 	Status         string          `json:"status" bson:"status"`
 	Address        AddressResponse `json:"address" bson:"address"`

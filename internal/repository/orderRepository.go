@@ -9,8 +9,6 @@ import (
 	"time"
 )
 
-// TODO: Userid update edilmesi ayrı business
-// TODO: Kafka da configleri collection gibi al
 type OrderRepository struct {
 	OrderCollection *mongo.Collection
 }
@@ -30,7 +28,7 @@ type IOrderRepository interface {
 }
 
 // GetAll Method => to list every order
-func (b OrderRepository) GetAll() ([]models.Order, error) {
+func (b *OrderRepository) GetAll() ([]models.Order, error) {
 	var order models.Order
 	var orders []models.Order
 
@@ -58,7 +56,7 @@ func (b OrderRepository) GetAll() ([]models.Order, error) {
 }
 
 // GetOrderById Method => to find a single order with id
-func (b OrderRepository) GetOrderById(id string) (models.Order, error) {
+func (b *OrderRepository) GetOrderById(id string) (models.Order, error) {
 	var order models.Order
 
 	// to open connection
@@ -76,7 +74,7 @@ func (b OrderRepository) GetOrderById(id string) (models.Order, error) {
 }
 
 // Insert method => to create new order
-func (b OrderRepository) Insert(order models.Order) (bool, error) {
+func (b *OrderRepository) Insert(order models.Order) (bool, error) {
 	// to open connection
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
@@ -92,7 +90,7 @@ func (b OrderRepository) Insert(order models.Order) (bool, error) {
 }
 
 // Update method => to change exist order
-func (b OrderRepository) Update(order models.Order) (bool, error) {
+func (b *OrderRepository) Update(order models.Order) (bool, error) {
 	// to open connection
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -128,7 +126,7 @@ func (b OrderRepository) Update(order models.Order) (bool, error) {
 }
 
 // Delete Method => to delete a order from orders by id
-func (b OrderRepository) Delete(id string) (bool, error) {
+func (b *OrderRepository) Delete(id string) (bool, error) {
 	// to open connection
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()

@@ -9,15 +9,17 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
+	"time"
 )
 
 type OrderHandler struct {
-	Service order_api.IOrderService
+	Service  *order_api.OrderService
+	Producer *kafka.ProducerKafka
 }
 
-func NewOrderHandler(e *echo.Echo, service order_api.IOrderService) *OrderHandler {
+func NewOrderHandler(e *echo.Echo, service *order_api.OrderService, producer *kafka.ProducerKafka) *OrderHandler {
 	router := e.Group("api/orders")
-	b := &OrderHandler{Service: service}
+	b := &OrderHandler{Service: service, Producer: producer}
 
 	//Routes
 	router.GET("", b.GetAllOrders)
@@ -35,7 +37,7 @@ func NewOrderHandler(e *echo.Echo, service order_api.IOrderService) *OrderHandle
 // @Success 200 {array} models.JSONSuccessResultData
 // @Success 500 {object} pkg.InternalServerError
 // @Router /orders [get]
-func (h OrderHandler) GetAllOrders(c echo.Context) error {
+func (h *OrderHandler) GetAllOrders(c echo.Context) error {
 
 	// to test GracefulShutdown
 	// time.Sleep(5 * time.Second)
@@ -56,7 +58,6 @@ func (h OrderHandler) GetAllOrders(c echo.Context) error {
 		orderResponse.ID = order.ID
 		orderResponse.UserId = order.UserId
 		orderResponse.Product = order.Product
-		// mapping from Address to AddressResponse
 		orderResponse.Address.Address = order.Address.Address
 		orderResponse.Address.City = order.Address.City
 		orderResponse.Address.District = order.Address.District
@@ -95,7 +96,7 @@ func (h OrderHandler) GetAllOrders(c echo.Context) error {
 // @Success 404 {object} pkg.NotFoundError
 // @Success 500 {object} pkg.InternalServerError
 // @Router /orders/{id} [get]
-func (h OrderHandler) GetOrderById(c echo.Context) error {
+func (h *OrderHandler) GetOrderById(c echo.Context) error {
 	query := c.Param("id")
 
 	order, err := h.Service.GetOrderById(query)
@@ -118,7 +119,6 @@ func (h OrderHandler) GetOrderById(c echo.Context) error {
 	orderResponse.ID = order.ID
 	orderResponse.UserId = order.UserId
 	orderResponse.Product = order.Product
-	// mapping from Address to AddressResponse
 	orderResponse.Address.Address = order.Address.Address
 	orderResponse.Address.City = order.Address.City
 	orderResponse.Address.District = order.Address.District
@@ -149,7 +149,7 @@ func (h OrderHandler) GetOrderById(c echo.Context) error {
 // @Success 404 {object} pkg.NotFoundError
 // @Success 500 {object} pkg.InternalServerError
 // @Router /orders [post]
-func (h OrderHandler) CreateOrder(c echo.Context) error {
+func (h *OrderHandler) CreateOrder(c echo.Context) error {
 
 	// We parse the data as json into the struct
 	var orderRequest order_api.OrderCreateRequest
@@ -188,17 +188,22 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 	// Service => Insert
 	result, err := h.Service.Insert(order)
 
-	// TODO: order-api de producer ve orderId oluşturulacak buraya gönderilebilir.
 	// => SEND MESSAGE (OrderID)
-	// create topic name
-	topic := "orderID-created-v01"
-	// sending data
-	err = kafka.SendToKafka(topic, []byte(result.ID))
+	err = h.Producer.SendToKafkaWithMessage([]byte(result.ID))
 	if err != nil {
 		c.Logger().Errorf("Something went wrong cannot pushed: %v", err)
 	} else {
 		c.Logger().Infof("Order (%v) Pushed Successfully.", result.ID)
 	}
+
+	// TODO : Silinecek kafka-test için yazıldı
+	go func() {
+		time.Sleep(2000 * time.Millisecond)
+
+		result := kafka.ListenFromKafka("orderID-created-v01")
+
+		c.Logger().Infof("Message is: %v", string(result))
+	}()
 
 	// To response id and success boolean
 	jsonSuccessResultId := models.JSONSuccessResultId{
@@ -219,7 +224,7 @@ func (h OrderHandler) CreateOrder(c echo.Context) error {
 // @Success 400 {object} pkg.BadRequestError
 // @Success 500 {object} pkg.InternalServerError
 // @Router /orders [put]
-func (h OrderHandler) UpdateOrder(c echo.Context) error {
+func (h *OrderHandler) UpdateOrder(c echo.Context) error {
 
 	// We parse the data as json into the struct
 	var orderUpdateRequest order_api.OrderUpdateRequest
@@ -297,7 +302,7 @@ func (h OrderHandler) UpdateOrder(c echo.Context) error {
 // @Success 200 {object} models.JSONSuccessResultId
 // @Success 404 {object} pkg.NotFoundError
 // @Router /orders/{id} [delete]
-func (h OrderHandler) DeleteOrder(c echo.Context) error {
+func (h *OrderHandler) DeleteOrder(c echo.Context) error {
 	query := c.Param("id")
 
 	result, err := h.Service.Delete(query)

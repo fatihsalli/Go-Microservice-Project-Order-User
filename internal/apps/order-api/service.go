@@ -11,10 +11,10 @@ import (
 )
 
 type OrderService struct {
-	OrderRepository repository.IOrderRepository
+	OrderRepository *repository.OrderRepository
 }
 
-func NewOrderService(orderRepository repository.IOrderRepository) *OrderService {
+func NewOrderService(orderRepository *repository.OrderRepository) *OrderService {
 	orderService := &OrderService{
 		OrderRepository: orderRepository,
 	}
@@ -30,7 +30,7 @@ type IOrderService interface {
 	CheckUser(userId string) error
 }
 
-func (b OrderService) GetAll() ([]models.Order, error) {
+func (b *OrderService) GetAll() ([]models.Order, error) {
 	result, err := b.OrderRepository.GetAll()
 
 	if err != nil {
@@ -40,7 +40,7 @@ func (b OrderService) GetAll() ([]models.Order, error) {
 	return result, nil
 }
 
-func (b OrderService) GetOrderById(id string) (models.Order, error) {
+func (b *OrderService) GetOrderById(id string) (models.Order, error) {
 
 	result, err := b.OrderRepository.GetOrderById(id)
 
@@ -51,7 +51,7 @@ func (b OrderService) GetOrderById(id string) (models.Order, error) {
 	return result, nil
 }
 
-func (b OrderService) Insert(order models.Order) (models.Order, error) {
+func (b *OrderService) Insert(order models.Order) (models.Order, error) {
 	// to create id and created date value
 	order.ID = uuid.New().String()
 	order.CreatedAt = time.Now()
@@ -73,7 +73,7 @@ func (b OrderService) Insert(order models.Order) (models.Order, error) {
 	return order, nil
 }
 
-func (b OrderService) Update(order models.Order) (bool, error) {
+func (b *OrderService) Update(order models.Order) (bool, error) {
 	// to create updated date value
 	order.UpdatedAt = time.Now()
 
@@ -86,7 +86,7 @@ func (b OrderService) Update(order models.Order) (bool, error) {
 	return true, nil
 }
 
-func (b OrderService) Delete(id string) (bool, error) {
+func (b *OrderService) Delete(id string) (bool, error) {
 	result, err := b.OrderRepository.Delete(id)
 
 	if err != nil || result == false {
@@ -96,7 +96,7 @@ func (b OrderService) Delete(id string) (bool, error) {
 	return true, nil
 }
 
-func (b OrderService) CheckUser(userId string) error {
+func (b *OrderService) CheckUser(userId string) error {
 	// => HTTP.CLIENT FIND USER
 	// Create a new HTTP client with a timeout (to check user)
 	client := http.Client{

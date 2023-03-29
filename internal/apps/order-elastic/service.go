@@ -100,6 +100,7 @@ func (b OrderElasticService) SaveOrderToElasticsearch(order models.Order) error 
 		var e map[string]interface{}
 		if err := json.NewDecoder(res.Body).Decode(&e); err != nil {
 			log.Errorf("Error parsing the response body: %s", err)
+			return err
 		} else {
 			// Print the error information.
 			log.Errorf("[%s] %s: %s",
