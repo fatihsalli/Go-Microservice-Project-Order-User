@@ -8,10 +8,10 @@ import (
 )
 
 type UserService struct {
-	Repository repository.IUserRepository
+	Repository *repository.UserRepository
 }
 
-func NewUserService(repository repository.IUserRepository) *UserService {
+func NewUserService(repository *repository.UserRepository) *UserService {
 	userService := &UserService{Repository: repository}
 	return userService
 }
@@ -24,7 +24,7 @@ type IUserService interface {
 	Delete(id string) (bool, error)
 }
 
-func (b UserService) GetAll() ([]models.User, error) {
+func (b *UserService) GetAll() ([]models.User, error) {
 	result, err := b.Repository.GetAll()
 
 	if err != nil {
@@ -34,7 +34,7 @@ func (b UserService) GetAll() ([]models.User, error) {
 	return result, nil
 }
 
-func (b UserService) GetUserById(id string) (models.User, error) {
+func (b *UserService) GetUserById(id string) (models.User, error) {
 
 	result, err := b.Repository.GetUserById(id)
 
@@ -45,7 +45,7 @@ func (b UserService) GetUserById(id string) (models.User, error) {
 	return result, nil
 }
 
-func (b UserService) Insert(user models.User) (models.User, error) {
+func (b *UserService) Insert(user models.User) (models.User, error) {
 
 	// to create id and created date value
 	user.ID = uuid.New().String()
@@ -61,7 +61,7 @@ func (b UserService) Insert(user models.User) (models.User, error) {
 	return user, nil
 }
 
-func (b UserService) Update(user models.User) (bool, error) {
+func (b *UserService) Update(user models.User) (bool, error) {
 	// to create updated date value
 	user.UpdatedAt = time.Now()
 
@@ -74,7 +74,7 @@ func (b UserService) Update(user models.User) (bool, error) {
 	return true, nil
 }
 
-func (b UserService) Delete(id string) (bool, error) {
+func (b *UserService) Delete(id string) (bool, error) {
 	result, err := b.Repository.Delete(id)
 
 	if err != nil || result == false {

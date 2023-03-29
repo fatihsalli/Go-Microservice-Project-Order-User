@@ -12,10 +12,10 @@ import (
 )
 
 type UserHandler struct {
-	Service user_api.IUserService
+	Service *user_api.UserService
 }
 
-func NewUserHandler(e *echo.Echo, service user_api.IUserService) *UserHandler {
+func NewUserHandler(e *echo.Echo, service *user_api.UserService) *UserHandler {
 	router := e.Group("api/users")
 	b := &UserHandler{Service: service}
 
@@ -36,7 +36,7 @@ func NewUserHandler(e *echo.Echo, service user_api.IUserService) *UserHandler {
 // @Success 200 {array} models.JSONSuccessResultData
 // @Success 500 {object} pkg.InternalServerError
 // @Router /users [get]
-func (h UserHandler) GetAllUsers(c echo.Context) error {
+func (h *UserHandler) GetAllUsers(c echo.Context) error {
 	userList, err := h.Service.GetAll()
 
 	if err != nil {
@@ -84,7 +84,7 @@ func (h UserHandler) GetAllUsers(c echo.Context) error {
 // @Success 404 {object} pkg.NotFoundError
 // @Success 500 {object} pkg.InternalServerError
 // @Router /users/{id} [get]
-func (h UserHandler) GetUserById(c echo.Context) error {
+func (h *UserHandler) GetUserById(c echo.Context) error {
 	query := c.Param("id")
 
 	user, err := h.Service.GetUserById(query)
@@ -130,7 +130,7 @@ func (h UserHandler) GetUserById(c echo.Context) error {
 // @Success 400 {object} pkg.BadRequestError
 // @Success 500 {object} pkg.InternalServerError
 // @Router /users [post]
-func (h UserHandler) CreateUser(c echo.Context) error {
+func (h *UserHandler) CreateUser(c echo.Context) error {
 
 	var userRequest user_api.UserCreateRequest
 
@@ -195,7 +195,7 @@ func (h UserHandler) CreateUser(c echo.Context) error {
 // @Success 400 {object} pkg.BadRequestError
 // @Success 500 {object} pkg.InternalServerError
 // @Router /users [put]
-func (h UserHandler) UpdateUser(c echo.Context) error {
+func (h *UserHandler) UpdateUser(c echo.Context) error {
 
 	var userUpdateRequest user_api.UserUpdateRequest
 
@@ -267,7 +267,7 @@ func (h UserHandler) UpdateUser(c echo.Context) error {
 // @Success 200 {object} models.JSONSuccessResultId
 // @Success 404 {object} pkg.NotFoundError
 // @Router /users/{id} [delete]
-func (h UserHandler) DeleteUser(c echo.Context) error {
+func (h *UserHandler) DeleteUser(c echo.Context) error {
 	query := c.Param("id")
 
 	result, err := h.Service.Delete(query)

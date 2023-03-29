@@ -30,11 +30,10 @@ func StartUserAPI() {
 
 	config := configs.GetConfig("test")
 
+	// to create repo and service
 	mongoUserCollection := configs.ConnectDB(config.Database.Connection).Database(config.Database.DatabaseName).Collection(config.Database.UserCollectionName)
-
 	UserRepository := repository.NewUserRepository(mongoUserCollection)
-
-	UserService := user_api.NewUserService(*UserRepository)
+	UserService := user_api.NewUserService(UserRepository)
 
 	// to create new app
 	handler.NewUserHandler(e, UserService)

@@ -36,8 +36,7 @@ import (
 func StartOrderAPI() {
 	e := echo.New()
 
-	// TODO : Kafka producer içeri handlera paslanacak
-	// logger instead of echo.log we use 'logrus' package
+	// Logger instead of echo.log we use 'logrus' package
 	log.Logger().SetOutput(os.Stdout)
 	log.Logger().SetLevel(echoLog.INFO)
 	log.Logger().SetFormatter(&logrus.JSONFormatter{
@@ -47,27 +46,27 @@ func StartOrderAPI() {
 	e.Use(pkg.Logger())
 	log.Info("Logger enabled!!")
 
-	// get config
+	// Get config
 	config := configs.GetConfig("test")
 
-	// to create kafka producer
+	// To create kafka producer as a field
 	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": "localhost:9092"})
 	if err != nil {
 		log.Errorf("Cannot create a producer: %v", err)
 	}
 	producer := kafka_Package.NewProducerKafka(p, "orderID-created-v01")
 
-	// to create repo and service
+	// To create repo and service
 	mongoOrderCollection := configs.ConnectDB(config.Database.Connection).Database(config.Database.DatabaseName).Collection(config.Database.OrderCollectionName)
 	OrderRepository := repository.NewOrderRepository(mongoOrderCollection)
 	OrderService := order_api.NewOrderService(OrderRepository)
 
-	// to create handler
+	// To create handler
 	handler.NewOrderHandler(e, OrderService, producer)
 
-	// if we don't use this swagger give an error
+	// If we don't use this swagger give an error
 	docs.SwaggerInfo.Host = "localhost:8011"
-	// add swagger
+	// Add swagger
 	e.GET("/swagger/*any", echoSwagger.WrapHandler)
 
 	// Start server

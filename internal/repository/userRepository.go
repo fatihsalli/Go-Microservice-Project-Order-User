@@ -28,7 +28,7 @@ type IUserRepository interface {
 }
 
 // GetAll Method => to list every user
-func (b UserRepository) GetAll() ([]models.User, error) {
+func (b *UserRepository) GetAll() ([]models.User, error) {
 	var user models.User
 	var users []models.User
 
@@ -56,7 +56,7 @@ func (b UserRepository) GetAll() ([]models.User, error) {
 }
 
 // GetUserById Method => to find a single user with id
-func (b UserRepository) GetUserById(id string) (models.User, error) {
+func (b *UserRepository) GetUserById(id string) (models.User, error) {
 	var user models.User
 
 	// to open connection
@@ -74,7 +74,7 @@ func (b UserRepository) GetUserById(id string) (models.User, error) {
 }
 
 // Insert method => to create new user
-func (b UserRepository) Insert(user models.User) (bool, error) {
+func (b *UserRepository) Insert(user models.User) (bool, error) {
 	// to open connection
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
@@ -90,7 +90,7 @@ func (b UserRepository) Insert(user models.User) (bool, error) {
 }
 
 // Update method => to change exist user
-func (b UserRepository) Update(user models.User) (bool, error) {
+func (b *UserRepository) Update(user models.User) (bool, error) {
 	// to open connection
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -123,7 +123,7 @@ func (b UserRepository) Update(user models.User) (bool, error) {
 }
 
 // Delete Method => to delete a user from users by id
-func (b UserRepository) Delete(id string) (bool, error) {
+func (b *UserRepository) Delete(id string) (bool, error) {
 	// to open connection
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
