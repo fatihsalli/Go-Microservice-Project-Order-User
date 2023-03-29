@@ -9,7 +9,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
-	"time"
 )
 
 type OrderHandler struct {
@@ -195,15 +194,6 @@ func (h *OrderHandler) CreateOrder(c echo.Context) error {
 	} else {
 		c.Logger().Infof("Order (%v) Pushed Successfully.", result.ID)
 	}
-
-	// TODO : Silinecek kafka-test için yazıldı
-	go func() {
-		time.Sleep(2000 * time.Millisecond)
-
-		result := kafka.ListenFromKafka("orderID-created-v01")
-
-		c.Logger().Infof("Message is: %v", string(result))
-	}()
 
 	// To response id and success boolean
 	jsonSuccessResultId := models.JSONSuccessResultId{

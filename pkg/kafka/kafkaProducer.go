@@ -18,7 +18,7 @@ func NewProducerKafka(producer *kafka.Producer, topic string) *ProducerKafka {
 }
 
 // SendToKafka take a topic name and message with format of []byte
-func SendToKafka(topic string, message []byte) error {
+/*func SendToKafka(topic string, message []byte) error {
 
 	// Producer
 	log.Print("Starting producer...")
@@ -57,7 +57,7 @@ func SendToKafka(topic string, message []byte) error {
 	p.Flush(15 * 1000)
 
 	return nil
-}
+}*/
 
 func (p *ProducerKafka) SendToKafkaWithMessage(message []byte) error {
 	// Delivery report handler for produced messages
@@ -74,7 +74,7 @@ func (p *ProducerKafka) SendToKafkaWithMessage(message []byte) error {
 		}
 	}()
 
-	// Produce messages to topic (asynchronously)
+	// Produce messages to topic
 	err := p.Producer.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &p.Topic, Partition: kafka.PartitionAny},
 		Value:          message,

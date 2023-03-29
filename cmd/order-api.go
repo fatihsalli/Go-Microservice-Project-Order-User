@@ -49,7 +49,7 @@ func StartOrderAPI() {
 	// Get config
 	config := configs.GetConfig("test")
 
-	// To create kafka producer as a field
+	// To create kafka producer as a 'ProducerKafka' struct
 	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": "localhost:9092"})
 	if err != nil {
 		log.Errorf("Cannot create a producer: %v", err)
