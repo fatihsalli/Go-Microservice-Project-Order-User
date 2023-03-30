@@ -53,3 +53,8 @@ type AddressResponse struct {
 		IsDefaultRegularAddress bool `json:"isDefaultRegularAddress" bson:"isDefaultRegularAddress"`
 	} `json:"default" bson:"default"`
 }
+
+type OrderResponseForElastic struct {
+	OrderID string `json:"orderID" bson:"orderID"`
+	Status  string `json:"status" bson:"status"`
+}

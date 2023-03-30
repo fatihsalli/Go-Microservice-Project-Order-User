@@ -6,6 +6,7 @@ import (
 	"OrderUserProject/internal/models"
 	"OrderUserProject/pkg"
 	"OrderUserProject/pkg/kafka"
+	"encoding/json"
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -277,11 +278,20 @@ func (h *OrderHandler) UpdateOrder(c echo.Context) error {
 	}
 
 	// => SEND MESSAGE (OrderID)
-	err = h.Producer.SendToKafkaWithMessage([]byte(order.ID), h.Config.Kafka.TopicName["OrderID"])
-	if err != nil {
-		c.Logger().Errorf("Something went wrong cannot pushed: %v", err)
+	var orderKafka order_api.OrderResponseForElastic
+	orderKafka.OrderID = order.ID
+	orderKafka.Status = "Created"
+
+	resultJson, errJson := json.Marshal(orderKafka)
+	if errJson != nil {
+		c.Logger().Errorf("Something went wrong convert to byte: %v", err)
 	} else {
-		c.Logger().Infof("Order (%v) Pushed Successfully.", order.ID)
+		err = h.Producer.SendToKafkaWithMessage(resultJson, h.Config.Kafka.TopicName["OrderID"])
+		if err != nil {
+			c.Logger().Errorf("Something went wrong cannot pushed: %v", err)
+		} else {
+			c.Logger().Infof("Order (%v) Pushed Successfully.", order.ID)
+		}
 	}
 
 	// To response id and success boolean
