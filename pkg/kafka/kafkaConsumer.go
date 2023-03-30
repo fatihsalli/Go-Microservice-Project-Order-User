@@ -24,18 +24,26 @@ func (c *ConsumerKafka) SubscribeToTopics(topics []string) error {
 	return err
 }
 
-func (c *ConsumerKafka) ConsumeFromTopics(bulkConsumeIntervalInSeconds int64, bulkConsumeMaxTimeoutInSeconds int, maxReadCount int) ([]kafka.Message, error) {
+func (c *ConsumerKafka) ConsumeFromTopics(bulkConsumeIntervalInSeconds int64, bulkConsumeMaxTimeoutInSeconds int, maxReadCount int, topic string) ([]kafka.Message, error) {
 	messages := make([]kafka.Message, 0)
 	timeoutCount := 0
 	start := time.Now()
+
+	err := c.consumer.SubscribeTopics([]string{topic}, nil)
+	if err != nil {
+		log.Errorf("Something went wrong: %v", err)
+	}
+
 	for {
-		msg, err := c.consumer.ReadMessage(time.Duration(bulkConsumeMaxTimeoutInSeconds) * time.Second)
+		//msg, err := c.consumer.ReadMessage(time.Duration(bulkConsumeMaxTimeoutInSeconds) * time.Second)
+
+		msg, err := c.consumer.ReadMessage(-1)
 
 		elapsedTime := time.Since(start)
 		if err != nil {
 			if err.(kafka.Error).Code() == kafka.ErrTimedOut {
 				timeoutCount++
-				if timeoutCount > 10 {
+				if timeoutCount > 2 {
 					return messages, nil
 				}
 				continue

@@ -5,6 +5,7 @@ import (
 	kafkaPackage "OrderUserProject/pkg/kafka"
 	"encoding/json"
 	"github.com/labstack/gommon/log"
+	"github.com/sirupsen/logrus"
 )
 
 type OrderSyncService struct {
@@ -12,28 +13,30 @@ type OrderSyncService struct {
 	Consumer *kafkaPackage.ConsumerKafka
 	Producer *kafkaPackage.ProducerKafka
 	Config   *configs.Config
+	Logger   *logrus.Logger
 }
 
-func NewOrderSyncService(service *OrderElasticService, consumer *kafkaPackage.ConsumerKafka, producer *kafkaPackage.ProducerKafka, config *configs.Config) *OrderSyncService {
+func NewOrderSyncService(service *OrderElasticService, consumer *kafkaPackage.ConsumerKafka, producer *kafkaPackage.ProducerKafka, config *configs.Config, logger *logrus.Logger) *OrderSyncService {
 	return &OrderSyncService{
 		Service:  service,
 		Consumer: consumer,
 		Config:   config,
 		Producer: producer,
+		Logger:   logger,
 	}
 }
 
-func (r OrderSyncService) StartPushOrder() error {
+func (r *OrderSyncService) StartPushOrder() error {
 	log.Info("Order sync service started")
-	err := r.Consumer.SubscribeToTopics([]string{r.Config.Elasticsearch.TopicName["OrderID"]})
-	if err != nil {
-		log.Errorf("Kafka connection failed. | Error: %v\n", err)
-	}
+	/*	err := r.Consumer.SubscribeToTopics([]string{r.Config.Kafka.TopicName["OrderID"]})
+		if err != nil {
+			log.Errorf("Kafka connection failed. | Error: %v\n", err)
+		}*/
 	for {
 		ordersID := make([]string, 0)
-		fromTopics, err := r.Consumer.ConsumeFromTopics(3, 10, 2)
+		fromTopics, err := r.Consumer.ConsumeFromTopics(1, 5, 2, r.Config.Kafka.TopicName["OrderID"])
 		if err != nil {
-			log.Info("An error when consume from topic...")
+			r.Logger.Errorf("An error when consume from topic...:%v", err)
 		}
 
 		for _, message := range fromTopics {
@@ -42,7 +45,7 @@ func (r OrderSyncService) StartPushOrder() error {
 
 		ordersModel, err := r.Service.GetOrderWithHttpClient(ordersID)
 		if err != nil {
-			log.Errorf("An error:%v", err)
+			r.Logger.Errorf("An error:%v", err)
 		} else {
 			r.Consumer.AckLastMessage()
 		}
@@ -51,40 +54,40 @@ func (r OrderSyncService) StartPushOrder() error {
 			// => SEND MESSAGE (Order Model)
 			orderJSON, err := json.Marshal(orderForPush)
 			if err != nil {
-				log.Errorf("Error marshalling order:", err)
+				r.Logger.Errorf("Error marshalling order: %v", err)
 			}
 
-			err = r.Producer.SendToKafkaWithMessage(orderJSON)
+			err = r.Producer.SendToKafkaWithMessage(orderJSON, r.Config.Kafka.TopicName["OrderModel"])
 			if err != nil {
-				log.Errorf("Something went wrong: %v", err)
+				r.Logger.Errorf("Something went wrong: %v", err)
 			}
 		}
 	}
 }
 
-func (r OrderSyncService) StartConsumeOrder() error {
+func (r *OrderSyncService) StartConsumeOrder() error {
 	log.Info("Order start to consume and save on elasticsearch!")
-	err := r.Consumer.SubscribeToTopics([]string{r.Config.Elasticsearch.TopicName["OrderModel"]})
+	err := r.Consumer.SubscribeToTopics([]string{r.Config.Kafka.TopicName["OrderModel"]})
 	if err != nil {
-		log.Errorf("Kafka connection failed. | Error: %v\n", err)
+		r.Logger.Errorf("Kafka connection failed. | Error: %v\n", err)
 	}
 
 	for {
-		fromTopics, err := r.Consumer.ConsumeFromTopics(3, 10, 2)
+		fromTopics, err := r.Consumer.ConsumeFromTopics(1, 5, 2, r.Config.Kafka.TopicName["OrderModel"])
 		if err != nil {
-			log.Info("An error when consume from topic...")
+			r.Logger.Errorf("An error when consume from topic...: %v", err)
 		}
 
 		for _, message := range fromTopics {
 			var orderResponse OrderResponse
 			jsonErr := json.Unmarshal(message.Value, &orderResponse)
 			if jsonErr == nil {
-				err = r.Service.SaveOrderToElasticsearch(orderResponse)
+				err = r.Service.SaveOrderToElasticsearch(orderResponse, *r.Config)
 				if err != nil {
-					log.Errorf("Something went wrong: %v", err)
+					r.Logger.Errorf("Something went wrong: %v", err)
 				}
 			} else {
-				log.Errorf(jsonErr.Error())
+				r.Logger.Errorf(jsonErr.Error())
 			}
 		}
 	}

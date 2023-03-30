@@ -7,13 +7,17 @@ import (
 
 type ProducerKafka struct {
 	Producer *kafka.Producer
-	Topic    string
 }
 
-func NewProducerKafka(producer *kafka.Producer, topic string) *ProducerKafka {
+func NewProducerKafka(kafkaHost string) *ProducerKafka {
+	// To create kafka producer as a 'ProducerKafka' struct
+	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": kafkaHost})
+	if err != nil {
+		log.Errorf("Cannot create a producer: %v", err)
+	}
+
 	return &ProducerKafka{
-		Producer: producer,
-		Topic:    topic,
+		Producer: p,
 	}
 }
 
@@ -59,7 +63,7 @@ func NewProducerKafka(producer *kafka.Producer, topic string) *ProducerKafka {
 	return nil
 }*/
 
-func (p *ProducerKafka) SendToKafkaWithMessage(message []byte) error {
+func (p *ProducerKafka) SendToKafkaWithMessage(message []byte, topic string) error {
 	// Delivery report handler for produced messages
 	go func() {
 		for e := range p.Producer.Events() {
@@ -76,7 +80,7 @@ func (p *ProducerKafka) SendToKafkaWithMessage(message []byte) error {
 
 	// Produce messages to topic
 	err := p.Producer.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: &p.Topic, Partition: kafka.PartitionAny},
+		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
 		Value:          message,
 	}, nil)
 	if err != nil {

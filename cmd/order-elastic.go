@@ -24,14 +24,9 @@ func StartOrderElastic() {
 	// Get config
 	config := configs.GetConfig("test")
 
-	orderElasticService := order_elastic.NewOrderElasticService(&config)
+	orderElasticService := order_elastic.NewOrderElasticService()
 
-	// To create kafka producer as a 'ProducerKafka' struct
-	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": "localhost:9092"})
-	if err != nil {
-		logger.Errorf("Cannot create a producer: %v", err)
-	}
-	producer := kafkaPackage.NewProducerKafka(p, config.Elasticsearch.TopicName["OrderModel"])
+	producer := kafkaPackage.NewProducerKafka(config.Kafka.Address)
 
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": "localhost:9092",
@@ -42,15 +37,16 @@ func StartOrderElastic() {
 		logger.Errorf("Kafka consumer didn't work. Error:%v", err)
 	}
 	consumer := kafkaPackage.NewConsumerKafka(c)
-	orderElasticSync := order_elastic.NewOrderSyncService(orderElasticService, consumer, producer, &config)
+	orderElasticSync := order_elastic.NewOrderSyncService(orderElasticService, consumer, producer, &config, logger)
 
 	logger.Info("Order Elastic Service is starting.")
-	if err := orderElasticSync.StartConsumeOrder(); err != nil {
-		logger.Fatalf("Order sync service failed, shutting down the server. Error:%v", err)
-	}
 	go func() {
-		if err := orderElasticSync.StartPushOrder(); err != nil {
+		if err := orderElasticSync.StartConsumeOrder(); err != nil {
 			logger.Fatalf("Order sync service failed, shutting down the server. Error:%v", err)
 		}
 	}()
+	if err := orderElasticSync.StartPushOrder(); err != nil {
+		logger.Fatalf("Order sync service failed, shutting down the server. Error:%v", err)
+	}
+
 }

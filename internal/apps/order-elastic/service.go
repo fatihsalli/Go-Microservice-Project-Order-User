@@ -14,11 +14,10 @@ import (
 )
 
 type OrderElasticService struct {
-	Config *configs.Config
 }
 
-func NewOrderElasticService(config *configs.Config) *OrderElasticService {
-	orderElasticService := &OrderElasticService{Config: config}
+func NewOrderElasticService() *OrderElasticService {
+	orderElasticService := &OrderElasticService{}
 	return orderElasticService
 }
 
@@ -72,11 +71,11 @@ func (b *OrderElasticService) GetOrderWithHttpClient(ordersID []string) ([]Order
 	return orders, nil
 }
 
-func (b *OrderElasticService) SaveOrderToElasticsearch(order OrderResponse) error {
+func (b *OrderElasticService) SaveOrderToElasticsearch(order OrderResponse, config configs.Config) error {
 	// client with default config => http://localhost:9200
 	cfg := elasticsearch.Config{
 		Addresses: []string{
-			b.Config.Elasticsearch.Addresses["Address 1"],
+			config.Elasticsearch.Addresses["Address 1"],
 		},
 	}
 
@@ -96,7 +95,7 @@ func (b *OrderElasticService) SaveOrderToElasticsearch(order OrderResponse) erro
 	// TODO : versiyonlama araştırılacak
 	// Set up the request object.
 	req := esapi.IndexRequest{
-		Index:      b.Config.Elasticsearch.IndexName["OrderSave"],
+		Index:      config.Elasticsearch.IndexName["OrderSave"],
 		DocumentID: order.ID,
 		Body:       bytes.NewReader(data),
 		Refresh:    "true",

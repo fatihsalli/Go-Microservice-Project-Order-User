@@ -2,6 +2,7 @@ package handler
 
 import (
 	"OrderUserProject/internal/apps/order-api"
+	"OrderUserProject/internal/configs"
 	"OrderUserProject/internal/models"
 	"OrderUserProject/pkg"
 	"OrderUserProject/pkg/kafka"
@@ -14,11 +15,12 @@ import (
 type OrderHandler struct {
 	Service  *order_api.OrderService
 	Producer *kafka.ProducerKafka
+	Config   *configs.Config
 }
 
-func NewOrderHandler(e *echo.Echo, service *order_api.OrderService, producer *kafka.ProducerKafka) *OrderHandler {
+func NewOrderHandler(e *echo.Echo, service *order_api.OrderService, producer *kafka.ProducerKafka, config *configs.Config) *OrderHandler {
 	router := e.Group("api/orders")
-	b := &OrderHandler{Service: service, Producer: producer}
+	b := &OrderHandler{Service: service, Producer: producer, Config: config}
 
 	//Routes
 	router.GET("", b.GetAllOrders)
@@ -188,7 +190,7 @@ func (h *OrderHandler) CreateOrder(c echo.Context) error {
 	result, err := h.Service.Insert(order)
 
 	// => SEND MESSAGE (OrderID)
-	err = h.Producer.SendToKafkaWithMessage([]byte(result.ID))
+	err = h.Producer.SendToKafkaWithMessage([]byte(result.ID), h.Config.Kafka.TopicName["OrderID"])
 	if err != nil {
 		c.Logger().Errorf("Something went wrong cannot pushed: %v", err)
 	} else {

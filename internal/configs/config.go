@@ -14,6 +14,9 @@ type Config struct {
 	Elasticsearch struct {
 		Addresses map[string]string
 		IndexName map[string]string
+	}
+	Kafka struct {
+		Address   string
 		TopicName map[string]string
 	}
 }
@@ -45,7 +48,6 @@ var Configs = map[string]Config{
 		Elasticsearch: struct {
 			Addresses map[string]string
 			IndexName map[string]string
-			TopicName map[string]string
 		}{
 			Addresses: map[string]string{
 				"Address 1": "http://localhost:9200",
@@ -53,6 +55,12 @@ var Configs = map[string]Config{
 			IndexName: map[string]string{
 				"OrderSave": "order_duplicate_v01",
 			},
+		},
+		Kafka: struct {
+			Address   string
+			TopicName map[string]string
+		}{
+			Address: "localhost:9092",
 			TopicName: map[string]string{
 				"OrderID":    "orderID-created-v01",
 				"OrderModel": "orderDuplicate-created-v01",
