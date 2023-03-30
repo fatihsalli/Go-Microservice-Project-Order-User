@@ -171,3 +171,5 @@ func (b *OrderElasticService) DeleteOrderFromElasticsearch(orderID string, confi
 
 	return nil
 }
+
+// TODO: Elasticsearch client'ı Mongo.Client gibi dışarıdan verilecektir.

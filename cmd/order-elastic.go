@@ -21,7 +21,7 @@ func StartOrderElastic() {
 	// Get config
 	config := configs.GetConfig("test")
 
-	// First OrderSyncService => Consume orderID, get order model and push order model
+	// First OrderSyncService => Consume orderID, get order model, delete order from elastic and push order model
 	// Create service,producer and consumer for orderSyncService
 	service1 := order_elastic.NewOrderElasticService()
 	producer1 := kafka.NewProducerKafka(config.Kafka.Address)
@@ -35,13 +35,13 @@ func StartOrderElastic() {
 	consumer2 := kafka.NewConsumerKafka()
 	orderSyncService2 := order_elastic.NewOrderSyncService(service2, consumer2, producer2, &config, logger)
 
-	logger.Info("Order Elastic Service is starting.")
+	logger.Info("Order Elastic Service is starting...")
 	go func() {
-		if err := orderSyncService1.StartPushOrder(); err != nil {
-			logger.Fatalf("Order sync service (StartPushOrder) failed, shutting down the server. Error:%v", err)
+		if err := orderSyncService1.StartGetOrderAndPushOrder(); err != nil {
+			logger.Fatalf("Order sync service (StartPushOrder) failed, shutting down the server. | Error: %v\n", err)
 		}
 	}()
-	if err := orderSyncService2.StartConsumeOrder(); err != nil {
-		logger.Fatalf("Order sync service (StartConsumeOrder) failed, shutting down the server. Error:%v", err)
+	if err := orderSyncService2.StartConsumeAndSaveOrder(); err != nil {
+		logger.Fatalf("Order sync service (StartConsumeOrder) failed, shutting down the server. | Error: %v\n", err)
 	}
 }
