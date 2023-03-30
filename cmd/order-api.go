@@ -7,7 +7,7 @@ import (
 	"OrderUserProject/internal/configs"
 	"OrderUserProject/internal/repository"
 	"OrderUserProject/pkg"
-	kafka_Package "OrderUserProject/pkg/kafka"
+	"OrderUserProject/pkg/kafka"
 	"github.com/labstack/echo/v4"
 	echoLog "github.com/labstack/gommon/log"
 	"github.com/neko-neko/echo-logrus/v2/log"
@@ -35,7 +35,7 @@ func StartOrderAPI() {
 	config := configs.GetConfig("test")
 
 	// Create Kafka producer
-	producer := kafka_Package.NewProducerKafka(config.Kafka.Address)
+	producer := kafka.NewProducerKafka(config.Kafka.Address)
 
 	// Create repo and service
 	mongoOrderCollection := configs.ConnectDB(config.Database.Connection).Database(config.Database.DatabaseName).Collection(config.Database.OrderCollectionName)

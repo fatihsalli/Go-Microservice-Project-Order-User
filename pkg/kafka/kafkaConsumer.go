@@ -1,15 +1,14 @@
 package kafka
 
 import (
-	"fmt"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/labstack/gommon/log"
 	"time"
 )
 
 type ConsumerKafka struct {
-	consumer    *kafka.Consumer
-	lastMessage kafka.Message
+	Consumer    *kafka.Consumer
+	LastMessage kafka.Message
 }
 
 func NewConsumerKafka() *ConsumerKafka {
@@ -22,15 +21,19 @@ func NewConsumerKafka() *ConsumerKafka {
 		log.Errorf("Kafka consumer didn't work. Error:%v", err)
 	}
 	return &ConsumerKafka{
-		consumer:    c,
-		lastMessage: kafka.Message{},
+		Consumer:    c,
+		LastMessage: kafka.Message{},
 	}
 }
 
 func (c *ConsumerKafka) SubscribeToTopics(topics []string) error {
-	err := c.consumer.SubscribeTopics(topics, nil)
+	err := c.Consumer.SubscribeTopics(topics, nil)
 	return err
 }
+
+// bulkConsumeIntervalInSeconds: bulk reading interval (in seconds)
+// bulkConsumeMaxTimeoutInSeconds: maximum read time (in seconds)
+// maxReadCount: maximum number of messages to read
 
 func (c *ConsumerKafka) ConsumeFromTopics(bulkConsumeIntervalInSeconds int64, bulkConsumeMaxTimeoutInSeconds int, maxReadCount int) ([]kafka.Message, error) {
 
@@ -39,7 +42,7 @@ func (c *ConsumerKafka) ConsumeFromTopics(bulkConsumeIntervalInSeconds int64, bu
 	start := time.Now()
 
 	for {
-		msg, err := c.consumer.ReadMessage(time.Duration(bulkConsumeMaxTimeoutInSeconds) * time.Second)
+		msg, err := c.Consumer.ReadMessage(time.Duration(bulkConsumeMaxTimeoutInSeconds) * time.Second)
 
 		elapsedTime := time.Since(start)
 		if err != nil {
@@ -60,7 +63,7 @@ func (c *ConsumerKafka) ConsumeFromTopics(bulkConsumeIntervalInSeconds int64, bu
 		}
 
 		if msg != nil {
-			c.lastMessage = *msg
+			c.LastMessage = *msg
 			messages = append(messages, *msg)
 		}
 
@@ -71,30 +74,15 @@ func (c *ConsumerKafka) ConsumeFromTopics(bulkConsumeIntervalInSeconds int64, bu
 }
 
 func (c *ConsumerKafka) AckLastMessage() {
-	if &c.lastMessage != nil {
-		_, err := c.consumer.CommitMessage(&c.lastMessage)
+	if &c.LastMessage != nil {
+		_, err := c.Consumer.CommitMessage(&c.LastMessage)
 		if err != nil {
 			log.Errorf("Ack Last message failed. | Error: %v\n", err)
 		}
 	}
 }
 
-func (c *ConsumerKafka) ListenFromKafkaWithoutTopic() ([]byte, error) {
-	for {
-		msg, err := c.consumer.ReadMessage(-1)
-		if err == nil {
-			data := string(msg.Value)
-			log.Printf("Message on %s: %s\n", msg.TopicPartition, data)
-			return msg.Value, nil
-		} else {
-			// The client will automatically try to recover from all errors.
-			log.Errorf("Consumer error: %v (%v)\n", err, msg)
-			return []byte{}, err
-		}
-	}
-}
-
-func ListenFromKafka(topic string) []byte {
+/*func ListenFromKafka(topic string) []byte {
 	fmt.Printf("Starting consumer...")
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": "localhost:9092",
@@ -126,4 +114,4 @@ func ListenFromKafka(topic string) []byte {
 	}
 
 	return msg.Value
-}
+}*/

@@ -4,7 +4,6 @@ import (
 	"OrderUserProject/internal/configs"
 	kafkaPackage "OrderUserProject/pkg/kafka"
 	"encoding/json"
-	"github.com/labstack/gommon/log"
 	"github.com/sirupsen/logrus"
 )
 
@@ -26,11 +25,12 @@ func NewOrderSyncService(service *OrderElasticService, consumer *kafkaPackage.Co
 	}
 }
 
+// StartPushOrder => Get message from Kafka to consume OrderID, get order with http.client and push order with Kafka
 func (r *OrderSyncService) StartPushOrder() error {
-	log.Info("Order sync service started")
+	r.Logger.Info("Order sync service start to get OrderID and push Order models!")
 	err := r.Consumer.SubscribeToTopics([]string{r.Config.Kafka.TopicName["OrderID"]})
 	if err != nil {
-		log.Errorf("Kafka connection failed. | Error: %v\n", err)
+		r.Logger.Errorf("Kafka connection failed. | Error: %v\n", err)
 	}
 	for {
 		ordersID := make([]string, 0)
@@ -40,6 +40,7 @@ func (r *OrderSyncService) StartPushOrder() error {
 		}
 
 		for _, message := range fromTopics {
+			r.Logger.Infof("Messaige received: %v", string(message.Value))
 			ordersID = append(ordersID, string(message.Value))
 		}
 
@@ -60,13 +61,16 @@ func (r *OrderSyncService) StartPushOrder() error {
 			err = r.Producer.SendToKafkaWithMessage(orderJSON, r.Config.Kafka.TopicName["OrderModel"])
 			if err != nil {
 				r.Logger.Errorf("Something went wrong: %v", err)
+			} else {
+				r.Logger.Infof("Order pushed with id: %v", orderForPush.ID)
 			}
 		}
 	}
 }
 
+// StartConsumeOrder => Get message from Kafka to consume OrderModel and save on elasticsearch
 func (r *OrderSyncService) StartConsumeOrder() error {
-	log.Info("Order start to consume and save on elasticsearch!")
+	r.Logger.Info("Order sync service start to consume Order Model and save on elasticsearch!")
 	err := r.Consumer.SubscribeToTopics([]string{r.Config.Kafka.TopicName["OrderModel"]})
 	if err != nil {
 		r.Logger.Errorf("Kafka connection failed. | Error: %v\n", err)
@@ -85,6 +89,8 @@ func (r *OrderSyncService) StartConsumeOrder() error {
 				err = r.Service.SaveOrderToElasticsearch(orderResponse, *r.Config)
 				if err != nil {
 					r.Logger.Errorf("Something went wrong: %v", err)
+				} else {
+					r.Logger.Infof("Order (%v) saved on elasticsearch", orderResponse.ID)
 				}
 			} else {
 				r.Logger.Errorf(jsonErr.Error())
