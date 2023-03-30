@@ -191,11 +191,20 @@ func (h *OrderHandler) CreateOrder(c echo.Context) error {
 	result, err := h.Service.Insert(order)
 
 	// => SEND MESSAGE (OrderID)
-	err = h.Producer.SendToKafkaWithMessage([]byte(result.ID), h.Config.Kafka.TopicName["OrderID"])
-	if err != nil {
-		c.Logger().Errorf("Something went wrong cannot pushed: %v", err)
+	var orderKafka order_api.OrderResponseForElastic
+	orderKafka.OrderID = result.ID
+	orderKafka.Status = "Created"
+
+	resultJson, errJson := json.Marshal(orderKafka)
+	if errJson != nil {
+		c.Logger().Errorf("Something went wrong convert to byte: %v", err)
 	} else {
-		c.Logger().Infof("Order (%v) Pushed Successfully.", result.ID)
+		err = h.Producer.SendToKafkaWithMessage(resultJson, h.Config.Kafka.TopicName["OrderID"])
+		if err != nil {
+			c.Logger().Errorf("Something went wrong cannot pushed: %v", err)
+		} else {
+			c.Logger().Infof("Order (%v) Pushed Successfully.", result.ID)
+		}
 	}
 
 	// To response id and success boolean
@@ -280,7 +289,7 @@ func (h *OrderHandler) UpdateOrder(c echo.Context) error {
 	// => SEND MESSAGE (OrderID)
 	var orderKafka order_api.OrderResponseForElastic
 	orderKafka.OrderID = order.ID
-	orderKafka.Status = "Created"
+	orderKafka.Status = "Updated"
 
 	resultJson, errJson := json.Marshal(orderKafka)
 	if errJson != nil {
@@ -322,6 +331,23 @@ func (h *OrderHandler) DeleteOrder(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
 			Message: fmt.Sprintf("Not found exception: {%v} with id not found!", query),
 		})
+	}
+
+	// => SEND MESSAGE (OrderID)
+	var orderKafka order_api.OrderResponseForElastic
+	orderKafka.OrderID = query
+	orderKafka.Status = "Deleted"
+
+	resultJson, errJson := json.Marshal(orderKafka)
+	if errJson != nil {
+		c.Logger().Errorf("Something went wrong convert to byte: %v", err)
+	} else {
+		err = h.Producer.SendToKafkaWithMessage(resultJson, h.Config.Kafka.TopicName["OrderID"])
+		if err != nil {
+			c.Logger().Errorf("Something went wrong cannot pushed: %v", err)
+		} else {
+			c.Logger().Infof("Order (%v) Pushed Successfully.", query)
+		}
 	}
 
 	// To response id and success boolean

@@ -41,28 +41,44 @@ func (r *OrderSyncService) StartPushOrder() error {
 
 		for _, message := range fromTopics {
 			r.Logger.Infof("Messaige received: %v", string(message.Value))
-			ordersID = append(ordersID, string(message.Value))
-		}
 
-		ordersModel, err := r.Service.GetOrderWithHttpClient(ordersID)
-		if err != nil || ordersModel == nil {
-			r.Logger.Errorf("Orders are empty. Error:%v", err)
-		} else {
-			r.Consumer.AckLastMessage()
-		}
-
-		for _, orderForPush := range ordersModel {
-			// => SEND MESSAGE (Order Model)
-			orderJSON, err := json.Marshal(orderForPush)
-			if err != nil {
-				r.Logger.Errorf("Error marshalling order: %v", err)
+			var orderResponse OrderResponseForElastic
+			jsonErr := json.Unmarshal(message.Value, &orderResponse)
+			if jsonErr != nil {
+				r.Logger.Errorf(jsonErr.Error())
 			}
 
-			err = r.Producer.SendToKafkaWithMessage(orderJSON, r.Config.Kafka.TopicName["OrderModel"])
-			if err != nil {
-				r.Logger.Errorf("Something went wrong: %v", err)
+			if orderResponse.Status == "Deleted" {
+				err := r.Service.DeleteOrderFromElasticsearch(orderResponse.OrderID, *r.Config)
+				if err != nil {
+					r.Logger.Errorf("An error when delete from elasticsearch...:%v", err)
+				}
+			} else if orderResponse.Status == "Created" || orderResponse.Status == "Updated" {
+				ordersID = append(ordersID, orderResponse.OrderID)
+			}
+		}
+
+		if len(ordersID) > 0 {
+			ordersModel, err := r.Service.GetOrderWithHttpClient(ordersID)
+			if err != nil || ordersModel == nil {
+				r.Logger.Errorf("Orders are empty. Error:%v", err)
 			} else {
-				r.Logger.Infof("Order pushed with id: %v", orderForPush.ID)
+				r.Consumer.AckLastMessage()
+			}
+
+			for _, orderForPush := range ordersModel {
+				// => SEND MESSAGE (Order Model)
+				orderJSON, err := json.Marshal(orderForPush)
+				if err != nil {
+					r.Logger.Errorf("Error marshalling order: %v", err)
+				}
+
+				err = r.Producer.SendToKafkaWithMessage(orderJSON, r.Config.Kafka.TopicName["OrderModel"])
+				if err != nil {
+					r.Logger.Errorf("Something went wrong: %v", err)
+				} else {
+					r.Logger.Infof("Order pushed with id: %v", orderForPush.ID)
+				}
 			}
 		}
 	}

@@ -125,3 +125,49 @@ func (b *OrderElasticService) SaveOrderToElasticsearch(order OrderResponse, conf
 
 	return nil
 }
+
+func (b *OrderElasticService) DeleteOrderFromElasticsearch(orderID string, config configs.Config) error {
+	// client with default config => http://localhost:9200
+	cfg := elasticsearch.Config{
+		Addresses: []string{
+			config.Elasticsearch.Addresses["Address 1"],
+		},
+	}
+
+	esClient, err := elasticsearch.NewClient(cfg)
+	if err != nil {
+		log.Errorf("Error creating the client: ", err)
+		return err
+	}
+
+	// Create request object
+	req := esapi.DeleteRequest{
+		Index:      config.Elasticsearch.IndexName["OrderSave"],
+		DocumentID: orderID,
+		Refresh:    "true",
+	}
+
+	// Execute the request
+	res, err := req.Do(context.Background(), esClient)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		var e map[string]interface{}
+		if err := json.NewDecoder(res.Body).Decode(&e); err != nil {
+			log.Errorf("Error parsing the response body: %s", err)
+			return err
+		} else {
+			// Print the error information.
+			log.Errorf("[%s] %s: %s",
+				res.Status(),
+				e["error"].(map[string]interface{})["type"],
+				e["error"].(map[string]interface{})["reason"],
+			)
+		}
+	}
+
+	return nil
+}
