@@ -4,7 +4,6 @@ import (
 	order_elastic "OrderUserProject/internal/apps/order-elastic"
 	"OrderUserProject/internal/configs"
 	kafkaPackage "OrderUserProject/pkg/kafka"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/sirupsen/logrus"
 	"os"
 	"time"
@@ -16,37 +15,34 @@ func StartOrderElastic() {
 	logger := logrus.StandardLogger()
 	logger.SetOutput(os.Stdout)
 	logger.SetLevel(logrus.InfoLevel)
-	logger.SetFormatter(&logrus.JSONFormatter{
-		TimestampFormat: time.RFC3339,
-	})
+	logger.SetFormatter(&logrus.JSONFormatter{TimestampFormat: time.RFC3339})
 	logger.Info("Logger enabled!!")
 
 	// Get config
 	config := configs.GetConfig("test")
 
-	orderElasticService := order_elastic.NewOrderElasticService()
+	// First orderSyncService: Consume orderID, get order model and push order model
+	// Create service,producer and consumer for orderSyncService
 
-	producer := kafkaPackage.NewProducerKafka(config.Kafka.Address)
+	service1 := order_elastic.NewOrderElasticService()
+	producer1 := kafkaPackage.NewProducerKafka(config.Kafka.Address)
+	consumer1 := kafkaPackage.NewConsumerKafka()
+	orderSyncService1 := order_elastic.NewOrderSyncService(service1, consumer1, producer1, &config, logger)
 
-	c, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": "localhost:9092",
-		"group.id":          "myGroup",
-		"auto.offset.reset": "earliest",
-	})
-	if err != nil {
-		logger.Errorf("Kafka consumer didn't work. Error:%v", err)
-	}
-	consumer := kafkaPackage.NewConsumerKafka(c)
-	orderElasticSync := order_elastic.NewOrderSyncService(orderElasticService, consumer, producer, &config, logger)
+	// Second orderSyncService: Consume orderModel, save on elastic search
+	// Create service,producer and consumer for orderSyncService
+	service2 := order_elastic.NewOrderElasticService()
+	producer2 := kafkaPackage.NewProducerKafka(config.Kafka.Address)
+	consumer2 := kafkaPackage.NewConsumerKafka()
+	orderSyncService2 := order_elastic.NewOrderSyncService(service2, consumer2, producer2, &config, logger)
 
 	logger.Info("Order Elastic Service is starting.")
 	go func() {
-		if err := orderElasticSync.StartConsumeOrder(); err != nil {
+		if err := orderSyncService1.StartConsumeOrder(); err != nil {
 			logger.Fatalf("Order sync service failed, shutting down the server. Error:%v", err)
 		}
 	}()
-	if err := orderElasticSync.StartPushOrder(); err != nil {
+	if err := orderSyncService2.StartPushOrder(); err != nil {
 		logger.Fatalf("Order sync service failed, shutting down the server. Error:%v", err)
 	}
-
 }

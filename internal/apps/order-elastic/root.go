@@ -28,13 +28,13 @@ func NewOrderSyncService(service *OrderElasticService, consumer *kafkaPackage.Co
 
 func (r *OrderSyncService) StartPushOrder() error {
 	log.Info("Order sync service started")
-	/*	err := r.Consumer.SubscribeToTopics([]string{r.Config.Kafka.TopicName["OrderID"]})
-		if err != nil {
-			log.Errorf("Kafka connection failed. | Error: %v\n", err)
-		}*/
+	err := r.Consumer.SubscribeToTopics([]string{r.Config.Kafka.TopicName["OrderID"]})
+	if err != nil {
+		log.Errorf("Kafka connection failed. | Error: %v\n", err)
+	}
 	for {
 		ordersID := make([]string, 0)
-		fromTopics, err := r.Consumer.ConsumeFromTopics(1, 5, 2, r.Config.Kafka.TopicName["OrderID"])
+		fromTopics, err := r.Consumer.ConsumeFromTopics(1, 5, 2)
 		if err != nil {
 			r.Logger.Errorf("An error when consume from topic...:%v", err)
 		}
@@ -73,7 +73,7 @@ func (r *OrderSyncService) StartConsumeOrder() error {
 	}
 
 	for {
-		fromTopics, err := r.Consumer.ConsumeFromTopics(1, 5, 2, r.Config.Kafka.TopicName["OrderModel"])
+		fromTopics, err := r.Consumer.ConsumeFromTopics(1, 5, 2)
 		if err != nil {
 			r.Logger.Errorf("An error when consume from topic...: %v", err)
 		}

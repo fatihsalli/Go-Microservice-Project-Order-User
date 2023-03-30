@@ -12,9 +12,17 @@ type ConsumerKafka struct {
 	lastMessage kafka.Message
 }
 
-func NewConsumerKafka(consumer *kafka.Consumer) *ConsumerKafka {
+func NewConsumerKafka() *ConsumerKafka {
+	c, err := kafka.NewConsumer(&kafka.ConfigMap{
+		"bootstrap.servers": "localhost:9092",
+		"group.id":          "myGroup",
+		"auto.offset.reset": "earliest",
+	})
+	if err != nil {
+		log.Errorf("Kafka consumer didn't work. Error:%v", err)
+	}
 	return &ConsumerKafka{
-		consumer:    consumer,
+		consumer:    c,
 		lastMessage: kafka.Message{},
 	}
 }
@@ -24,20 +32,14 @@ func (c *ConsumerKafka) SubscribeToTopics(topics []string) error {
 	return err
 }
 
-func (c *ConsumerKafka) ConsumeFromTopics(bulkConsumeIntervalInSeconds int64, bulkConsumeMaxTimeoutInSeconds int, maxReadCount int, topic string) ([]kafka.Message, error) {
+func (c *ConsumerKafka) ConsumeFromTopics(bulkConsumeIntervalInSeconds int64, bulkConsumeMaxTimeoutInSeconds int, maxReadCount int) ([]kafka.Message, error) {
+
 	messages := make([]kafka.Message, 0)
 	timeoutCount := 0
 	start := time.Now()
 
-	err := c.consumer.SubscribeTopics([]string{topic}, nil)
-	if err != nil {
-		log.Errorf("Something went wrong: %v", err)
-	}
-
 	for {
-		//msg, err := c.consumer.ReadMessage(time.Duration(bulkConsumeMaxTimeoutInSeconds) * time.Second)
-
-		msg, err := c.consumer.ReadMessage(-1)
+		msg, err := c.consumer.ReadMessage(time.Duration(bulkConsumeMaxTimeoutInSeconds) * time.Second)
 
 		elapsedTime := time.Since(start)
 		if err != nil {
@@ -77,13 +79,7 @@ func (c *ConsumerKafka) AckLastMessage() {
 	}
 }
 
-func (c *ConsumerKafka) ListenFromKafkaWithoutTopic(topic string) ([]byte, error) {
-	err := c.consumer.SubscribeTopics([]string{topic}, nil)
-	if err != nil {
-		log.Errorf("Something went wrong: %v", err)
-	}
-	defer c.consumer.Close()
-
+func (c *ConsumerKafka) ListenFromKafkaWithoutTopic() ([]byte, error) {
 	for {
 		msg, err := c.consumer.ReadMessage(-1)
 		if err == nil {
