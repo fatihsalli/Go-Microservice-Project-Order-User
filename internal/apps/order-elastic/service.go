@@ -92,7 +92,6 @@ func (b *OrderElasticService) SaveOrderToElasticsearch(order OrderResponse, conf
 		return err
 	}
 
-	// TODO : versiyonlama araştırılacak
 	// Set up the request object.
 	req := esapi.IndexRequest{
 		Index:      config.Elasticsearch.IndexName["OrderSave"],

@@ -276,6 +276,14 @@ func (h *OrderHandler) UpdateOrder(c echo.Context) error {
 		})
 	}
 
+	// => SEND MESSAGE (OrderID)
+	err = h.Producer.SendToKafkaWithMessage([]byte(order.ID), h.Config.Kafka.TopicName["OrderID"])
+	if err != nil {
+		c.Logger().Errorf("Something went wrong cannot pushed: %v", err)
+	} else {
+		c.Logger().Infof("Order (%v) Pushed Successfully.", order.ID)
+	}
+
 	// To response id and success boolean
 	jsonSuccessResultId := models.JSONSuccessResultId{
 		ID:      order.ID,

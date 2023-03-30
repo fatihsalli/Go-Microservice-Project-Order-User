@@ -37,11 +37,11 @@ func StartOrderElastic() {
 
 	logger.Info("Order Elastic Service is starting.")
 	go func() {
-		if err := orderSyncService1.StartConsumeOrder(); err != nil {
-			logger.Fatalf("Order sync service (StartConsumeOrder) failed, shutting down the server. Error:%v", err)
+		if err := orderSyncService1.StartPushOrder(); err != nil {
+			logger.Fatalf("Order sync service (StartPushOrder) failed, shutting down the server. Error:%v", err)
 		}
 	}()
-	if err := orderSyncService2.StartPushOrder(); err != nil {
-		logger.Fatalf("Order sync service (StartPushOrder) failed, shutting down the server. Error:%v", err)
+	if err := orderSyncService2.StartConsumeOrder(); err != nil {
+		logger.Fatalf("Order sync service (StartConsumeOrder) failed, shutting down the server. Error:%v", err)
 	}
 }

@@ -45,8 +45,8 @@ func (r *OrderSyncService) StartPushOrder() error {
 		}
 
 		ordersModel, err := r.Service.GetOrderWithHttpClient(ordersID)
-		if err != nil {
-			r.Logger.Errorf("An error:%v", err)
+		if err != nil || ordersModel == nil {
+			r.Logger.Errorf("Orders are empty. Error:%v", err)
 		} else {
 			r.Consumer.AckLastMessage()
 		}
@@ -68,7 +68,7 @@ func (r *OrderSyncService) StartPushOrder() error {
 	}
 }
 
-// StartConsumeOrder => Get message from Kafka to consume OrderModel and save on elasticsearch
+// StartConsumeOrder => Get message from Kafka to consume OrderModel and save/update on elasticsearch
 func (r *OrderSyncService) StartConsumeOrder() error {
 	r.Logger.Info("Order sync service start to consume Order Model and save on elasticsearch!")
 	err := r.Consumer.SubscribeToTopics([]string{r.Config.Kafka.TopicName["OrderModel"]})
