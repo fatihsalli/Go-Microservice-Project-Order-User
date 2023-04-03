@@ -21,9 +21,7 @@ func StartUserAPI() {
 	// Logger instead of echo.log we use 'logrus' package
 	log.Logger().SetOutput(os.Stdout)
 	log.Logger().SetLevel(echoLog.INFO)
-	log.Logger().SetFormatter(&logrus.JSONFormatter{
-		TimestampFormat: time.RFC3339,
-	})
+	log.Logger().SetFormatter(&logrus.JSONFormatter{TimestampFormat: time.RFC3339})
 	e.Logger = log.Logger()
 	e.Use(pkg.Logger())
 	log.Info("Logger enabled!!")

@@ -75,7 +75,6 @@ func (h *OrderHandler) GetAllOrders(c echo.Context) error {
 		orderResponse.Status = order.Status
 		orderResponse.CreatedAt = order.CreatedAt
 		orderResponse.UpdatedAt = order.UpdatedAt
-
 		ordersResponse = append(ordersResponse, orderResponse)
 	}
 
