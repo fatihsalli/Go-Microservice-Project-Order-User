@@ -293,6 +293,9 @@ func (h *UserHandler) UpdateUser(c echo.Context) error {
 	user.Name = userUpdateRequest.Name
 	user.Email = userUpdateRequest.Email
 	for _, addressRequest := range userUpdateRequest.Addresses {
+		if addressRequest.ID == "" {
+			addressRequest.ID = uuid.New().String()
+		}
 		address.ID = addressRequest.ID
 		address.Address = addressRequest.Address
 		address.City = addressRequest.City

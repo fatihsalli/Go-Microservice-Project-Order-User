@@ -60,11 +60,13 @@ func (h *OrderHandler) GetAllOrders(c echo.Context) error {
 		orderResponse.ID = order.ID
 		orderResponse.UserId = order.UserId
 		orderResponse.Product = order.Product
+		orderResponse.Address.ID = order.Address.ID
 		orderResponse.Address.Address = order.Address.Address
 		orderResponse.Address.City = order.Address.City
 		orderResponse.Address.District = order.Address.District
 		orderResponse.Address.Type = order.Address.Type
 		orderResponse.Address.Default = order.Address.Default
+		orderResponse.InvoiceAddress.ID = order.InvoiceAddress.ID
 		orderResponse.InvoiceAddress.Address = order.InvoiceAddress.Address
 		orderResponse.InvoiceAddress.City = order.InvoiceAddress.City
 		orderResponse.InvoiceAddress.District = order.InvoiceAddress.District
@@ -120,11 +122,13 @@ func (h *OrderHandler) GetOrderById(c echo.Context) error {
 	orderResponse.ID = order.ID
 	orderResponse.UserId = order.UserId
 	orderResponse.Product = order.Product
+	orderResponse.Address.ID = order.Address.ID
 	orderResponse.Address.Address = order.Address.Address
 	orderResponse.Address.City = order.Address.City
 	orderResponse.Address.District = order.Address.District
 	orderResponse.Address.Type = order.Address.Type
 	orderResponse.Address.Default = order.Address.Default
+	orderResponse.InvoiceAddress.ID = order.InvoiceAddress.ID
 	orderResponse.InvoiceAddress.Address = order.InvoiceAddress.Address
 	orderResponse.InvoiceAddress.City = order.InvoiceAddress.City
 	orderResponse.InvoiceAddress.District = order.InvoiceAddress.District
@@ -170,12 +174,33 @@ func (h *OrderHandler) CreateOrder(c echo.Context) error {
 		})
 	}
 
+	// Address check
+	regularAddressCheck := false
+	invoiceAddressCheck := false
+	for _, regularAddress := range user.Addresses {
+		if regularAddress.ID == orderRequest.Address {
+			regularAddressCheck = true
+		}
+
+		if regularAddress.ID == orderRequest.InvoiceAddress {
+			invoiceAddressCheck = true
+		}
+	}
+
+	if regularAddressCheck == false || invoiceAddressCheck == false {
+		c.Logger().Error("Not Found Exception: Address not found. Before order processing please put address.")
+		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
+			Message: "User's addresses cannot find!",
+		})
+	}
+
 	// Mapping => we can use automapper, but it will cause performance loss.
 	var order models.Order
 	order.UserId = orderRequest.UserId
 	order.Status = orderRequest.Status
 	for _, regularAddress := range user.Addresses {
 		if regularAddress.ID == orderRequest.Address {
+			order.Address.ID = regularAddress.ID
 			order.Address.Address = regularAddress.Address
 			order.Address.City = regularAddress.City
 			order.Address.District = regularAddress.District
@@ -185,6 +210,7 @@ func (h *OrderHandler) CreateOrder(c echo.Context) error {
 	}
 	for _, invoiceAddress := range user.Addresses {
 		if invoiceAddress.ID == orderRequest.InvoiceAddress {
+			order.InvoiceAddress.ID = invoiceAddress.ID
 			order.InvoiceAddress.Address = invoiceAddress.Address
 			order.InvoiceAddress.City = invoiceAddress.City
 			order.InvoiceAddress.District = invoiceAddress.District
@@ -261,6 +287,25 @@ func (h *OrderHandler) UpdateOrder(c echo.Context) error {
 		})
 	}
 
+	// Address check
+	regularAddressCheck := false
+	invoiceAddressCheck := false
+	for _, regularAddress := range user.Addresses {
+		if regularAddress.ID == orderUpdateRequest.Address {
+			regularAddressCheck = true
+		}
+		if regularAddress.ID == orderUpdateRequest.InvoiceAddress {
+			invoiceAddressCheck = true
+		}
+	}
+
+	if regularAddressCheck == false || invoiceAddressCheck == false {
+		c.Logger().Error("Not Found Exception: Address not found. Before order processing please put address.")
+		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
+			Message: "User's addresses cannot find!",
+		})
+	}
+
 	// Mapping => we can use automapper, but it will cause performance loss.
 	var order models.Order
 	order.ID = orderUpdateRequest.ID
@@ -268,6 +313,7 @@ func (h *OrderHandler) UpdateOrder(c echo.Context) error {
 	order.Status = orderUpdateRequest.Status
 	for _, regularAddress := range user.Addresses {
 		if regularAddress.ID == orderUpdateRequest.Address {
+			order.Address.ID = regularAddress.ID
 			order.Address.Address = regularAddress.Address
 			order.Address.City = regularAddress.City
 			order.Address.District = regularAddress.District
@@ -277,6 +323,7 @@ func (h *OrderHandler) UpdateOrder(c echo.Context) error {
 	}
 	for _, invoiceAddress := range user.Addresses {
 		if invoiceAddress.ID == orderUpdateRequest.InvoiceAddress {
+			order.InvoiceAddress.ID = invoiceAddress.ID
 			order.InvoiceAddress.Address = invoiceAddress.Address
 			order.InvoiceAddress.City = invoiceAddress.City
 			order.InvoiceAddress.District = invoiceAddress.District
