@@ -7,10 +7,7 @@ import (
 	"encoding/json"
 	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/elastic/go-elasticsearch/v7/esapi"
-	"github.com/labstack/gommon/log"
-	"io"
-	"net/http"
-	"time"
+	"github.com/neko-neko/echo-logrus/v2/log"
 )
 
 type OrderElasticService struct {
@@ -19,56 +16,6 @@ type OrderElasticService struct {
 func NewOrderElasticService() *OrderElasticService {
 	orderElasticService := &OrderElasticService{}
 	return orderElasticService
-}
-
-var ClientBaseUrl = map[string]string{
-	"order":         "http://localhost:8011/api/orders",
-	"user":          "http://localhost:8012/api/users",
-	"order-elastic": "http://localhost:8013/api/orders-elastic",
-}
-
-type IOrderElasticService interface {
-	GetOrderWithHttpClient(orderID string) (OrderResponse, error)
-	SaveOrderToElasticsearch(order OrderResponse) error
-}
-
-func (b *OrderElasticService) GetOrderWithHttpClient(ordersID []string) ([]OrderResponse, error) {
-
-	var orders []OrderResponse
-
-	for _, orderID := range ordersID {
-		// => HTTP.CLIENT FIND ORDER
-		// Create a new HTTP client with a timeout
-		client := http.Client{
-			Timeout: time.Second * 20,
-		}
-
-		// Send a GET request to the Order service to retrieve order information
-		respOrder, err := client.Get(ClientBaseUrl["order"] + "/" + orderID)
-		if err != nil || respOrder.StatusCode != http.StatusOK {
-			log.Errorf("Order with id {%v} cannot find!", orderID)
-			return []OrderResponse{}, err
-		}
-
-		// Read the response body
-		respOrderBody, err := io.ReadAll(respOrder.Body)
-		if err != nil {
-			log.Errorf("StatusInternalServerError: %v", err.Error())
-			return []OrderResponse{}, err
-		}
-
-		// Unmarshal the response body into an Order struct
-		var orderResponse OrderResponse
-		err = json.Unmarshal(respOrderBody, &orderResponse)
-		if err != nil {
-			log.Errorf("StatusInternalServerError: %v", err.Error())
-			return []OrderResponse{}, err
-		}
-
-		orders = append(orders, orderResponse)
-	}
-
-	return orders, nil
 }
 
 func (b *OrderElasticService) SaveOrderToElasticsearch(order OrderResponse, config configs.Config) error {
@@ -171,5 +118,3 @@ func (b *OrderElasticService) DeleteOrderFromElasticsearch(orderID string, confi
 
 	return nil
 }
-
-// TODO: Elasticsearch client'ı Mongo.Client gibi dışarıdan verilecektir.

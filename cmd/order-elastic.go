@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"OrderUserProject/internal/apps/order-elastic"
+	"OrderUserProject/internal/apps/order-elastic/roots"
 	"OrderUserProject/internal/configs"
 	"OrderUserProject/pkg/kafka"
 	"github.com/sirupsen/logrus"
@@ -21,28 +22,21 @@ func StartOrderElastic() {
 	// Get config
 	config := configs.GetConfig("test")
 
-	// First OrderSyncService => Consume orderID, get order model, delete order from elastic and push order model
-	// Create service,producer and consumer for orderSyncService
-	service1 := order_elastic.NewOrderElasticService()
-	producer1 := kafka.NewProducerKafka(config.Kafka.Address)
-	consumer1 := kafka.NewConsumerKafka()
+	// Create OrderElasticRoot => Consume orderModel, save on elastic search
+	orderElasticService := order_elastic.NewOrderElasticService()
+	producerElastic := kafka.NewProducerKafka(config.Kafka.Address)
+	consumerElastic := kafka.NewConsumerKafka()
+	orderElasticRoot := roots.NewOrderElasticRoot(orderElasticService, consumerElastic, producerElastic, &config, logger)
 
-	orderSyncService1 := order_elastic.NewOrderSyncService(service1, consumer1, producer1, &config, logger)
+	// Create OrderEventRoot => Consume orderID, get order model, delete order from elastic and push order model
+	orderEventService := order_elastic.NewOrderEventService(logger)
+	producerEvent := kafka.NewProducerKafka(config.Kafka.Address)
+	consumerEvent := kafka.NewConsumerKafka()
+	orderEventRoot := roots.NewOrderEventRoot(orderEventService, orderElasticService, consumerEvent, producerEvent, &config, logger)
 
-	// Second OrderSyncService => Consume orderModel, save on elastic search
-	// Create service,producer and consumer for orderSyncService
-	service2 := order_elastic.NewOrderElasticService()
-	producer2 := kafka.NewProducerKafka(config.Kafka.Address)
-	consumer2 := kafka.NewConsumerKafka()
-	orderSyncService2 := order_elastic.NewOrderSyncService(service2, consumer2, producer2, &config, logger)
+	// Create OrderSyncService
+	orderSyncService := roots.NewOrderSyncService(orderElasticRoot, orderEventRoot)
 
 	logger.Info("Order Elastic Service is starting...")
-	go func() {
-		if err := orderSyncService1.StartGetOrderAndPushOrder(); err != nil {
-			logger.Fatalf("Order sync service (StartGetOrderAndPushOrder) failed, shutting down the server. | Error: %v\n", err)
-		}
-	}()
-	if err := orderSyncService2.StartConsumeAndSaveOrder(); err != nil {
-		logger.Fatalf("Order sync service (StartConsumeAndSaveOrder) failed, shutting down the server. | Error: %v\n", err)
-	}
+	orderSyncService.Start()
 }
