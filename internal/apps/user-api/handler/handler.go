@@ -5,6 +5,7 @@ import (
 	"OrderUserProject/internal/models"
 	"OrderUserProject/pkg"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
@@ -55,6 +56,7 @@ func (h *UserHandler) GetAllUsers(c echo.Context) error {
 		userResponse.Name = user.Name
 		userResponse.Email = user.Email
 		for _, address := range user.Addresses {
+			addressResponse.ID = address.ID
 			addressResponse.Address = address.Address
 			addressResponse.City = address.City
 			addressResponse.District = address.District
@@ -109,6 +111,7 @@ func (h *UserHandler) GetUserById(c echo.Context) error {
 	userResponse.Name = user.Name
 	userResponse.Email = user.Email
 	for _, address := range user.Addresses {
+		addressResponse.ID = address.ID
 		addressResponse.Address = address.Address
 		addressResponse.City = address.City
 		addressResponse.District = address.District
@@ -142,12 +145,46 @@ func (h *UserHandler) CreateUser(c echo.Context) error {
 		})
 	}
 
+	// Check address
+	if len(userRequest.Addresses) < 1 {
+		c.Logger().Error("Address value is empty.")
+		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
+			Message: "Address value cannot empty. At least you have to put one address!",
+		})
+	}
+
+	// Invoice and regular addresses check
+	if len(userRequest.Addresses) == 1 {
+		userRequest.Addresses[0].Default.IsDefaultInvoiceAddress = true
+		userRequest.Addresses[0].Default.IsDefaultRegularAddress = true
+	} else if len(userRequest.Addresses) > 1 {
+		hasDefaultInvoice := false
+		hasDefaultRegular := false
+		for _, addressRequest := range userRequest.Addresses {
+			if addressRequest.Default.IsDefaultRegularAddress {
+				hasDefaultRegular = true
+			}
+			if addressRequest.Default.IsDefaultInvoiceAddress {
+				hasDefaultInvoice = true
+			}
+		}
+
+		if !hasDefaultInvoice {
+			userRequest.Addresses[0].Default.IsDefaultInvoiceAddress = true
+		}
+
+		if !hasDefaultRegular {
+			userRequest.Addresses[0].Default.IsDefaultRegularAddress = true
+		}
+	}
+
 	// we can use automapper, but it will cause performance loss.
 	var user models.User
 	var address models.Address
 	user.Name = userRequest.Name
 	user.Email = userRequest.Email
 	for _, addressRequest := range userRequest.Addresses {
+		address.ID = uuid.New().String()
 		address.Address = addressRequest.Address
 		address.City = addressRequest.City
 		address.District = addressRequest.District
@@ -216,6 +253,39 @@ func (h *UserHandler) UpdateUser(c echo.Context) error {
 		})
 	}
 
+	// Check address
+	if len(userUpdateRequest.Addresses) < 1 {
+		c.Logger().Error("Address value is empty.")
+		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
+			Message: "Address value cannot empty. At least you have to put one address!",
+		})
+	}
+
+	// Invoice and regular addresses check
+	if len(userUpdateRequest.Addresses) == 1 {
+		userUpdateRequest.Addresses[0].Default.IsDefaultInvoiceAddress = true
+		userUpdateRequest.Addresses[0].Default.IsDefaultRegularAddress = true
+	} else if len(userUpdateRequest.Addresses) > 1 {
+		hasDefaultInvoice := false
+		hasDefaultRegular := false
+		for _, addressRequest := range userUpdateRequest.Addresses {
+			if addressRequest.Default.IsDefaultRegularAddress {
+				hasDefaultRegular = true
+			}
+			if addressRequest.Default.IsDefaultInvoiceAddress {
+				hasDefaultInvoice = true
+			}
+		}
+
+		if !hasDefaultInvoice {
+			userUpdateRequest.Addresses[0].Default.IsDefaultInvoiceAddress = true
+		}
+
+		if !hasDefaultRegular {
+			userUpdateRequest.Addresses[0].Default.IsDefaultRegularAddress = true
+		}
+	}
+
 	// we can use automapper, but it will cause performance loss.
 	var user models.User
 	var address models.Address
@@ -223,6 +293,7 @@ func (h *UserHandler) UpdateUser(c echo.Context) error {
 	user.Name = userUpdateRequest.Name
 	user.Email = userUpdateRequest.Email
 	for _, addressRequest := range userUpdateRequest.Addresses {
+		address.ID = addressRequest.ID
 		address.Address = addressRequest.Address
 		address.City = addressRequest.City
 		address.District = addressRequest.District

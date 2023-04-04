@@ -3,10 +3,10 @@ package order_api
 import "time"
 
 type OrderCreateRequest struct {
-	UserId         string          `json:"userId" bson:"userId"`
-	Status         string          `json:"status" bson:"status"`
-	Address        AddressResponse `json:"address" bson:"address"`
-	InvoiceAddress AddressResponse `json:"invoiceAddress" bson:"invoiceAddress"`
+	UserId         string `json:"userId" bson:"userId"`
+	Status         string `json:"status" bson:"status"`
+	Address        string `json:"address" bson:"address"`
+	InvoiceAddress string `json:"invoiceAddress" bson:"invoiceAddress"`
 	Product        []struct {
 		Name     string  `json:"name" bson:"name"`
 		Quantity int     `json:"quantity" bson:"quantity"`
@@ -17,11 +17,11 @@ type OrderCreateRequest struct {
 // TODO: Dto da address id al ve model tarafında address response olarak ekle.
 
 type OrderUpdateRequest struct {
-	ID             string          `json:"id" bson:"_id"`
-	UserId         string          `json:"userId" bson:"userId"`
-	Status         string          `json:"status" bson:"status"`
-	Address        AddressResponse `json:"address" bson:"address"`
-	InvoiceAddress AddressResponse `json:"invoiceAddress" bson:"invoiceAddress"`
+	ID             string `json:"id" bson:"_id"`
+	UserId         string `json:"userId" bson:"userId"`
+	Status         string `json:"status" bson:"status"`
+	Address        string `json:"address" bson:"address"`
+	InvoiceAddress string `json:"invoiceAddress" bson:"invoiceAddress"`
 	Product        []struct {
 		Name     string  `json:"name" bson:"name"`
 		Quantity int     `json:"quantity" bson:"quantity"`
@@ -46,6 +46,7 @@ type OrderResponse struct {
 }
 
 type AddressResponse struct {
+	ID       string   `json:"id"`
 	Address  string   `json:"address" bson:"address"`
 	City     string   `json:"city" bson:"city"`
 	District string   `json:"district" bson:"district"`
@@ -54,6 +55,13 @@ type AddressResponse struct {
 		IsDefaultInvoiceAddress bool `json:"isDefaultInvoiceAddress" bson:"isDefaultInvoiceAddress"`
 		IsDefaultRegularAddress bool `json:"isDefaultRegularAddress" bson:"isDefaultRegularAddress"`
 	} `json:"default" bson:"default"`
+}
+
+type UserResponse struct {
+	ID        string            `json:"id"`
+	Name      string            `json:"name"`
+	Email     string            `json:"email"`
+	Addresses []AddressResponse `json:"address"`
 }
 
 type OrderResponseForElastic struct {

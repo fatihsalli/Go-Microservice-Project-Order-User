@@ -23,6 +23,7 @@ type UserResponse struct {
 }
 
 type AddressResponse struct {
+	ID       string   `json:"id"`
 	Address  string   `json:"address" bson:"address"`
 	City     string   `json:"city" bson:"city"`
 	District string   `json:"district" bson:"district"`
@@ -32,5 +33,3 @@ type AddressResponse struct {
 		IsDefaultRegularAddress bool `json:"isDefaultRegularAddress" bson:"isDefaultRegularAddress"`
 	} `json:"default" bson:"default"`
 }
-
-// User Addresslerde Id değeri olsun.

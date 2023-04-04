@@ -162,7 +162,7 @@ func (h *OrderHandler) CreateOrder(c echo.Context) error {
 	}
 
 	// Check user with http.Client
-	err := h.Service.CheckUser(orderRequest.UserId)
+	user, err := h.Service.GetUser(orderRequest.UserId)
 	if err != nil {
 		c.Logger().Errorf("Not Found Exception: %v", err.Error())
 		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
@@ -174,16 +174,24 @@ func (h *OrderHandler) CreateOrder(c echo.Context) error {
 	var order models.Order
 	order.UserId = orderRequest.UserId
 	order.Status = orderRequest.Status
-	order.Address.Address = orderRequest.Address.Address
-	order.Address.City = orderRequest.Address.City
-	order.Address.District = orderRequest.Address.District
-	order.Address.Type = orderRequest.Address.Type
-	order.Address.Default = orderRequest.Address.Default
-	order.InvoiceAddress.Address = orderRequest.InvoiceAddress.Address
-	order.InvoiceAddress.City = orderRequest.InvoiceAddress.City
-	order.InvoiceAddress.District = orderRequest.InvoiceAddress.District
-	order.InvoiceAddress.Type = orderRequest.InvoiceAddress.Type
-	order.InvoiceAddress.Default = orderRequest.InvoiceAddress.Default
+	for _, regularAddress := range user.Addresses {
+		if regularAddress.ID == orderRequest.Address {
+			order.Address.Address = regularAddress.Address
+			order.Address.City = regularAddress.City
+			order.Address.District = regularAddress.District
+			order.Address.Type = regularAddress.Type
+			order.Address.Default = regularAddress.Default
+		}
+	}
+	for _, invoiceAddress := range user.Addresses {
+		if invoiceAddress.ID == orderRequest.InvoiceAddress {
+			order.InvoiceAddress.Address = invoiceAddress.Address
+			order.InvoiceAddress.City = invoiceAddress.City
+			order.InvoiceAddress.District = invoiceAddress.District
+			order.InvoiceAddress.Type = invoiceAddress.Type
+			order.InvoiceAddress.Default = invoiceAddress.Default
+		}
+	}
 	order.Product = orderRequest.Product
 
 	// Service => Insert
@@ -245,7 +253,7 @@ func (h *OrderHandler) UpdateOrder(c echo.Context) error {
 	}
 
 	// Check user with http.Client
-	err := h.Service.CheckUser(orderUpdateRequest.UserId)
+	user, err := h.Service.GetUser(orderUpdateRequest.UserId)
 	if err != nil {
 		c.Logger().Errorf("Not Found Exception: %v", err.Error())
 		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
@@ -258,22 +266,25 @@ func (h *OrderHandler) UpdateOrder(c echo.Context) error {
 	order.ID = orderUpdateRequest.ID
 	order.UserId = orderUpdateRequest.UserId
 	order.Status = orderUpdateRequest.Status
-	order.Address.Address = orderUpdateRequest.Address.Address
-	order.Address.City = orderUpdateRequest.Address.City
-	order.Address.District = orderUpdateRequest.Address.District
-	order.Address.Type = orderUpdateRequest.Address.Type
-	order.Address.Default = orderUpdateRequest.Address.Default
-	order.InvoiceAddress.Address = orderUpdateRequest.InvoiceAddress.Address
-	order.InvoiceAddress.City = orderUpdateRequest.InvoiceAddress.City
-	order.InvoiceAddress.District = orderUpdateRequest.InvoiceAddress.District
-	order.InvoiceAddress.Type = orderUpdateRequest.InvoiceAddress.Type
-	order.InvoiceAddress.Default = orderUpdateRequest.InvoiceAddress.Default
-	order.Product = orderUpdateRequest.Product
-	var total float64
-	for _, product := range order.Product {
-		total = product.Price * float64(product.Quantity)
-		order.Total += total
+	for _, regularAddress := range user.Addresses {
+		if regularAddress.ID == orderUpdateRequest.Address {
+			order.Address.Address = regularAddress.Address
+			order.Address.City = regularAddress.City
+			order.Address.District = regularAddress.District
+			order.Address.Type = regularAddress.Type
+			order.Address.Default = regularAddress.Default
+		}
 	}
+	for _, invoiceAddress := range user.Addresses {
+		if invoiceAddress.ID == orderUpdateRequest.InvoiceAddress {
+			order.InvoiceAddress.Address = invoiceAddress.Address
+			order.InvoiceAddress.City = invoiceAddress.City
+			order.InvoiceAddress.District = invoiceAddress.District
+			order.InvoiceAddress.Type = invoiceAddress.Type
+			order.InvoiceAddress.Default = invoiceAddress.Default
+		}
+	}
+	order.Product = orderUpdateRequest.Product
 
 	// Service => Update
 	result, err := h.Service.Update(order)
