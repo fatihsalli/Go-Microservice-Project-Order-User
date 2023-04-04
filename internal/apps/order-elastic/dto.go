@@ -19,6 +19,7 @@ type OrderResponse struct {
 }
 
 type AddressResponse struct {
+	ID       string   `json:"addressID" bson:"_id"`
 	Address  string   `json:"address" bson:"address"`
 	City     string   `json:"city" bson:"city"`
 	District string   `json:"district" bson:"district"`
