@@ -3,6 +3,7 @@ package kafka
 import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/labstack/gommon/log"
+	"time"
 )
 
 type ProducerKafka struct {
@@ -47,7 +48,7 @@ func (p *ProducerKafka) SendToKafkaWithMessage(message []byte, topic string) err
 	}
 
 	// Wait for message deliveries before shutting down
-	p.Producer.Flush(15 * 1000)
+	p.Producer.Flush(15 * (int(time.Millisecond)))
 
 	return nil
 }
@@ -93,3 +94,5 @@ func (p *ProducerKafka) SendToKafkaWithMessage(message []byte, topic string) err
 
 	return nil
 }*/
+
+// TODO : partition ne işe yarar kafka.message - partition key ne işe yarar.

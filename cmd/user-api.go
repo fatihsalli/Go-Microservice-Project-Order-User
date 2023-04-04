@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	docs "OrderUserProject/docs/user"
 	"OrderUserProject/internal/apps/user-api"
 	"OrderUserProject/internal/apps/user-api/handler"
 	"OrderUserProject/internal/configs"
@@ -10,11 +11,26 @@ import (
 	echoLog "github.com/labstack/gommon/log"
 	"github.com/neko-neko/echo-logrus/v2/log"
 	"github.com/sirupsen/logrus"
+	echoSwagger "github.com/swaggo/echo-swagger"
 	"net/http"
 	"os"
 	"time"
 )
 
+// @title           User Microservice
+// @version         1.0
+// @description     This is a user microservice project.
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@swagger.io
+
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host      localhost:8012
+// @BasePath  /api
 func StartUserAPI() {
 	e := echo.New()
 
@@ -35,6 +51,11 @@ func StartUserAPI() {
 
 	// To create new app
 	handler.NewUserHandler(e, UserService)
+
+	// If we don't use this swagger give an error
+	docs.SwaggerInfouserAPI.Host = "localhost:8012"
+	// Add swagger
+	e.GET("/swagger/*", echoSwagger.EchoWrapHandler(echoSwagger.InstanceName("userAPI")))
 
 	// Start server
 	go func() {

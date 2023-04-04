@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"OrderUserProject/docs"
+	docs "OrderUserProject/docs/order"
 	"OrderUserProject/internal/apps/order-api"
 	"OrderUserProject/internal/apps/order-api/handler"
 	"OrderUserProject/internal/configs"
@@ -18,6 +18,20 @@ import (
 	"time"
 )
 
+// @title           Order Microservice
+// @version         1.0
+// @description     This is an order microservice project.
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@swagger.io
+
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host      localhost:8011
+// @BasePath  /api
 func StartOrderAPI() {
 	e := echo.New()
 
@@ -44,9 +58,9 @@ func StartOrderAPI() {
 	handler.NewOrderHandler(e, OrderService, producer, &config)
 
 	// If we don't use this swagger give an error
-	docs.SwaggerInfo.Host = "localhost:8011"
+	docs.SwaggerInfoorderAPI.Host = "localhost:8011"
 	// Add swagger
-	e.GET("/swagger/*any", echoSwagger.WrapHandler)
+	e.GET("/swagger/*", echoSwagger.EchoWrapHandler(echoSwagger.InstanceName("orderAPI")))
 
 	// Start server
 	go func() {

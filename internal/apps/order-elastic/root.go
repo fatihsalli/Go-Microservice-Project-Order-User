@@ -1,5 +1,8 @@
 package order_elastic
 
+// TODO : Order Event orderId alıp order modeli push ediyor
+// TODO : 2.proje order modeli çekip elastice kaydedecek
+
 import (
 	"OrderUserProject/internal/configs"
 	kafkaPackage "OrderUserProject/pkg/kafka"

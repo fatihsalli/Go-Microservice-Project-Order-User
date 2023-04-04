@@ -26,6 +26,7 @@ func StartOrderElastic() {
 	service1 := order_elastic.NewOrderElasticService()
 	producer1 := kafka.NewProducerKafka(config.Kafka.Address)
 	consumer1 := kafka.NewConsumerKafka()
+
 	orderSyncService1 := order_elastic.NewOrderSyncService(service1, consumer1, producer1, &config, logger)
 
 	// Second OrderSyncService => Consume orderModel, save on elastic search

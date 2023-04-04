@@ -32,3 +32,5 @@ type AddressResponse struct {
 		IsDefaultRegularAddress bool `json:"isDefaultRegularAddress" bson:"isDefaultRegularAddress"`
 	} `json:"default" bson:"default"`
 }
+
+// User Addresslerde Id değeri olsun.

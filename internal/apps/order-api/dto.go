@@ -14,6 +14,8 @@ type OrderCreateRequest struct {
 	} `json:"product" bson:"product"`
 }
 
+// TODO: Dto da address id al ve model tarafında address response olarak ekle.
+
 type OrderUpdateRequest struct {
 	ID             string          `json:"id" bson:"_id"`
 	UserId         string          `json:"userId" bson:"userId"`
@@ -58,3 +60,6 @@ type OrderResponseForElastic struct {
 	OrderID string `json:"orderID" bson:"orderID"`
 	Status  string `json:"status" bson:"status"`
 }
+
+// TODO: Bir kullanıcının her zaman max ve min sayı olarak 1 tane default adresi olması lazım (1 tane regular 1 tane invoice)
+//
