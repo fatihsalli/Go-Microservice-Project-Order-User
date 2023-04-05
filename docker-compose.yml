@@ -52,6 +52,15 @@ services:
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
     ports:
       - "5601:5601"
+  order-api:
+    container_name: order-api
+    build:
+      context: .
+      dockerfile: /internal/apps/order-api/Dockerfile
+    ports:
+      - "8011:80"
+    depends_on:
+      - kafka
 
 volumes:
   elasticsearch-data:

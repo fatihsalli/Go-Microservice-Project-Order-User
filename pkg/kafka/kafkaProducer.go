@@ -52,5 +52,3 @@ func (p *ProducerKafka) SendToKafkaWithMessage(message []byte, topic string) err
 
 	return nil
 }
-
-// TODO : partition ne işe yarar kafka.message - partition key ne işe yarar.

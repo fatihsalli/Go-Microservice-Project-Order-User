@@ -41,5 +41,3 @@ type Address struct {
 		IsDefaultRegularAddress bool `json:"isDefaultRegularAddress" bson:"isDefaultRegularAddress"`
 	} `json:"default" bson:"default"`
 }
-
-// TODO: Tüm defaultları kaldırmamalı en son 1 tane değer kaldığında default olarak kalmalı kaldıramamalı
