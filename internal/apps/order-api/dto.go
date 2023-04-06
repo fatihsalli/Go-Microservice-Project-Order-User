@@ -3,30 +3,28 @@ package order_api
 import "time"
 
 type OrderCreateRequest struct {
-	UserId         string `json:"userId" bson:"userId"`
-	Status         string `json:"status" bson:"status"`
-	Address        string `json:"address" bson:"address"`
-	InvoiceAddress string `json:"invoiceAddress" bson:"invoiceAddress"`
+	UserId         string `json:"userId" bson:"userId" validate:"required,uuid4"`
+	Status         string `json:"status" bson:"status" validate:"required,min=1,max=100"`
+	Address        string `json:"address" bson:"address" validate:"required,uuid4"`
+	InvoiceAddress string `json:"invoiceAddress" bson:"invoiceAddress" validate:"required,uuid4"`
 	Product        []struct {
-		Name     string  `json:"name" bson:"name"`
-		Quantity int     `json:"quantity" bson:"quantity"`
-		Price    float64 `json:"price" bson:"price"`
-	} `json:"product" bson:"product"`
+		Name     string  `json:"name" bson:"name" validate:"required,min=1,max=100"`
+		Quantity int     `json:"quantity" bson:"quantity" validate:"required"`
+		Price    float64 `json:"price" bson:"price" validate:"required"`
+	} `json:"product" bson:"product" validate:"required"`
 }
 
-// TODO: Dto da address id al ve model tarafında address response olarak ekle.
-
 type OrderUpdateRequest struct {
-	ID             string `json:"id" bson:"_id"`
-	UserId         string `json:"userId" bson:"userId"`
-	Status         string `json:"status" bson:"status"`
-	Address        string `json:"address" bson:"address"`
-	InvoiceAddress string `json:"invoiceAddress" bson:"invoiceAddress"`
+	ID             string `json:"id" bson:"_id" validate:"required,uuid4"`
+	UserId         string `json:"userId" bson:"userId" validate:"required,uuid4"`
+	Status         string `json:"status" bson:"status" validate:"required,min=1,max=100"`
+	Address        string `json:"address" bson:"address" validate:"required,uuid4"`
+	InvoiceAddress string `json:"invoiceAddress" bson:"invoiceAddress" validate:"required,uuid4"`
 	Product        []struct {
-		Name     string  `json:"name" bson:"name"`
-		Quantity int     `json:"quantity" bson:"quantity"`
-		Price    float64 `json:"price" bson:"price"`
-	} `json:"product" bson:"product"`
+		Name     string  `json:"name" bson:"name" validate:"required,min=1,max=100"`
+		Quantity int     `json:"quantity" bson:"quantity" validate:"required"`
+		Price    float64 `json:"price" bson:"price" validate:"required"`
+	} `json:"product" bson:"product" validate:"required"`
 }
 
 type OrderResponse struct {
@@ -68,6 +66,3 @@ type OrderResponseForElastic struct {
 	OrderID string `json:"orderID" bson:"orderID"`
 	Status  string `json:"status" bson:"status"`
 }
-
-// TODO: Bir kullanıcının her zaman max ve min sayı olarak 1 tane default adresi olması lazım (1 tane regular 1 tane invoice)
-//

@@ -2,7 +2,7 @@ package user_api
 
 type UserCreateRequest struct {
 	Name      string            `json:"name"`
-	Email     string            `json:"email"`
+	Email     string            `json:"email" validate:"required,email"`
 	Password  string            `json:"password"`
 	Addresses []AddressResponse `json:"address"`
 }
@@ -10,7 +10,7 @@ type UserCreateRequest struct {
 type UserUpdateRequest struct {
 	ID        string            `json:"id"`
 	Name      string            `json:"name"`
-	Email     string            `json:"email"`
+	Email     string            `json:"email" validate:"required,email"`
 	Password  string            `json:"password"`
 	Addresses []AddressResponse `json:"address"`
 }
