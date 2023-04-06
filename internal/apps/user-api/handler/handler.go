@@ -25,6 +25,7 @@ func NewUserHandler(e *echo.Echo, service *user_api.UserService) *UserHandler {
 	router.GET("/:id", b.GetUserById)
 	router.POST("", b.CreateUser)
 	router.PUT("", b.UpdateUser)
+	router.PUT("/:id", b.AddOrChangeAddress)
 	router.DELETE("/:id", b.DeleteUser)
 
 	return b
@@ -73,7 +74,7 @@ func (h *UserHandler) GetAllUsers(c echo.Context) error {
 		Data:           usersResponse,
 	}
 
-	c.Logger().Info("All books are listed.")
+	c.Logger().Info("All users are listed.")
 	return c.JSON(http.StatusOK, jsonSuccessResultData)
 }
 
@@ -153,31 +154,6 @@ func (h *UserHandler) CreateUser(c echo.Context) error {
 		})
 	}
 
-	// Invoice and regular addresses check
-	if len(userRequest.Addresses) == 1 {
-		userRequest.Addresses[0].Default.IsDefaultInvoiceAddress = true
-		userRequest.Addresses[0].Default.IsDefaultRegularAddress = true
-	} else if len(userRequest.Addresses) > 1 {
-		hasDefaultInvoice := false
-		hasDefaultRegular := false
-		for _, addressRequest := range userRequest.Addresses {
-			if addressRequest.Default.IsDefaultRegularAddress {
-				hasDefaultRegular = true
-			}
-			if addressRequest.Default.IsDefaultInvoiceAddress {
-				hasDefaultInvoice = true
-			}
-		}
-
-		if !hasDefaultInvoice {
-			userRequest.Addresses[0].Default.IsDefaultInvoiceAddress = true
-		}
-
-		if !hasDefaultRegular {
-			userRequest.Addresses[0].Default.IsDefaultRegularAddress = true
-		}
-	}
-
 	// we can use automapper, but it will cause performance loss.
 	var user models.User
 	var address models.Address
@@ -204,7 +180,10 @@ func (h *UserHandler) CreateUser(c echo.Context) error {
 	}
 	user.Password = hashedPassword
 
-	result, err := h.Service.Insert(user)
+	// Invoice and regular addresses check
+	userCheckAddress := h.Service.InvoiceRegularAddressCheck(user)
+
+	result, err := h.Service.Insert(userCheckAddress)
 
 	if err != nil {
 		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
@@ -245,7 +224,7 @@ func (h *UserHandler) UpdateUser(c echo.Context) error {
 	}
 
 	// to find user
-	userPasswordCheck, err := h.Service.GetUserById(userUpdateRequest.ID)
+	userExist, err := h.Service.GetUserById(userUpdateRequest.ID)
 	if err != nil {
 		c.Logger().Errorf("Not found exception: {%v} with id not found!", userUpdateRequest.ID)
 		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
@@ -253,61 +232,15 @@ func (h *UserHandler) UpdateUser(c echo.Context) error {
 		})
 	}
 
-	// Check address
-	if len(userUpdateRequest.Addresses) < 1 {
-		c.Logger().Error("Address value is empty.")
-		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
-			Message: "Address value cannot empty. At least you have to put one address!",
-		})
-	}
-
-	// Invoice and regular addresses check
-	if len(userUpdateRequest.Addresses) == 1 {
-		userUpdateRequest.Addresses[0].Default.IsDefaultInvoiceAddress = true
-		userUpdateRequest.Addresses[0].Default.IsDefaultRegularAddress = true
-	} else if len(userUpdateRequest.Addresses) > 1 {
-		hasDefaultInvoice := false
-		hasDefaultRegular := false
-		for _, addressRequest := range userUpdateRequest.Addresses {
-			if addressRequest.Default.IsDefaultRegularAddress {
-				hasDefaultRegular = true
-			}
-			if addressRequest.Default.IsDefaultInvoiceAddress {
-				hasDefaultInvoice = true
-			}
-		}
-
-		if !hasDefaultInvoice {
-			userUpdateRequest.Addresses[0].Default.IsDefaultInvoiceAddress = true
-		}
-
-		if !hasDefaultRegular {
-			userUpdateRequest.Addresses[0].Default.IsDefaultRegularAddress = true
-		}
-	}
-
-	// TODO : Address ID olayı çözülecek
 	// we can use automapper, but it will cause performance loss.
 	var user models.User
-	var address models.Address
 	user.ID = userUpdateRequest.ID
 	user.Name = userUpdateRequest.Name
 	user.Email = userUpdateRequest.Email
-	for _, addressRequest := range userUpdateRequest.Addresses {
-		if addressRequest.ID == "" {
-			addressRequest.ID = uuid.New().String()
-		}
-		address.ID = addressRequest.ID
-		address.Address = addressRequest.Address
-		address.City = addressRequest.City
-		address.District = addressRequest.District
-		address.Type = addressRequest.Type
-		address.Default = addressRequest.Default
-		user.Addresses = append(user.Addresses, address)
-	}
+	user.Addresses = userExist.Addresses
 
 	// using 'bcrypt' to check password (tested)
-	err = bcrypt.CompareHashAndPassword(userPasswordCheck.Password, []byte(userUpdateRequest.Password))
+	err = bcrypt.CompareHashAndPassword(userExist.Password, []byte(userUpdateRequest.Password))
 	if err != nil {
 		c.Logger().Error("Password is wrong. Please put correct password!")
 		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
@@ -320,7 +253,7 @@ func (h *UserHandler) UpdateUser(c echo.Context) error {
 	if err != nil || result == false {
 		c.Logger().Errorf("StatusInternalServerError: {%v} ", err.Error())
 		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
-			Message: "Book cannot create! Something went wrong.",
+			Message: "User cannot update! Something went wrong.",
 		})
 	}
 
@@ -361,5 +294,85 @@ func (h *UserHandler) DeleteUser(c echo.Context) error {
 	}
 
 	c.Logger().Infof("{%v} with id is deleted.", jsonSuccessResultId.ID)
+	return c.JSON(http.StatusOK, jsonSuccessResultId)
+}
+
+// AddOrChangeAddress godoc
+// @Summary add or change a user's address by userID
+// @ID add-or-change-address-with-userID
+// @Produce json
+// @Param id path string true "user ID"
+// @Param data body user_api.AddressResponse true "address data"
+// @Success 200 {object} models.JSONSuccessResultId
+// @Success 404 {object} pkg.NotFoundError
+// @Success 500 {object} pkg.InternalServerError
+// @Router /users/{id} [put]
+func (h *UserHandler) AddOrChangeAddress(c echo.Context) error {
+	query := c.Param("id")
+
+	user, err := h.Service.GetUserById(query)
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.Logger().Errorf("Not found exception: {%v} with id not found!", query)
+			return c.JSON(http.StatusNotFound, pkg.NotFoundError{
+				Message: fmt.Sprintf("Not found exception: {%v} with id not found!", query),
+			})
+		}
+		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
+		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
+			Message: "Something went wrong!",
+		})
+	}
+
+	var userAddress user_api.AddressResponse
+
+	// we parse the data as json into the struct
+	if err := c.Bind(&userAddress); err != nil {
+		c.Logger().Errorf("Bad Request! %v", err)
+		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
+			Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", err.Error()),
+		})
+	}
+
+	newAddressAdded := true
+	var userAddressModel models.Address
+	userAddressModel.ID = userAddress.ID
+	userAddressModel.Address = userAddress.Address
+	userAddressModel.City = userAddress.City
+	userAddressModel.District = userAddress.District
+	userAddressModel.Type = userAddress.Type
+	userAddressModel.Default = userAddress.Default
+
+	for i, address := range user.Addresses {
+		if address.ID == userAddressModel.ID {
+			user.Addresses[i] = userAddressModel
+			newAddressAdded = false
+		}
+	}
+
+	if newAddressAdded {
+		userAddressModel.ID = uuid.New().String()
+		user.Addresses = append(user.Addresses, userAddressModel)
+	}
+
+	userAddressCheck := h.Service.InvoiceRegularAddressCheck(user)
+
+	result, err := h.Service.Update(userAddressCheck)
+
+	if err != nil || result == false {
+		c.Logger().Errorf("StatusInternalServerError: {%v} ", err.Error())
+		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
+			Message: "User cannot update! Something went wrong.",
+		})
+	}
+
+	// to response id and success boolean
+	jsonSuccessResultId := models.JSONSuccessResultId{
+		ID:      userAddressCheck.ID,
+		Success: result,
+	}
+
+	c.Logger().Infof("{%v} with id is updated.", jsonSuccessResultId.ID)
 	return c.JSON(http.StatusOK, jsonSuccessResultId)
 }

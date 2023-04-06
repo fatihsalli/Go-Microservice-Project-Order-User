@@ -22,6 +22,7 @@ type IUserService interface {
 	Insert(user models.User) (models.User, error)
 	Update(user models.User) (bool, error)
 	Delete(id string) (bool, error)
+	InvoiceRegularAddressCheck(user models.User) models.User
 }
 
 func (b *UserService) GetAll() ([]models.User, error) {
@@ -82,4 +83,33 @@ func (b *UserService) Delete(id string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (b *UserService) InvoiceRegularAddressCheck(user models.User) models.User {
+	// Invoice and regular addresses check
+	if len(user.Addresses) == 1 {
+		user.Addresses[0].Default.IsDefaultInvoiceAddress = true
+		user.Addresses[0].Default.IsDefaultRegularAddress = true
+	} else if len(user.Addresses) > 1 {
+		hasDefaultInvoice := false
+		hasDefaultRegular := false
+		for _, addressRequest := range user.Addresses {
+			if addressRequest.Default.IsDefaultRegularAddress {
+				hasDefaultRegular = true
+			}
+			if addressRequest.Default.IsDefaultInvoiceAddress {
+				hasDefaultInvoice = true
+			}
+		}
+
+		if !hasDefaultInvoice {
+			user.Addresses[0].Default.IsDefaultInvoiceAddress = true
+		}
+
+		if !hasDefaultRegular {
+			user.Addresses[0].Default.IsDefaultRegularAddress = true
+		}
+	}
+
+	return user
 }

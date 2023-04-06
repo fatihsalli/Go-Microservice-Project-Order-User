@@ -218,7 +218,14 @@ func (h *OrderHandler) CreateOrder(c echo.Context) error {
 			order.InvoiceAddress.Default = invoiceAddress.Default
 		}
 	}
-	order.Product = orderRequest.Product
+	for _, productRequest := range orderRequest.Product {
+		for _, productModel := range order.Product {
+			productModel.Name = productRequest.Name
+			productModel.Price = productRequest.Price
+			productModel.Quantity = productRequest.Quantity
+			order.Product = append(order.Product, productModel)
+		}
+	}
 
 	// Service => Insert
 	result, err := h.Service.Insert(order)
@@ -331,7 +338,14 @@ func (h *OrderHandler) UpdateOrder(c echo.Context) error {
 			order.InvoiceAddress.Default = invoiceAddress.Default
 		}
 	}
-	order.Product = orderUpdateRequest.Product
+	for _, productRequest := range orderUpdateRequest.Product {
+		for _, productModel := range order.Product {
+			productModel.Name = productRequest.Name
+			productModel.Price = productRequest.Price
+			productModel.Quantity = productRequest.Quantity
+			order.Product = append(order.Product, productModel)
+		}
+	}
 
 	// Service => Update
 	result, err := h.Service.Update(order)
