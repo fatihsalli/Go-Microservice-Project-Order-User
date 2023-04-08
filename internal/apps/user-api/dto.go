@@ -44,6 +44,10 @@ type AddressUpdateRequest struct {
 	} `json:"default" bson:"default"`
 }
 
+type AddressDeleteRequest struct {
+	ID string `json:"id" validate:"required,uuid4"`
+}
+
 type AddressResponse struct {
 	ID       string   `json:"id"`
 	Address  string   `json:"address" bson:"address"`

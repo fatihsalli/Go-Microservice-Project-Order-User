@@ -442,14 +442,72 @@ func (h *UserHandler) ChangeAddress(c echo.Context) error {
 
 // DeleteAddress godoc
 // @Summary delete a user's address by userID
-// @ID change-address-with-userID
+// @ID delete-address-with-userID
 // @Produce json
 // @Param id path string true "user ID"
-// @Param data body user_api.AddressUpdateRequest true "address data"
+// @Param data body user_api.AddressDeleteRequest true "address data"
 // @Success 200 {object} models.JSONSuccessResultId
 // @Success 404 {object} pkg.NotFoundError
 // @Success 500 {object} pkg.InternalServerError
 // @Router /users/{id} [put]
 func (h *UserHandler) DeleteAddress(c echo.Context) error {
+	query := c.Param("id")
 
+	user, err := h.Service.GetUserById(query)
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.Logger().Errorf("Not found exception: {%v} with id not found!", query)
+			return c.JSON(http.StatusNotFound, pkg.NotFoundError{
+				Message: fmt.Sprintf("Not found exception: {%v} with id not found!", query),
+			})
+		}
+		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
+		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
+			Message: "Something went wrong!",
+		})
+	}
+
+	if len(user.Addresses) < 2 {
+		c.Logger().Errorf("BadRequestError: %v", err.Error())
+		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
+			Message: "You cannot delete user's address. Because there is just one address.",
+		})
+	}
+
+	var userAddress user_api.AddressDeleteRequest
+
+	// we parse the data as json into the struct
+	if err := c.Bind(&userAddress); err != nil {
+		c.Logger().Errorf("Bad Request! %v", err)
+		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
+			Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", err.Error()),
+		})
+	}
+
+	for i, address := range user.Addresses {
+		if address.ID == userAddress.ID {
+			user.Addresses = append(user.Addresses[:i], user.Addresses[i+1:]...)
+		}
+	}
+
+	userAddressCheck := h.Service.InvoiceRegularAddressCheck(user)
+
+	result, err := h.Service.Update(userAddressCheck)
+
+	if err != nil || result == false {
+		c.Logger().Errorf("StatusInternalServerError: {%v} ", err.Error())
+		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
+			Message: "User cannot update! Something went wrong.",
+		})
+	}
+
+	// to response id and success boolean
+	jsonSuccessResultId := models.JSONSuccessResultId{
+		ID:      userAddressCheck.ID,
+		Success: result,
+	}
+
+	c.Logger().Infof("{%v} with id is updated.", jsonSuccessResultId.ID)
+	return c.JSON(http.StatusOK, jsonSuccessResultId)
 }
