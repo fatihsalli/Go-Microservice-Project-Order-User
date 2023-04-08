@@ -8,20 +8,22 @@ import (
 	"OrderUserProject/pkg/kafka"
 	"encoding/json"
 	"fmt"
+	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 )
 
 type OrderHandler struct {
-	Service  *order_api.OrderService
-	Producer *kafka.ProducerKafka
-	Config   *configs.Config
+	Service   *order_api.OrderService
+	Producer  *kafka.ProducerKafka
+	Config    *configs.Config
+	Validator *validator.Validate
 }
 
-func NewOrderHandler(e *echo.Echo, service *order_api.OrderService, producer *kafka.ProducerKafka, config *configs.Config) *OrderHandler {
+func NewOrderHandler(e *echo.Echo, service *order_api.OrderService, producer *kafka.ProducerKafka, config *configs.Config, v *validator.Validate) *OrderHandler {
 	router := e.Group("api/orders")
-	b := &OrderHandler{Service: service, Producer: producer, Config: config}
+	b := &OrderHandler{Service: service, Producer: producer, Config: config, Validator: v}
 
 	//Routes
 	router.GET("", b.GetAllOrders)
@@ -165,6 +167,14 @@ func (h *OrderHandler) CreateOrder(c echo.Context) error {
 		})
 	}
 
+	// Validate user input using the validator instance
+	if err := h.Validator.Struct(orderRequest); err != nil {
+		c.Logger().Errorf("Bad Request. Please put valid order model ! %v", err.Error())
+		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
+			Message: fmt.Sprintf("Bad Request. Please put valid order model! %v", err.Error()),
+		})
+	}
+
 	// Check user with http.Client
 	user, err := h.Service.GetUser(orderRequest.UserId)
 	if err != nil {
@@ -274,6 +284,14 @@ func (h *OrderHandler) UpdateOrder(c echo.Context) error {
 		c.Logger().Errorf("Bad Request! %v", err)
 		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
 			Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", err.Error()),
+		})
+	}
+
+	// Validate user input using the validator instance
+	if err := h.Validator.Struct(orderUpdateRequest); err != nil {
+		c.Logger().Errorf("Bad Request. Please put valid order model ! %v", err.Error())
+		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
+			Message: fmt.Sprintf("Bad Request. Please put valid order model! %v", err.Error()),
 		})
 	}
 

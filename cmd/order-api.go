@@ -8,6 +8,7 @@ import (
 	"OrderUserProject/internal/repository"
 	"OrderUserProject/pkg"
 	"OrderUserProject/pkg/kafka"
+	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	echoLog "github.com/labstack/gommon/log"
 	"github.com/neko-neko/echo-logrus/v2/log"
@@ -35,6 +36,9 @@ import (
 func StartOrderAPI() {
 	e := echo.New()
 
+	// Validator instance
+	v := validator.New()
+
 	// Logger instead of echo.log we use 'logrus' package
 	log.Logger().SetOutput(os.Stdout)
 	log.Logger().SetLevel(echoLog.INFO)
@@ -55,7 +59,7 @@ func StartOrderAPI() {
 	OrderService := order_api.NewOrderService(OrderRepository)
 
 	// Create handler
-	handler.NewOrderHandler(e, OrderService, producer, &config)
+	handler.NewOrderHandler(e, OrderService, producer, &config, v)
 
 	// If we don't use this swagger give an error
 	docs.SwaggerInfoorderAPI.Host = "localhost:8011"
