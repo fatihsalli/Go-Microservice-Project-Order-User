@@ -3,7 +3,7 @@ package user_api
 type UserCreateRequest struct {
 	Name      string                 `json:"name" validate:"required,min=1,max=100"`
 	Email     string                 `json:"email" validate:"required,email"`
-	Password  string                 `json:"password" validate:"required,min=1,max=100"`
+	Password  string                 `json:"password" validate:"required,min=8,max=16"`
 	Addresses []AddressCreateRequest `json:"address" validate:"required"`
 }
 
@@ -11,7 +11,7 @@ type UserUpdateRequest struct {
 	ID       string `json:"id" validate:"required,uuid4"`
 	Name     string `json:"name" validate:"required,min=1,max=100"`
 	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,min=1,max=100"`
+	Password string `json:"password" validate:"required,min=8,max=16"`
 }
 
 type UserResponse struct {
@@ -22,7 +22,7 @@ type UserResponse struct {
 }
 
 type AddressCreateRequest struct {
-	Address  string   `json:"address" bson:"address" validate:"required"`
+	Address  string   `json:"address" bson:"address" validate:"required,min=1,max=200"`
 	City     string   `json:"city" bson:"city" validate:"required,min=1,max=100"`
 	District string   `json:"district" bson:"district" validate:"required,min=1,max=100"`
 	Type     []string `json:"type" bson:"type" validate:"required,min=1,max=100"`

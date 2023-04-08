@@ -7,6 +7,7 @@ import (
 	"OrderUserProject/internal/configs"
 	"OrderUserProject/internal/repository"
 	"OrderUserProject/pkg"
+	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	echoLog "github.com/labstack/gommon/log"
 	"github.com/neko-neko/echo-logrus/v2/log"
@@ -34,6 +35,9 @@ import (
 func StartUserAPI() {
 	e := echo.New()
 
+	// Validator instance
+	v := validator.New()
+
 	// Logger instead of echo.log we use 'logrus' package
 	log.Logger().SetOutput(os.Stdout)
 	log.Logger().SetLevel(echoLog.INFO)
@@ -50,7 +54,7 @@ func StartUserAPI() {
 	UserService := user_api.NewUserService(UserRepository)
 
 	// To create new app
-	handler.NewUserHandler(e, UserService)
+	handler.NewUserHandler(e, UserService, v)
 
 	// If we don't use this swagger give an error
 	docs.SwaggerInfouserAPI.Host = "localhost:8012"

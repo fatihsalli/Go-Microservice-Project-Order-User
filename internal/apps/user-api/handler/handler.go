@@ -6,6 +6,7 @@ import (
 	"OrderUserProject/pkg"
 	"errors"
 	"fmt"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -14,12 +15,13 @@ import (
 )
 
 type UserHandler struct {
-	Service *user_api.UserService
+	Service   *user_api.UserService
+	Validator *validator.Validate
 }
 
-func NewUserHandler(e *echo.Echo, service *user_api.UserService) *UserHandler {
+func NewUserHandler(e *echo.Echo, service *user_api.UserService, v *validator.Validate) *UserHandler {
 	router := e.Group("api/users")
-	b := &UserHandler{Service: service}
+	b := &UserHandler{Service: service, Validator: v}
 
 	//Routes
 	router.GET("", b.GetAllUsers)
@@ -157,6 +159,14 @@ func (h *UserHandler) CreateUser(c echo.Context) error {
 		})
 	}
 
+	// Validate user input using the validator instance
+	if err := h.Validator.Struct(userRequest); err != nil {
+		c.Logger().Errorf("Bad Request. Please put valid user model ! %v", err.Error())
+		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
+			Message: fmt.Sprintf("Bad Request. Please put valid user model! %v", err.Error()),
+		})
+	}
+
 	// we can use automapper, but it will cause performance loss.
 	var user models.User
 	var address models.Address
@@ -223,6 +233,14 @@ func (h *UserHandler) UpdateUser(c echo.Context) error {
 		c.Logger().Errorf("Bad Request! %v", err)
 		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
 			Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", err.Error()),
+		})
+	}
+
+	// Validate user input using the validator instance
+	if err := h.Validator.Struct(userUpdateRequest); err != nil {
+		c.Logger().Errorf("Bad Request. Please put valid user model ! %v", err.Error())
+		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
+			Message: fmt.Sprintf("Bad Request. Please put valid user model! %v", err.Error()),
 		})
 	}
 
@@ -338,6 +356,14 @@ func (h *UserHandler) AddAddress(c echo.Context) error {
 		})
 	}
 
+	// Validate user input using the validator instance
+	if err := h.Validator.Struct(userAddress); err != nil {
+		c.Logger().Errorf("Bad Request. Please put valid user address model ! %v", err.Error())
+		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
+			Message: fmt.Sprintf("Bad Request. Please put valid user address model! %v", err.Error()),
+		})
+	}
+
 	var userAddressModel models.Address
 	userAddressModel.ID = uuid.New().String()
 	userAddressModel.Address = userAddress.Address
@@ -404,6 +430,14 @@ func (h *UserHandler) ChangeAddress(c echo.Context) error {
 		c.Logger().Errorf("Bad Request! %v", err)
 		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
 			Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", err.Error()),
+		})
+	}
+
+	// Validate user input using the validator instance
+	if err := h.Validator.Struct(userAddress); err != nil {
+		c.Logger().Errorf("Bad Request. Please put valid user address model ! %v", err.Error())
+		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
+			Message: fmt.Sprintf("Bad Request. Please put valid user address model! %v", err.Error()),
 		})
 	}
 
@@ -484,6 +518,14 @@ func (h *UserHandler) DeleteAddress(c echo.Context) error {
 		c.Logger().Errorf("Bad Request! %v", err)
 		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
 			Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", err.Error()),
+		})
+	}
+
+	// Validate user input using the validator instance
+	if err := h.Validator.Struct(userAddress); err != nil {
+		c.Logger().Errorf("Bad Request. Please put valid user address model ! %v", err.Error())
+		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
+			Message: fmt.Sprintf("Bad Request. Please put valid user address model! %v", err.Error()),
 		})
 	}
 
