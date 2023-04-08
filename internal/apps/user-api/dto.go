@@ -45,7 +45,7 @@ type AddressUpdateRequest struct {
 }
 
 type AddressDeleteRequest struct {
-	ID string `json:"id" validate:"required,uuid4"`
+	AddressID string `json:"addressID" validate:"required,uuid4"`
 }
 
 type AddressResponse struct {

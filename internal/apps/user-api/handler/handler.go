@@ -4,6 +4,7 @@ import (
 	"OrderUserProject/internal/apps/user-api"
 	"OrderUserProject/internal/models"
 	"OrderUserProject/pkg"
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -25,8 +26,9 @@ func NewUserHandler(e *echo.Echo, service *user_api.UserService) *UserHandler {
 	router.GET("/:id", b.GetUserById)
 	router.POST("", b.CreateUser)
 	router.PUT("", b.UpdateUser)
-	router.PUT("/:id", b.AddAddress)
-	router.PUT("/:id", b.ChangeAddress)
+	router.PUT("/add-address/:id", b.AddAddress)
+	router.PUT("/change-address/:id", b.ChangeAddress)
+	router.PUT("/delete-address/:id", b.DeleteAddress)
 	router.DELETE("/:id", b.DeleteUser)
 
 	return b
@@ -307,7 +309,7 @@ func (h *UserHandler) DeleteUser(c echo.Context) error {
 // @Success 200 {object} models.JSONSuccessResultId
 // @Success 404 {object} pkg.NotFoundError
 // @Success 500 {object} pkg.InternalServerError
-// @Router /users/{id} [put]
+// @Router /users/add-address/{id} [put]
 func (h *UserHandler) AddAddress(c echo.Context) error {
 	query := c.Param("id")
 
@@ -359,7 +361,7 @@ func (h *UserHandler) AddAddress(c echo.Context) error {
 
 	// to response id and success boolean
 	jsonSuccessResultId := models.JSONSuccessResultId{
-		ID:      userAddressCheck.ID,
+		ID:      userAddressModel.ID,
 		Success: result,
 	}
 
@@ -376,7 +378,7 @@ func (h *UserHandler) AddAddress(c echo.Context) error {
 // @Success 200 {object} models.JSONSuccessResultId
 // @Success 404 {object} pkg.NotFoundError
 // @Success 500 {object} pkg.InternalServerError
-// @Router /users/{id} [put]
+// @Router /users/change-address/{id} [put]
 func (h *UserHandler) ChangeAddress(c echo.Context) error {
 	query := c.Param("id")
 
@@ -432,7 +434,7 @@ func (h *UserHandler) ChangeAddress(c echo.Context) error {
 
 	// to response id and success boolean
 	jsonSuccessResultId := models.JSONSuccessResultId{
-		ID:      userAddressCheck.ID,
+		ID:      userAddressModel.ID,
 		Success: result,
 	}
 
@@ -449,7 +451,7 @@ func (h *UserHandler) ChangeAddress(c echo.Context) error {
 // @Success 200 {object} models.JSONSuccessResultId
 // @Success 404 {object} pkg.NotFoundError
 // @Success 500 {object} pkg.InternalServerError
-// @Router /users/{id} [put]
+// @Router /users/delete-address/{id} [put]
 func (h *UserHandler) DeleteAddress(c echo.Context) error {
 	query := c.Param("id")
 
@@ -469,7 +471,7 @@ func (h *UserHandler) DeleteAddress(c echo.Context) error {
 	}
 
 	if len(user.Addresses) < 2 {
-		c.Logger().Errorf("BadRequestError: %v", err.Error())
+		c.Logger().Errorf("BadRequestError: %v", errors.New("you cannot delete user's address"))
 		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
 			Message: "You cannot delete user's address. Because there is just one address.",
 		})
@@ -486,7 +488,7 @@ func (h *UserHandler) DeleteAddress(c echo.Context) error {
 	}
 
 	for i, address := range user.Addresses {
-		if address.ID == userAddress.ID {
+		if address.ID == userAddress.AddressID {
 			user.Addresses = append(user.Addresses[:i], user.Addresses[i+1:]...)
 		}
 	}
@@ -504,7 +506,7 @@ func (h *UserHandler) DeleteAddress(c echo.Context) error {
 
 	// to response id and success boolean
 	jsonSuccessResultId := models.JSONSuccessResultId{
-		ID:      userAddressCheck.ID,
+		ID:      userAddress.AddressID,
 		Success: result,
 	}
 
