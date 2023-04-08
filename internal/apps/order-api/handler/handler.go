@@ -228,14 +228,12 @@ func (h *OrderHandler) CreateOrder(c echo.Context) error {
 			order.InvoiceAddress.Default = invoiceAddress.Default
 		}
 	}
-	for _, productRequest := range orderRequest.Product {
-		for _, productModel := range order.Product {
-			productModel.Name = productRequest.Name
-			productModel.Price = productRequest.Price
-			productModel.Quantity = productRequest.Quantity
-			order.Product = append(order.Product, productModel)
-		}
-	}
+
+	order.Product = []struct {
+		Name     string  `json:"name" bson:"name"`
+		Quantity int     `json:"quantity" bson:"quantity"`
+		Price    float64 `json:"price" bson:"price"`
+	}(orderRequest.Product)
 
 	// Service => Insert
 	result, err := h.Service.Insert(order)
@@ -356,14 +354,11 @@ func (h *OrderHandler) UpdateOrder(c echo.Context) error {
 			order.InvoiceAddress.Default = invoiceAddress.Default
 		}
 	}
-	for _, productRequest := range orderUpdateRequest.Product {
-		for _, productModel := range order.Product {
-			productModel.Name = productRequest.Name
-			productModel.Price = productRequest.Price
-			productModel.Quantity = productRequest.Quantity
-			order.Product = append(order.Product, productModel)
-		}
-	}
+	order.Product = []struct {
+		Name     string  `json:"name" bson:"name"`
+		Quantity int     `json:"quantity" bson:"quantity"`
+		Price    float64 `json:"price" bson:"price"`
+	}(orderUpdateRequest.Product)
 
 	// Service => Update
 	result, err := h.Service.Update(order)
