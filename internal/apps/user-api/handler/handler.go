@@ -25,7 +25,8 @@ func NewUserHandler(e *echo.Echo, service *user_api.UserService) *UserHandler {
 	router.GET("/:id", b.GetUserById)
 	router.POST("", b.CreateUser)
 	router.PUT("", b.UpdateUser)
-	router.PUT("/:id", b.AddOrChangeAddress)
+	router.PUT("/:id", b.AddAddress)
+	router.PUT("/:id", b.ChangeAddress)
 	router.DELETE("/:id", b.DeleteUser)
 
 	return b
@@ -297,17 +298,17 @@ func (h *UserHandler) DeleteUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, jsonSuccessResultId)
 }
 
-// AddOrChangeAddress godoc
-// @Summary add or change a user's address by userID
-// @ID add-or-change-address-with-userID
+// AddAddress godoc
+// @Summary add a user's address by userID
+// @ID add-address-with-userID
 // @Produce json
 // @Param id path string true "user ID"
-// @Param data body user_api.AddressResponse true "address data"
+// @Param data body user_api.AddressCreateRequest true "address data"
 // @Success 200 {object} models.JSONSuccessResultId
 // @Success 404 {object} pkg.NotFoundError
 // @Success 500 {object} pkg.InternalServerError
 // @Router /users/{id} [put]
-func (h *UserHandler) AddOrChangeAddress(c echo.Context) error {
+func (h *UserHandler) AddAddress(c echo.Context) error {
 	query := c.Param("id")
 
 	user, err := h.Service.GetUserById(query)
@@ -325,7 +326,7 @@ func (h *UserHandler) AddOrChangeAddress(c echo.Context) error {
 		})
 	}
 
-	var userAddress user_api.AddressResponse
+	var userAddress user_api.AddressCreateRequest
 
 	// we parse the data as json into the struct
 	if err := c.Bind(&userAddress); err != nil {
@@ -335,7 +336,75 @@ func (h *UserHandler) AddOrChangeAddress(c echo.Context) error {
 		})
 	}
 
-	newAddressAdded := true
+	var userAddressModel models.Address
+	userAddressModel.ID = uuid.New().String()
+	userAddressModel.Address = userAddress.Address
+	userAddressModel.City = userAddress.City
+	userAddressModel.District = userAddress.District
+	userAddressModel.Type = userAddress.Type
+	userAddressModel.Default = userAddress.Default
+
+	user.Addresses = append(user.Addresses, userAddressModel)
+
+	userAddressCheck := h.Service.InvoiceRegularAddressCheck(user)
+
+	result, err := h.Service.Update(userAddressCheck)
+
+	if err != nil || result == false {
+		c.Logger().Errorf("StatusInternalServerError: {%v} ", err.Error())
+		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
+			Message: "User cannot update! Something went wrong.",
+		})
+	}
+
+	// to response id and success boolean
+	jsonSuccessResultId := models.JSONSuccessResultId{
+		ID:      userAddressCheck.ID,
+		Success: result,
+	}
+
+	c.Logger().Infof("{%v} with id is updated.", jsonSuccessResultId.ID)
+	return c.JSON(http.StatusOK, jsonSuccessResultId)
+}
+
+// ChangeAddress godoc
+// @Summary change a user's address by userID
+// @ID change-address-with-userID
+// @Produce json
+// @Param id path string true "user ID"
+// @Param data body user_api.AddressUpdateRequest true "address data"
+// @Success 200 {object} models.JSONSuccessResultId
+// @Success 404 {object} pkg.NotFoundError
+// @Success 500 {object} pkg.InternalServerError
+// @Router /users/{id} [put]
+func (h *UserHandler) ChangeAddress(c echo.Context) error {
+	query := c.Param("id")
+
+	user, err := h.Service.GetUserById(query)
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.Logger().Errorf("Not found exception: {%v} with id not found!", query)
+			return c.JSON(http.StatusNotFound, pkg.NotFoundError{
+				Message: fmt.Sprintf("Not found exception: {%v} with id not found!", query),
+			})
+		}
+		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
+		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
+			Message: "Something went wrong!",
+		})
+	}
+
+	var userAddress user_api.AddressUpdateRequest
+
+	// we parse the data as json into the struct
+	if err := c.Bind(&userAddress); err != nil {
+		c.Logger().Errorf("Bad Request! %v", err)
+		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
+			Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", err.Error()),
+		})
+	}
+
 	var userAddressModel models.Address
 	userAddressModel.ID = userAddress.ID
 	userAddressModel.Address = userAddress.Address
@@ -347,13 +416,7 @@ func (h *UserHandler) AddOrChangeAddress(c echo.Context) error {
 	for i, address := range user.Addresses {
 		if address.ID == userAddressModel.ID {
 			user.Addresses[i] = userAddressModel
-			newAddressAdded = false
 		}
-	}
-
-	if newAddressAdded {
-		userAddressModel.ID = uuid.New().String()
-		user.Addresses = append(user.Addresses, userAddressModel)
 	}
 
 	userAddressCheck := h.Service.InvoiceRegularAddressCheck(user)
@@ -375,4 +438,18 @@ func (h *UserHandler) AddOrChangeAddress(c echo.Context) error {
 
 	c.Logger().Infof("{%v} with id is updated.", jsonSuccessResultId.ID)
 	return c.JSON(http.StatusOK, jsonSuccessResultId)
+}
+
+// DeleteAddress godoc
+// @Summary delete a user's address by userID
+// @ID change-address-with-userID
+// @Produce json
+// @Param id path string true "user ID"
+// @Param data body user_api.AddressUpdateRequest true "address data"
+// @Success 200 {object} models.JSONSuccessResultId
+// @Success 404 {object} pkg.NotFoundError
+// @Success 500 {object} pkg.InternalServerError
+// @Router /users/{id} [put]
+func (h *UserHandler) DeleteAddress(c echo.Context) error {
+
 }
