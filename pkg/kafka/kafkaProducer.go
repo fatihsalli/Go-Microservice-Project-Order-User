@@ -37,6 +37,18 @@ func (p *ProducerKafka) SendToKafkaWithMessage(message []byte, topic string) err
 		}
 	}()
 
+	/*
+		msg := &kafka.Message{
+		    TopicPartition: kafka.TopicPartition{
+		        Topic:     &topic,
+		        Partition: kafka.PartitionAny,
+		    },
+		    Key:   []byte("123"), // Partition key value
+		    Value: message,
+		}
+		Burada Key alanına "123" değeri atanmıştır. Bu, mesajın "123" değerine sahip partition key'e sahip olan bir partition'a yazılmasını sağlayacaktır. Partition key değeri, mesajın içeriğine göre değişebilir veya sabit bir değer olarak belirlenebilir.
+	*/
+
 	// Produce messages to topic
 	err := p.Producer.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
