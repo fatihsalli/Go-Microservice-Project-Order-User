@@ -19,7 +19,7 @@ func NewOrderElasticService() *OrderElasticService {
 }
 
 func (b *OrderElasticService) SaveOrderToElasticsearch(order OrderResponse, config configs.Config) error {
-	// client with default config => http://localhost:9200
+	// client with default config
 	cfg := elasticsearch.Config{
 		Addresses: []string{
 			config.Elasticsearch.Addresses["Address 1"],
@@ -74,7 +74,7 @@ func (b *OrderElasticService) SaveOrderToElasticsearch(order OrderResponse, conf
 }
 
 func (b *OrderElasticService) DeleteOrderFromElasticsearch(orderID string, config configs.Config) error {
-	// client with default config => http://localhost:9200
+	// client with default config
 	cfg := elasticsearch.Config{
 		Addresses: []string{
 			config.Elasticsearch.Addresses["Address 1"],

@@ -47,17 +47,17 @@ func (b *OrderService) GetOrderById(id string) (models.Order, error) {
 	result, err := b.OrderRepository.GetOrderById(id)
 
 	if err != nil {
-		return result, err
+		return models.Order{}, err
 	}
 
 	return result, nil
 }
 
 func (b *OrderService) Insert(order models.Order) (models.Order, error) {
-	// to create id and created date value
+	// Create id and created date value
 	order.ID = uuid.New().String()
 	order.CreatedAt = time.Now()
-	// we don't want to set null, so we put CreatedAt value.
+	// We don't want to set null, so we put CreatedAt value.
 	order.UpdatedAt = order.CreatedAt
 
 	var total float64
@@ -76,7 +76,7 @@ func (b *OrderService) Insert(order models.Order) (models.Order, error) {
 }
 
 func (b *OrderService) Update(order models.Order) (bool, error) {
-	// to create updated date value
+	// Create updated date value
 	order.UpdatedAt = time.Now()
 
 	var total float64
@@ -104,7 +104,7 @@ func (b *OrderService) Delete(id string) (bool, error) {
 	return true, nil
 }
 
-func (b *OrderService) GetUser(userId string) (UserResponse, error) {
+func (b *OrderService) GetUser(userId string, userURL string) (UserResponse, error) {
 	// => HTTP.CLIENT FIND USER
 	// Create a new HTTP client with a timeout (to check user)
 	client := http.Client{
@@ -112,7 +112,7 @@ func (b *OrderService) GetUser(userId string) (UserResponse, error) {
 	}
 
 	// Send a GET request to the User service to retrieve user information
-	respUser, err := client.Get("http://localhost:8012/api/users" + "/" + userId)
+	respUser, err := client.Get(userURL + "/" + userId)
 	if err != nil || respUser.StatusCode != http.StatusOK {
 		return UserResponse{}, errors.New("user cannot find")
 	}

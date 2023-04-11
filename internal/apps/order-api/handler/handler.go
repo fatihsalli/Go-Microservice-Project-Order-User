@@ -42,10 +42,6 @@ func NewOrderHandler(e *echo.Echo, service *order_api.OrderService, producer *ka
 // @Success 500 {object} pkg.InternalServerError
 // @Router /orders [get]
 func (h *OrderHandler) GetAllOrders(c echo.Context) error {
-
-	// to test GracefulShutdown
-	// time.Sleep(5 * time.Second)
-
 	orderList, err := h.Service.GetAll()
 
 	if err != nil {
@@ -55,7 +51,7 @@ func (h *OrderHandler) GetAllOrders(c echo.Context) error {
 		})
 	}
 
-	// we can use automapper, but it will cause performance loss.
+	// We can use automapper, but it will cause performance loss.
 	var orderResponse order_api.OrderResponse
 	var ordersResponse []order_api.OrderResponse
 	for _, order := range orderList {
@@ -82,7 +78,7 @@ func (h *OrderHandler) GetAllOrders(c echo.Context) error {
 		ordersResponse = append(ordersResponse, orderResponse)
 	}
 
-	// to response success result data
+	// Response success result data
 	jsonSuccessResultData := models.JSONSuccessResultData{
 		TotalItemCount: len(ordersResponse),
 		Data:           ordersResponse,
@@ -119,7 +115,7 @@ func (h *OrderHandler) GetOrderById(c echo.Context) error {
 		})
 	}
 
-	// we can use automapper, but it will cause performance loss.
+	// We can use automapper, but it will cause performance loss.
 	var orderResponse order_api.OrderResponse
 	orderResponse.ID = order.ID
 	orderResponse.UserId = order.UserId
@@ -176,7 +172,7 @@ func (h *OrderHandler) CreateOrder(c echo.Context) error {
 	}
 
 	// Check user with http.Client
-	user, err := h.Service.GetUser(orderRequest.UserId)
+	user, err := h.Service.GetUser(orderRequest.UserId, h.Config.HttpClient.UserAPI)
 	if err != nil {
 		c.Logger().Errorf("Not Found Exception: %v", err.Error())
 		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
@@ -198,7 +194,7 @@ func (h *OrderHandler) CreateOrder(c echo.Context) error {
 	}
 
 	if regularAddressCheck == false || invoiceAddressCheck == false {
-		c.Logger().Error("Not Found Exception: Address not found. Before order processing please put address.")
+		c.Logger().Error("Not Found Exception: Address not found. Before order processing please put correct address.")
 		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
 			Message: "User's addresses cannot find!",
 		})
@@ -228,7 +224,6 @@ func (h *OrderHandler) CreateOrder(c echo.Context) error {
 			order.InvoiceAddress.Default = invoiceAddress.Default
 		}
 	}
-
 	order.Product = []struct {
 		Name     string  `json:"name" bson:"name"`
 		Quantity int     `json:"quantity" bson:"quantity"`
@@ -302,7 +297,7 @@ func (h *OrderHandler) UpdateOrder(c echo.Context) error {
 	}
 
 	// Check user with http.Client
-	user, err := h.Service.GetUser(orderUpdateRequest.UserId)
+	user, err := h.Service.GetUser(orderUpdateRequest.UserId, h.Config.HttpClient.UserAPI)
 	if err != nil {
 		c.Logger().Errorf("Not Found Exception: %v", err.Error())
 		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
@@ -323,7 +318,7 @@ func (h *OrderHandler) UpdateOrder(c echo.Context) error {
 	}
 
 	if regularAddressCheck == false || invoiceAddressCheck == false {
-		c.Logger().Error("Not Found Exception: Address not found. Before order processing please put address.")
+		c.Logger().Error("Not Found Exception: Address not found. Before order processing please put correct address.")
 		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
 			Message: "User's addresses cannot find!",
 		})

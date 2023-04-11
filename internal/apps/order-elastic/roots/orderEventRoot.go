@@ -65,7 +65,7 @@ func (o *OrderEventRoot) StartGetOrderAndPushOrder() error {
 		}
 
 		if len(ordersID) > 0 {
-			ordersModel, err := o.ServiceEvent.GetOrderWithHttpClient(ordersID)
+			ordersModel, err := o.ServiceEvent.GetOrderWithHttpClient(ordersID, o.Config.HttpClient.OrderAPI)
 			if err != nil || ordersModel == nil {
 				o.Logger.Errorf("Orders cannot find. | Error: %v\n", err)
 			} else {

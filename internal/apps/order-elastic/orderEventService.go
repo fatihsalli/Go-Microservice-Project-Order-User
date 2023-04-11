@@ -17,7 +17,7 @@ func NewOrderEventService(logger *logrus.Logger) *OrderEventService {
 	return orderEventService
 }
 
-func (o *OrderEventService) GetOrderWithHttpClient(ordersID []string) ([]OrderResponse, error) {
+func (o *OrderEventService) GetOrderWithHttpClient(ordersID []string, orderURL string) ([]OrderResponse, error) {
 
 	var orders []OrderResponse
 
@@ -29,7 +29,7 @@ func (o *OrderEventService) GetOrderWithHttpClient(ordersID []string) ([]OrderRe
 		}
 
 		// Send a GET request to the Order service to retrieve order information
-		respOrder, err := client.Get("http://localhost:8011/api/orders" + "/" + orderID)
+		respOrder, err := client.Get(orderURL + "/" + orderID)
 		if err != nil || respOrder.StatusCode != http.StatusOK {
 			o.Logger.Errorf("Order with id {%v} cannot find!", orderID)
 			return []OrderResponse{}, err

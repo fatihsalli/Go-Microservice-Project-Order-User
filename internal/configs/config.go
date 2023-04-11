@@ -19,6 +19,10 @@ type Config struct {
 		Address   string
 		TopicName map[string]string
 	}
+	HttpClient struct {
+		UserAPI  string
+		OrderAPI string
+	}
 }
 
 var Configs = map[string]Config{
@@ -65,6 +69,13 @@ var Configs = map[string]Config{
 				"OrderID":    "orderID-created-v01",
 				"OrderModel": "orderDuplicate-created-v01",
 			},
+		},
+		HttpClient: struct {
+			UserAPI  string
+			OrderAPI string
+		}{
+			UserAPI:  "http://localhost:8012/api/users",
+			OrderAPI: "http://localhost:8011/api/orders",
 		},
 	},
 	"qa":   {},
