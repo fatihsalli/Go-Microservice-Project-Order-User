@@ -53,7 +53,7 @@ func (h *UserHandler) GetAllUsers(c echo.Context) error {
 		})
 	}
 
-	// we can use automapper, but it will cause performance loss.
+	// We can use automapper, but it will cause performance loss.
 	var userResponse user_api.UserResponse
 	var usersResponse []user_api.UserResponse
 	var addressResponse user_api.AddressResponse
@@ -73,7 +73,7 @@ func (h *UserHandler) GetAllUsers(c echo.Context) error {
 		usersResponse = append(usersResponse, userResponse)
 	}
 
-	// to response success result data
+	// Response success result data
 	jsonSuccessResultData := models.JSONSuccessResultData{
 		TotalItemCount: len(usersResponse),
 		Data:           usersResponse,
@@ -110,7 +110,7 @@ func (h *UserHandler) GetUserById(c echo.Context) error {
 		})
 	}
 
-	// we can use automapper, but it will cause performance loss.
+	// We can use automapper, but it will cause performance loss.
 	var userResponse user_api.UserResponse
 	var addressResponse user_api.AddressResponse
 	userResponse.ID = user.ID
@@ -167,7 +167,7 @@ func (h *UserHandler) CreateUser(c echo.Context) error {
 		})
 	}
 
-	// we can use automapper, but it will cause performance loss.
+	// We can use automapper, but it will cause performance loss.
 	var user models.User
 	var address models.Address
 	user.Name = userRequest.Name
@@ -182,7 +182,7 @@ func (h *UserHandler) CreateUser(c echo.Context) error {
 		user.Addresses = append(user.Addresses, address)
 	}
 
-	// using 'bcrypt' to hash password
+	// Using 'bcrypt' to hash password
 	password := []byte(userRequest.Password)
 	hashedPassword, err := bcrypt.GenerateFromPassword(password, bcrypt.DefaultCost)
 	if err != nil {
@@ -205,7 +205,7 @@ func (h *UserHandler) CreateUser(c echo.Context) error {
 		})
 	}
 
-	// to response id and success boolean
+	// Response id and success boolean
 	jsonSuccessResultId := models.JSONSuccessResultId{
 		ID:      result.ID,
 		Success: true,
@@ -225,10 +225,9 @@ func (h *UserHandler) CreateUser(c echo.Context) error {
 // @Success 500 {object} pkg.InternalServerError
 // @Router /users [put]
 func (h *UserHandler) UpdateUser(c echo.Context) error {
-
 	var userUpdateRequest user_api.UserUpdateRequest
 
-	// we parse the data as json into the struct
+	// We parse the data as json into the struct
 	if err := c.Bind(&userUpdateRequest); err != nil {
 		c.Logger().Errorf("Bad Request! %v", err)
 		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
@@ -244,7 +243,7 @@ func (h *UserHandler) UpdateUser(c echo.Context) error {
 		})
 	}
 
-	// to find user
+	// To find user
 	userExist, err := h.Service.GetUserById(userUpdateRequest.ID)
 	if err != nil {
 		c.Logger().Errorf("Not found exception: {%v} with id not found!", userUpdateRequest.ID)
@@ -253,14 +252,14 @@ func (h *UserHandler) UpdateUser(c echo.Context) error {
 		})
 	}
 
-	// we can use automapper, but it will cause performance loss.
+	// We can use automapper, but it will cause performance loss.
 	var user models.User
 	user.ID = userUpdateRequest.ID
 	user.Name = userUpdateRequest.Name
 	user.Email = userUpdateRequest.Email
 	user.Addresses = userExist.Addresses
 
-	// using 'bcrypt' to check password (tested)
+	// Using 'bcrypt' to check password (tested)
 	err = bcrypt.CompareHashAndPassword(userExist.Password, []byte(userUpdateRequest.Password))
 	if err != nil {
 		c.Logger().Error("Password is wrong. Please put correct password!")
@@ -278,7 +277,7 @@ func (h *UserHandler) UpdateUser(c echo.Context) error {
 		})
 	}
 
-	// to response id and success boolean
+	// Response id and success boolean
 	jsonSuccessResultId := models.JSONSuccessResultId{
 		ID:      user.ID,
 		Success: result,
@@ -308,7 +307,7 @@ func (h *UserHandler) DeleteUser(c echo.Context) error {
 		})
 	}
 
-	// to response id and success boolean
+	// Response id and success boolean
 	jsonSuccessResultId := models.JSONSuccessResultId{
 		ID:      query,
 		Success: result,
@@ -348,7 +347,7 @@ func (h *UserHandler) AddAddress(c echo.Context) error {
 
 	var userAddress user_api.AddressCreateRequest
 
-	// we parse the data as json into the struct
+	// We parse the data as json into the struct
 	if err := c.Bind(&userAddress); err != nil {
 		c.Logger().Errorf("Bad Request! %v", err)
 		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
@@ -385,7 +384,7 @@ func (h *UserHandler) AddAddress(c echo.Context) error {
 		})
 	}
 
-	// to response id and success boolean
+	// Response id and success boolean
 	jsonSuccessResultId := models.JSONSuccessResultId{
 		ID:      userAddressModel.ID,
 		Success: result,
@@ -425,7 +424,7 @@ func (h *UserHandler) ChangeAddress(c echo.Context) error {
 
 	var userAddress user_api.AddressUpdateRequest
 
-	// we parse the data as json into the struct
+	// We parse the data as json into the struct
 	if err := c.Bind(&userAddress); err != nil {
 		c.Logger().Errorf("Bad Request! %v", err)
 		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
@@ -466,7 +465,7 @@ func (h *UserHandler) ChangeAddress(c echo.Context) error {
 		})
 	}
 
-	// to response id and success boolean
+	// Response id and success boolean
 	jsonSuccessResultId := models.JSONSuccessResultId{
 		ID:      userAddressModel.ID,
 		Success: result,
@@ -513,7 +512,7 @@ func (h *UserHandler) DeleteAddress(c echo.Context) error {
 
 	var userAddress user_api.AddressDeleteRequest
 
-	// we parse the data as json into the struct
+	// We parse the data as json into the struct
 	if err := c.Bind(&userAddress); err != nil {
 		c.Logger().Errorf("Bad Request! %v", err)
 		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
@@ -546,7 +545,7 @@ func (h *UserHandler) DeleteAddress(c echo.Context) error {
 		})
 	}
 
-	// to response id and success boolean
+	// Response id and success boolean
 	jsonSuccessResultId := models.JSONSuccessResultId{
 		ID:      userAddress.AddressID,
 		Success: result,

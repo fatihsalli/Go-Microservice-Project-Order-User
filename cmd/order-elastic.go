@@ -24,13 +24,13 @@ func StartOrderElastic() {
 	// Create OrderElasticRoot => Consume orderModel, save on elastic search
 	orderElasticService := order_elastic.NewOrderElasticService()
 	producerElastic := kafka.NewProducerKafka(config.Kafka.Address)
-	consumerElastic := kafka.NewConsumerKafka()
+	consumerElastic := kafka.NewConsumerKafka(config.Kafka.Address)
 	orderElasticRoot := roots.NewOrderElasticRoot(orderElasticService, consumerElastic, producerElastic, &config, logger)
 
 	// Create OrderEventRoot => Consume orderID, get order model, delete order from elastic and push order model
 	orderEventService := order_elastic.NewOrderEventService(logger)
 	producerEvent := kafka.NewProducerKafka(config.Kafka.Address)
-	consumerEvent := kafka.NewConsumerKafka()
+	consumerEvent := kafka.NewConsumerKafka(config.Kafka.Address)
 	orderEventRoot := roots.NewOrderEventRoot(orderEventService, orderElasticService, consumerEvent, producerEvent, &config, logger)
 
 	// Create OrderSyncService

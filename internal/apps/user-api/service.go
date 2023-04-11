@@ -48,10 +48,10 @@ func (b *UserService) GetUserById(id string) (models.User, error) {
 
 func (b *UserService) Insert(user models.User) (models.User, error) {
 
-	// to create id and created date value
+	// Create id and created date value
 	user.ID = uuid.New().String()
 	user.CreatedAt = time.Now()
-	user.UpdatedAt = time.Now()
+	user.UpdatedAt = user.CreatedAt
 
 	result, err := b.Repository.Insert(user)
 
