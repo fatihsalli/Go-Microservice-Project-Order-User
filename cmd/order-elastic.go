@@ -11,7 +11,6 @@ import (
 )
 
 func StartOrderElastic() {
-
 	// Logger instead of standard log we use 'logrus' package
 	logger := logrus.StandardLogger()
 	logger.SetOutput(os.Stdout)

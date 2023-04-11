@@ -34,6 +34,7 @@ import (
 // @host      localhost:8011
 // @BasePath  /api
 func StartOrderAPI() {
+	// Echo instance
 	e := echo.New()
 
 	// Validator instance
@@ -66,7 +67,7 @@ func StartOrderAPI() {
 	// Add swagger
 	e.GET("/swagger/*", echoSwagger.EchoWrapHandler(echoSwagger.InstanceName("orderAPI")))
 
-	// Start server
+	// Start server as asynchronous
 	go func() {
 		if err := e.Start(config.Server.Port["orderAPI"]); err != nil && err != http.ErrServerClosed {
 			e.Logger.Fatal("Shutting down the server!")

@@ -33,6 +33,7 @@ import (
 // @host      localhost:8012
 // @BasePath  /api
 func StartUserAPI() {
+	// Echo instance
 	e := echo.New()
 
 	// Validator instance
@@ -46,27 +47,29 @@ func StartUserAPI() {
 	e.Use(pkg.Logger())
 	log.Info("Logger enabled!!")
 
+	// Get config
 	config := configs.GetConfig("test")
 
-	// To create repo and service
+	// Create new repo and new service
 	mongoUserCollection := configs.ConnectDB(config.Database.Connection).Database(config.Database.DatabaseName).Collection(config.Database.UserCollectionName)
 	UserRepository := repository.NewUserRepository(mongoUserCollection)
 	UserService := user_api.NewUserService(UserRepository)
 
-	// To create new app
+	// Create new app
 	handler.NewUserHandler(e, UserService, v)
 
 	// If we don't use this swagger give an error
 	docs.SwaggerInfouserAPI.Host = "localhost:8012"
-	// Add swagger
+	// Add swagger (InstanceName is important!)
 	e.GET("/swagger/*", echoSwagger.EchoWrapHandler(echoSwagger.InstanceName("userAPI")))
 
-	// Start server
+	// Start server as asynchronous
 	go func() {
 		if err := e.Start(config.Server.Port["userAPI"]); err != nil && err != http.ErrServerClosed {
 			e.Logger.Fatal("Shutting down the server!")
 		}
 	}()
 
+	// Graceful Shutdown
 	pkg.GracefulShutdown(e, 10*time.Second)
 }
