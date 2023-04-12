@@ -1,5 +1,14 @@
 version: "3"
 services:
+  mongodb:
+    container_name: 'mongodb'
+    image: mongo:latest
+    restart: always
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongodb_data:/data/db
+
   zookeeper:
     container_name: 'zookeeper'
     image: 'bitnami/zookeeper:latest'
@@ -20,6 +29,7 @@ services:
       - ALLOW_PLAINTEXT_LISTENER=yes
     depends_on:
       - zookeeper
+
   kafka-ui:
     image: provectuslabs/kafka-ui
     container_name: kafka-ui
@@ -52,16 +62,34 @@ services:
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
     ports:
       - "5601:5601"
-  order-api:
-    container_name: order-api
+
+  order.api:
+    container_name: order.api
+    restart: on-failure
     build:
       context: .
       dockerfile: /internal/apps/order-api/Dockerfile
     ports:
       - "8011:80"
     depends_on:
+      - mongodb
       - kafka
+      - user.api
+
+  user.api:
+    container_name: user.api
+    restart: on-failure
+    build:
+      context: .
+      dockerfile: /internal/apps/user-api/Dockerfile
+    ports:
+      - "8012:80"
+    depends_on:
+      - mongodb
+      - kafka
+
+
 
 volumes:
   elasticsearch-data:
-    driver: local
+  mongodb_data:

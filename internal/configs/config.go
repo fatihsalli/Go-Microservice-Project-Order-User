@@ -78,8 +78,59 @@ var Configs = map[string]Config{
 			OrderAPI: "http://localhost:8011/api/orders",
 		},
 	},
-	"qa":   {},
-	"prod": {},
+	"qa": {},
+	"prod": {
+		Server: struct {
+			Port map[string]string
+			Host string
+		}{
+			Port: map[string]string{
+				"orderAPI":     ":8011",
+				"userAPI":      ":8012",
+				"orderElastic": ":8013",
+			},
+			Host: "localhost",
+		},
+		Database: struct {
+			Connection          string
+			DatabaseName        string
+			UserCollectionName  string
+			OrderCollectionName string
+		}{
+			Connection:          "mongodb://mongodb:27017",
+			DatabaseName:        "ProjectDB",
+			UserCollectionName:  "Users",
+			OrderCollectionName: "Orders",
+		},
+		Elasticsearch: struct {
+			Addresses map[string]string
+			IndexName map[string]string
+		}{
+			Addresses: map[string]string{
+				"Address 1": "http://elasticsearch:9200",
+			},
+			IndexName: map[string]string{
+				"OrderSave": "order_duplicate_v01",
+			},
+		},
+		Kafka: struct {
+			Address   string
+			TopicName map[string]string
+		}{
+			Address: "kafka:9092",
+			TopicName: map[string]string{
+				"OrderID":    "orderID-created-v01",
+				"OrderModel": "orderDuplicate-created-v01",
+			},
+		},
+		HttpClient: struct {
+			UserAPI  string
+			OrderAPI string
+		}{
+			UserAPI:  "http://user.api:80/api/users",
+			OrderAPI: "http://order.api:80/api/orders",
+		},
+	},
 }
 
 func GetConfig(env string) Config {
