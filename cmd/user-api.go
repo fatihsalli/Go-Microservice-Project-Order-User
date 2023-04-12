@@ -30,7 +30,7 @@ import (
 // @license.name  Apache 2.0
 // @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host      user.api:8012
+// @host      localhost:8012
 // @BasePath  /api
 func StartUserAPI() {
 	// Echo instance
@@ -59,7 +59,7 @@ func StartUserAPI() {
 	handler.NewUserHandler(e, UserService, v)
 
 	// If we don't use this swagger give an error
-	docs.SwaggerInfouserAPI.Host = "user.api:8012"
+	docs.SwaggerInfouserAPI.Host = "localhost:8012"
 	// Add swagger (InstanceName is important!)
 	e.GET("/swagger/*", echoSwagger.EchoWrapHandler(echoSwagger.InstanceName("userAPI")))
 

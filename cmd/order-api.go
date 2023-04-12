@@ -31,7 +31,7 @@ import (
 // @license.name  Apache 2.0
 // @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host      order.api:8011
+// @host      localhost:8011
 // @BasePath  /api
 func StartOrderAPI() {
 	// Echo instance
@@ -63,7 +63,7 @@ func StartOrderAPI() {
 	handler.NewOrderHandler(e, OrderService, producer, &config, v)
 
 	// If we don't use this swagger give an error
-	docs.SwaggerInfoorderAPI.Host = "order.api:8011"
+	docs.SwaggerInfoorderAPI.Host = "localhost:8011"
 	// Add swagger
 	e.GET("/swagger/*", echoSwagger.EchoWrapHandler(echoSwagger.InstanceName("orderAPI")))
 
