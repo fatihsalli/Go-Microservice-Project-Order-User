@@ -73,7 +73,7 @@ services:
       context: .
       dockerfile: /internal/apps/order-api/Dockerfile
     ports:
-      - "8011:80"
+      - "8011:8011"
     depends_on:
       - mongodb
       - kafka
@@ -86,7 +86,7 @@ services:
       context: .
       dockerfile: /internal/apps/user-api/Dockerfile
     ports:
-      - "8012:80"
+      - "8012:8012"
     depends_on:
       - mongodb
       - kafka
