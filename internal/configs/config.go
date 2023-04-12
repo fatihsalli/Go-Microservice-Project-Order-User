@@ -32,9 +32,8 @@ var Configs = map[string]Config{
 			Host string
 		}{
 			Port: map[string]string{
-				"orderAPI":     ":8011",
-				"userAPI":      ":8012",
-				"orderElastic": ":8013",
+				"orderAPI": ":8011",
+				"userAPI":  ":8012",
 			},
 			Host: "localhost",
 		},
@@ -85,11 +84,10 @@ var Configs = map[string]Config{
 			Host string
 		}{
 			Port: map[string]string{
-				"orderAPI":     ":8011",
-				"userAPI":      ":8012",
-				"orderElastic": ":8013",
+				"orderAPI": ":8011",
+				"userAPI":  ":8012",
 			},
-			Host: "localhost",
+			Host: "",
 		},
 		Database: struct {
 			Connection          string

@@ -2,12 +2,12 @@ version: "3"
 services:
   mongodb:
     container_name: 'mongodb'
-    image: mongo:latest
+    image: 'mongo:latest'
     restart: always
     ports:
       - '27017:27017'
     volumes:
-      - mongodb_data:/data/db
+      - mongodb-data:/data/db
 
   zookeeper:
     container_name: 'zookeeper'
@@ -16,6 +16,7 @@ services:
       - '2181:2181'
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
+
   kafka:
     container_name: 'kafka'
     image: 'bitnami/kafka:latest'
@@ -31,8 +32,8 @@ services:
       - zookeeper
 
   kafka-ui:
-    image: provectuslabs/kafka-ui
-    container_name: kafka-ui
+    container_name: 'kafka-ui'
+    image: 'provectuslabs/kafka-ui'
     ports:
       - "8080:8080"
     restart: always
@@ -41,9 +42,10 @@ services:
       - KAFKA_CLUSTERS_0_NAME=local
     depends_on:
       - kafka
+
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.13.0
-    container_name: es
+    container_name: 'elasticsearch'
+    image: 'docker.elastic.co/elasticsearch/elasticsearch:7.13.0'
     environment:
       - xpack.monitoring.enabled=true
       - xpack.watcher.enabled=false
@@ -54,9 +56,10 @@ services:
       - "9200:9200"
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
+
   kibana:
-    image: docker.elastic.co/kibana/kibana:7.13.0
-    container_name: kibana
+    container_name: 'kibana'
+    image: 'docker.elastic.co/kibana/kibana:7.13.0'
     environment:
       ELASTICSEARCH_URL: http://elasticsearch:9200
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
@@ -64,7 +67,7 @@ services:
       - "5601:5601"
 
   order.api:
-    container_name: order.api
+    container_name: 'order.api'
     restart: on-failure
     build:
       context: .
@@ -77,7 +80,7 @@ services:
       - user.api
 
   user.api:
-    container_name: user.api
+    container_name: 'user.api'
     restart: on-failure
     build:
       context: .
@@ -88,8 +91,6 @@ services:
       - mongodb
       - kafka
 
-
-
 volumes:
   elasticsearch-data:
-  mongodb_data:
+  mongodb-data:

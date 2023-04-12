@@ -20,7 +20,7 @@ RUN go mod download
 
 ## build the binary
 WORKDIR /app
-RUN swag init --g ./cmd/order-api.go --o ./docs/order -instanceName orderAPI --exclude ./internal/apps/user-api
+RUN swag init --g ./cmd/user-api.go --o ./docs/user -instanceName userAPI --exclude ./internal/apps/order-api
 RUN CGO_ENABLED=0
 RUN GOOS=linux
 RUN GO111MODULE=on
@@ -30,7 +30,7 @@ RUN go build -ldflags="-w -s" -tags musl -o main .
 # stage-2: image builder
 FROM alpine
 WORKDIR /build
-ENV project="orderAPI"
+ENV project="userAPI"
 COPY --from=builder /app/main .
 COPY --from=builder /app/docs .
 
