@@ -1,8 +1,6 @@
 # Go Microservice Project
 
 
-**Order and user services based on a simplified microservices architecture and Docker containers using Go**
-
 There are three microservices which are **Order, User** and **OrderElastic** microservices with using **MongoDB** and **Elasticsearch**.
 
 ![alt text](https://i.ibb.co/QfdgZRZ/Order-elastic.jpg)
