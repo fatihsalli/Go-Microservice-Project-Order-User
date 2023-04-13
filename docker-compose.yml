@@ -91,6 +91,19 @@ services:
       - mongodb
       - kafka
 
+  order-elastic:
+    container_name: 'order-elastic'
+    restart: on-failure
+    build:
+      context: .
+      dockerfile: /internal/apps/order-elastic/Dockerfile
+    ports:
+      - "8013:8013"
+    depends_on:
+      - kafka
+      - order-api
+      - elasticsearch
+
 volumes:
   elasticsearch-data:
   mongodb-data:
