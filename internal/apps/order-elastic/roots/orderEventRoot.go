@@ -28,8 +28,6 @@ func NewOrderEventRoot(serviceEvent *order_elastic.OrderEventService, serviceEla
 	}
 }
 
-// TODO: SubscribeToTopics kısmını araştır constructor da mı tanımlanmalı
-
 // StartGetOrderAndPushOrder => Get message from Kafka to consume OrderID, get order with http.client and push order with Kafka
 func (o *OrderEventRoot) StartGetOrderAndPushOrder() error {
 	o.Logger.Info("OrderSyncService starting for consume 'OrderID'.")
