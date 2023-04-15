@@ -3,6 +3,7 @@ package user_api
 import (
 	"OrderUserProject/internal/models"
 	"OrderUserProject/internal/repository"
+	"errors"
 	"github.com/google/uuid"
 	"time"
 )
@@ -85,31 +86,26 @@ func (b *UserService) Delete(id string) (bool, error) {
 	return true, nil
 }
 
-func (b *UserService) InvoiceRegularAddressCheck(user models.User) models.User {
+func (b *UserService) InvoiceRegularAddressCheck(user models.User) (models.User, error) {
 	// Invoice and regular addresses check
-	if len(user.Addresses) == 1 {
-		user.Addresses[0].Default.IsDefaultInvoiceAddress = true
-		user.Addresses[0].Default.IsDefaultRegularAddress = true
-	} else if len(user.Addresses) > 1 {
-		hasDefaultInvoice := false
-		hasDefaultRegular := false
-		for _, addressRequest := range user.Addresses {
-			if addressRequest.Default.IsDefaultRegularAddress {
-				hasDefaultRegular = true
-			}
-			if addressRequest.Default.IsDefaultInvoiceAddress {
-				hasDefaultInvoice = true
-			}
+	hasDefaultInvoice := false
+	hasDefaultRegular := false
+	for _, addressRequest := range user.Addresses {
+		if addressRequest.Default.IsDefaultRegularAddress {
+			hasDefaultRegular = true
 		}
-
-		if !hasDefaultInvoice {
-			user.Addresses[0].Default.IsDefaultInvoiceAddress = true
-		}
-
-		if !hasDefaultRegular {
-			user.Addresses[0].Default.IsDefaultRegularAddress = true
+		if addressRequest.Default.IsDefaultInvoiceAddress {
+			hasDefaultInvoice = true
 		}
 	}
 
-	return user
+	if !hasDefaultInvoice {
+		return user, errors.New("At least one address chosen as a default invoice address!")
+	}
+
+	if !hasDefaultRegular {
+		return user, errors.New("At least one address chosen as a default regular address!")
+	}
+
+	return user, nil
 }

@@ -4,7 +4,7 @@ type UserCreateRequest struct {
 	Name      string                 `json:"name" validate:"required,min=1,max=100"`
 	Email     string                 `json:"email" validate:"required,email"`
 	Password  string                 `json:"password" validate:"required,min=8,max=16"`
-	Addresses []AddressCreateRequest `json:"address" validate:"required"`
+	Addresses []AddressCreateRequest `json:"address"`
 }
 
 type UserUpdateRequest struct {
@@ -42,10 +42,6 @@ type AddressUpdateRequest struct {
 		IsDefaultInvoiceAddress bool `json:"isDefaultInvoiceAddress" bson:"isDefaultInvoiceAddress"`
 		IsDefaultRegularAddress bool `json:"isDefaultRegularAddress" bson:"isDefaultRegularAddress"`
 	} `json:"default" bson:"default"`
-}
-
-type AddressDeleteRequest struct {
-	AddressID string `json:"addressID" validate:"required,uuid4"`
 }
 
 type AddressResponse struct {

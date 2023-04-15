@@ -28,6 +28,8 @@ func NewOrderEventRoot(serviceEvent *order_elastic.OrderEventService, serviceEla
 	}
 }
 
+// TODO: SubscribeToTopics kısmını araştır constructor da mı tanımlanmalı
+
 // StartGetOrderAndPushOrder => Get message from Kafka to consume OrderID, get order with http.client and push order with Kafka
 func (o *OrderEventRoot) StartGetOrderAndPushOrder() error {
 	o.Logger.Info("OrderSyncService starting for consume 'OrderID'.")
@@ -55,6 +57,7 @@ func (o *OrderEventRoot) StartGetOrderAndPushOrder() error {
 			case "Created", "Updated":
 				ordersID = append(ordersID, orderResponse.OrderID)
 			case "Deleted":
+				// TODO: bulk olarak delete için de orderid toplamalısın
 				if err := o.ServiceElastic.DeleteOrderFromElasticsearch(orderResponse.OrderID, *o.Config); err != nil {
 					o.Logger.Errorf("An error deleting order from es. | Error: %v\n", err)
 				}

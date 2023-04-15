@@ -31,7 +31,7 @@ func NewUserHandler(e *echo.Echo, service *user_api.UserService, v *validator.Va
 	router.PUT("/add-address/:id", b.AddAddress)
 	router.PUT("/change-address/:id", b.ChangeAddress)
 	router.PUT("/delete-address/:id", b.DeleteAddress)
-	router.DELETE("/:id", b.DeleteUser)
+	router.DELETE("/:id/:addressId", b.DeleteUser)
 
 	return b
 }
@@ -194,9 +194,15 @@ func (h *UserHandler) CreateUser(c echo.Context) error {
 	user.Password = hashedPassword
 
 	// Invoice and regular addresses check
-	userCheckAddress := h.Service.InvoiceRegularAddressCheck(user)
+	userAddressCheck, err := h.Service.InvoiceRegularAddressCheck(user)
+	if err != nil {
+		c.Logger().Errorf("BadRequestError: %v", err)
+		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
+			Message: fmt.Sprintf("BadRequestError: %v", err),
+		})
+	}
 
-	result, err := h.Service.Insert(userCheckAddress)
+	result, err := h.Service.Insert(userAddressCheck)
 
 	if err != nil {
 		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
@@ -373,7 +379,13 @@ func (h *UserHandler) AddAddress(c echo.Context) error {
 
 	user.Addresses = append(user.Addresses, userAddressModel)
 
-	userAddressCheck := h.Service.InvoiceRegularAddressCheck(user)
+	userAddressCheck, err := h.Service.InvoiceRegularAddressCheck(user)
+	if err != nil {
+		c.Logger().Errorf("BadRequestError: %v", err)
+		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
+			Message: fmt.Sprintf("BadRequestError: %v", err),
+		})
+	}
 
 	result, err := h.Service.Update(userAddressCheck)
 
@@ -454,7 +466,13 @@ func (h *UserHandler) ChangeAddress(c echo.Context) error {
 		}
 	}
 
-	userAddressCheck := h.Service.InvoiceRegularAddressCheck(user)
+	userAddressCheck, err := h.Service.InvoiceRegularAddressCheck(user)
+	if err != nil {
+		c.Logger().Errorf("BadRequestError: %v", err)
+		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
+			Message: fmt.Sprintf("BadRequestError: %v", err),
+		})
+	}
 
 	result, err := h.Service.Update(userAddressCheck)
 
@@ -480,21 +498,22 @@ func (h *UserHandler) ChangeAddress(c echo.Context) error {
 // @ID delete-address-with-userID
 // @Produce json
 // @Param id path string true "user ID"
-// @Param data body user_api.AddressDeleteRequest true "address data"
+// @Param addressId path string true "address ID"
 // @Success 200 {object} models.JSONSuccessResultId
 // @Success 404 {object} pkg.NotFoundError
 // @Success 500 {object} pkg.InternalServerError
 // @Router /users/delete-address/{id} [put]
 func (h *UserHandler) DeleteAddress(c echo.Context) error {
-	query := c.Param("id")
+	queryID := c.Param("id")
+	queryAddressID := c.Param("addressId")
 
-	user, err := h.Service.GetUserById(query)
+	user, err := h.Service.GetUserById(queryID)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			c.Logger().Errorf("Not found exception: {%v} with id not found!", query)
+			c.Logger().Errorf("Not found exception: {%v} with id not found!", queryID)
 			return c.JSON(http.StatusNotFound, pkg.NotFoundError{
-				Message: fmt.Sprintf("Not found exception: {%v} with id not found!", query),
+				Message: fmt.Sprintf("Not found exception: {%v} with id not found!", queryID),
 			})
 		}
 		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
@@ -506,35 +525,23 @@ func (h *UserHandler) DeleteAddress(c echo.Context) error {
 	if len(user.Addresses) < 2 {
 		c.Logger().Errorf("BadRequestError: %v", errors.New("you cannot delete user's address"))
 		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
-			Message: "You cannot delete user's address. Because there is just one address.",
-		})
-	}
-
-	var userAddress user_api.AddressDeleteRequest
-
-	// We parse the data as json into the struct
-	if err := c.Bind(&userAddress); err != nil {
-		c.Logger().Errorf("Bad Request! %v", err)
-		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
-			Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", err.Error()),
-		})
-	}
-
-	// Validate user input using the validator instance
-	if err := h.Validator.Struct(userAddress); err != nil {
-		c.Logger().Errorf("Bad Request. Please put valid user address model ! %v", err.Error())
-		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
-			Message: fmt.Sprintf("Bad Request. Please put valid user address model! %v", err.Error()),
+			Message: "You cannot delete user's address. Because there is just one address. Please add an address after that you can delete this address.",
 		})
 	}
 
 	for i, address := range user.Addresses {
-		if address.ID == userAddress.AddressID {
+		if address.ID == queryAddressID {
 			user.Addresses = append(user.Addresses[:i], user.Addresses[i+1:]...)
 		}
 	}
 
-	userAddressCheck := h.Service.InvoiceRegularAddressCheck(user)
+	userAddressCheck, err := h.Service.InvoiceRegularAddressCheck(user)
+	if err != nil {
+		c.Logger().Errorf("BadRequestError: %v", err)
+		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
+			Message: fmt.Sprintf("BadRequestError: %v", err),
+		})
+	}
 
 	result, err := h.Service.Update(userAddressCheck)
 
@@ -547,7 +554,7 @@ func (h *UserHandler) DeleteAddress(c echo.Context) error {
 
 	// Response id and success boolean
 	jsonSuccessResultId := models.JSONSuccessResultId{
-		ID:      userAddress.AddressID,
+		ID:      queryID,
 		Success: result,
 	}
 
