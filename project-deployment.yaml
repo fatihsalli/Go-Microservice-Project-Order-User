@@ -26,11 +26,12 @@ metadata:
 spec:
   selector:
     app: user-api
+  type: NodePort
   ports:
-    - protocol: TCP
+    - name: http
       port: 80
       targetPort: 8012
-
+      nodePort: 30101
 
 ---
 apiVersion: apps/v1
