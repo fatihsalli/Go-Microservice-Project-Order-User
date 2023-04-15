@@ -39,6 +39,7 @@ func (o *OrderEventRoot) StartGetOrderAndPushOrder() error {
 	}
 	for {
 		ordersID := make([]string, 0)
+		ordersDeletedID := make([]string, 0)
 		fromTopics, err := o.Consumer.ConsumeFromTopics(1, 5, 2)
 		if err != nil {
 			o.Logger.Errorf("An error when consume from topic. | Error: %v\n", err)
@@ -57,11 +58,7 @@ func (o *OrderEventRoot) StartGetOrderAndPushOrder() error {
 			case "Created", "Updated":
 				ordersID = append(ordersID, orderResponse.OrderID)
 			case "Deleted":
-				// TODO: bulk olarak delete için de orderid toplamalısın
-				if err := o.ServiceElastic.DeleteOrderFromElasticsearch(orderResponse.OrderID, *o.Config); err != nil {
-					o.Logger.Errorf("An error deleting order from es. | Error: %v\n", err)
-				}
-				o.Logger.Infof("Order (ID:%v) successfully deleted from es.", orderResponse.OrderID)
+				ordersDeletedID = append(ordersDeletedID, orderResponse.OrderID)
 			default:
 				o.Logger.Errorf("Unknown order response status. | Error: %v\n", orderResponse.Status)
 			}
@@ -88,6 +85,15 @@ func (o *OrderEventRoot) StartGetOrderAndPushOrder() error {
 				} else {
 					o.Logger.Infof("Order successfully pushed with id: %v", orderForPush.ID)
 				}
+			}
+		}
+
+		if len(ordersDeletedID) > 0 {
+			for _, orderForDelete := range ordersDeletedID {
+				if err := o.ServiceElastic.DeleteOrderFromElasticsearch(orderForDelete, *o.Config); err != nil {
+					o.Logger.Errorf("An error deleting order from es. | Error: %v\n", err)
+				}
+				o.Logger.Infof("Order (ID:%v) successfully deleted from es.", orderForDelete)
 			}
 		}
 	}
