@@ -30,8 +30,8 @@ func NewUserHandler(e *echo.Echo, service *user_api.UserService, v *validator.Va
 	router.PUT("", b.UpdateUser)
 	router.PUT("/add-address/:id", b.AddAddress)
 	router.PUT("/change-address/:id", b.ChangeAddress)
-	router.PUT("/delete-address/:id", b.DeleteAddress)
-	router.DELETE("/:id/:addressId", b.DeleteUser)
+	router.PUT("/delete-address/:id/:address_id", b.DeleteAddress)
+	router.DELETE("/:id", b.DeleteUser)
 
 	return b
 }
@@ -498,14 +498,14 @@ func (h *UserHandler) ChangeAddress(c echo.Context) error {
 // @ID delete-address-with-userID
 // @Produce json
 // @Param id path string true "user ID"
-// @Param addressId path string true "address ID"
+// @Param address_id path string true "address ID"
 // @Success 200 {object} models.JSONSuccessResultId
 // @Success 404 {object} pkg.NotFoundError
 // @Success 500 {object} pkg.InternalServerError
-// @Router /users/delete-address/{id} [put]
+// @Router /users/delete-address/{id}/{address_id} [put]
 func (h *UserHandler) DeleteAddress(c echo.Context) error {
 	queryID := c.Param("id")
-	queryAddressID := c.Param("addressId")
+	queryAddressID := c.Param("address_id")
 
 	user, err := h.Service.GetUserById(queryID)
 
