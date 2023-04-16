@@ -1,38 +1,3 @@
-# => OrderAPI
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: order-api-deployment
-spec:
-  selector:
-    matchLabels:
-      app: order-api
-  replicas: 2
-  template:
-    metadata:
-      labels:
-        app: order-api
-    spec:
-      containers:
-        - name: order-api
-          image: order-user-project/order-api:V01
-          ports:
-            - containerPort: 8011
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: order-api
-spec:
-  selector:
-    app: order-api
-  type: NodePort
-  ports:
-    - name: http
-      port: 80
-      targetPort: 8011
-      nodePort: 30001
----
 # => UserAPI
 apiVersion: apps/v1
 kind: Deployment
@@ -68,92 +33,42 @@ spec:
       targetPort: 8012
       nodePort: 30002
 ---
-# => Kafka
-apiVersion: v1
-kind: Service
-metadata:
-  name: kafka
-spec:
-  type: ClusterIP
-  selector:
-    app: kafka
-  ports:
-    - name: kafka-port
-      port: 9092
-      targetPort: 9092
-
----
+# => OrderAPI
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kafka
+  name: order-api-deployment
 spec:
-  replicas: 1
   selector:
     matchLabels:
-      app: kafka
+      app: order-api
+  replicas: 2
   template:
     metadata:
       labels:
-        app: kafka
+        app: order-api
     spec:
       containers:
-        - name: kafka
-          image: wurstmeister/kafka
+        - name: order-api
+          image: order-user-project/order-api:V01
           ports:
-            - containerPort: 9092
-          env:
-            - name: KAFKA_ADVERTISED_HOST_NAME
-              value: kafka
-            - name: KAFKA_CREATE_TOPICS
-              value: "topic1:1:1"
-          volumeMounts:
-            - name: data
-              mountPath: /var/lib/kafka/data
-          resources:
-            limits:
-              cpu: "1"
-              memory: 512Mi
-      volumes:
-        - name: data
-          emptyDir: {}
+            - containerPort: 8011
 ---
-# => Kafka Zookeper
 apiVersion: v1
 kind: Service
 metadata:
-  name: zookeeper
+  name: order-api
 spec:
+  selector:
+    app: order-api
+  type: NodePort
   ports:
-    - name: client
-      port: 2181
-      protocol: TCP
-      targetPort: 2181
-  selector:
-    app: zookeeper
+    - name: http
+      port: 80
+      targetPort: 8011
+      nodePort: 30001
 ---
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: zookeeper-deployment
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: zookeeper
-  template:
-    metadata:
-      labels:
-        app: zookeeper
-    spec:
-      containers:
-        - name: zookeeper
-          image: zookeeper:3.7.0
-          ports:
-            - containerPort: 2181
-              name: client
 # => MongoDB
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -185,3 +100,97 @@ spec:
     - name: mongodb
       port: 27017
       targetPort: 27017
+---
+# => Kafka Zookeper
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper
+spec:
+  ports:
+    - name: client
+      port: 2181
+      protocol: TCP
+      targetPort: 2181
+  selector:
+    app: zookeeper
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zookeeper
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+    spec:
+      containers:
+        - name: zookeeper
+          image: bitnami/zookeeper:latest
+          ports:
+            - containerPort: 2181
+              name: client
+          env:
+          - name: ALLOW_ANONYMOUS_LOGIN
+            value: "yes"
+---
+# => Kafka
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+spec:
+  type: ClusterIP
+  selector:
+    app: kafka
+  ports:
+    - name: kafka-port
+      port: 9092
+      targetPort: 9092
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      containers:
+        - name: kafka
+          image: bitnami/kafka:latest
+          ports:
+            - containerPort: 9092
+          env:
+            - name: KAFKA_BROKER_ID
+              value: "1"
+            - name: KAFKA_CFG_LISTENERS
+              value: "PLAINTEXT://:9092"
+            - name: KAFKA_CFG_ADVERTISED_LISTENERS
+              value: "PLAINTEXT://kafka:9092"
+            - name: KAFKA_CFG_ZOOKEEPER_CONNECT
+              value: "zookeeper:2181"
+            - name: ALLOW_PLAINTEXT_LISTENER
+              value: "yes"
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/kafka/data
+          resources:
+            limits:
+              cpu: "1"
+              memory: 512Mi
+      volumes:
+        - name: data
+          emptyDir: {}
