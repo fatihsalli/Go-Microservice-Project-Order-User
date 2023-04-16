@@ -124,8 +124,8 @@ var Configs = map[string]Config{
 			UserAPI  string
 			OrderAPI string
 		}{
-			UserAPI:  "http://user-api:8012/api/users",
-			OrderAPI: "http://order-api:8011/api/orders",
+			UserAPI:  "http://user-api:80/api/users",
+			OrderAPI: "http://order-api:80/api/orders",
 		},
 	},
 	"qa":   {},
