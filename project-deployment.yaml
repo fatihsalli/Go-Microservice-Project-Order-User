@@ -1,4 +1,4 @@
-# => UserAPI
+# => UserAPI Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -19,6 +19,7 @@ spec:
           ports:
             - containerPort: 8012
 ---
+# => UserAPI Service
 apiVersion: v1
 kind: Service
 metadata:
@@ -28,12 +29,11 @@ spec:
     app: user-api
   type: NodePort
   ports:
-    - name: http
       port: 80
       targetPort: 8012
       nodePort: 30002
 ---
-# => OrderAPI
+# => OrderAPI Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -54,6 +54,7 @@ spec:
           ports:
             - containerPort: 8011
 ---
+# => OrderAPI Service
 apiVersion: v1
 kind: Service
 metadata:
@@ -63,12 +64,11 @@ spec:
     app: order-api
   type: NodePort
   ports:
-    - name: http
       port: 80
       targetPort: 8011
       nodePort: 30001
 ---
-# => MongoDB
+# => MongoDB Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -88,7 +88,14 @@ spec:
           image: mongo:latest
           ports:
             - containerPort: 27017
+          volumeMounts:
+            - name: mongodb-data
+              mountPath: /data/db
+      volumes:
+        - name: mongodb-data
+          emptyDir: { }
 ---
+# => MongoDB Service
 apiVersion: v1
 kind: Service
 metadata:
@@ -101,7 +108,7 @@ spec:
       port: 27017
       targetPort: 27017
 ---
-# => Kafka Zookeper
+# => Zookeeper Deployment
 apiVersion: v1
 kind: Service
 metadata:
@@ -115,6 +122,7 @@ spec:
   selector:
     app: zookeeper
 ---
+# => Zookeeper Service
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -139,7 +147,7 @@ spec:
           - name: ALLOW_ANONYMOUS_LOGIN
             value: "yes"
 ---
-# => Kafka
+# => Kafka Deployment
 apiVersion: v1
 kind: Service
 metadata:
@@ -152,8 +160,8 @@ spec:
     - name: kafka-port
       port: 9092
       targetPort: 9092
-
 ---
+# => Kafka Service
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -187,10 +195,142 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /var/lib/kafka/data
-          resources:
-            limits:
-              cpu: "1"
-              memory: 512Mi
       volumes:
         - name: data
           emptyDir: {}
+---
+# => Elasticsearch Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch
+spec:
+  selector:
+    app: elasticsearch
+  ports:
+    - name: http
+      port: 9200
+      targetPort: 9200
+    - name: transport
+      port: 9300
+      targetPort: 9300
+---
+# => Elasticsearch Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elasticsearch-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elasticsearch
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+    spec:
+      containers:
+        - name: elasticsearch
+          image: docker.elastic.co/elasticsearch/elasticsearch:7.13.0
+          env:
+            - name: discovery.type
+              value: single-node
+            - name: "ES_JAVA_OPTS"
+              value: "-Xms512m -Xmx512m"
+            - name: xpack.monitoring.enabled
+              value: "true"
+            - name: xpack.watcher.enabled
+              value: "false"
+            - name: xpack.security.enabled
+              value: "false"
+          ports:
+            - containerPort: 9200
+              name: http
+            - containerPort: 9300
+              name: transport
+          volumeMounts:
+            - name: elasticsearch-data
+              mountPath: /usr/share/elasticsearch/data
+      volumes:
+        - name: elasticsearch-data
+          persistentVolumeClaim:
+            claimName: elasticsearch-data
+---
+# => Kibana Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: kibana
+spec:
+  selector:
+    app: kibana
+  type: NodePort
+  ports:
+    - name: http
+      port: 5601
+      targetPort: 5601
+      nodePort: 30004
+---
+# => Kibana Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kibana
+  template:
+    metadata:
+      labels:
+        app: kibana
+    spec:
+      containers:
+        - name: kibana
+          image: docker.elastic.co/kibana/kibana:7.13.0
+          env:
+            - name: ELASTICSEARCH_URL
+              value: "http://elasticsearch:9200"
+            - name: ELASTICSEARCH_HOSTS
+              value: "http://elasticsearch:9200"
+          ports:
+            - containerPort: 5601
+              name: http
+---
+# => OrderElastic Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-elastic-deployment
+spec:
+  selector:
+    matchLabels:
+      app: order-elastic
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: order-elastic
+    spec:
+      containers:
+        - name: order-elastic
+          image: order-user-project/order-elastic:V01
+          ports:
+            - containerPort: 8013
+---
+# => OrderElastic Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-elastic
+spec:
+  selector:
+    app: order-elastic
+  type: NodePort
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8013
+      nodePort: 30003

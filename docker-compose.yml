@@ -8,10 +8,6 @@ services:
       - '27017:27017'
     volumes:
       - mongodb-data:/data/db
-    networks:
-      my-network:
-        aliases:
-          - mongodb
 
   zookeeper:
     container_name: 'zookeeper'
