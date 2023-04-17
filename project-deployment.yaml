@@ -199,7 +199,7 @@ spec:
         - name: data
           emptyDir: {}
 ---
-# => Elasticsearch Service
+# => Elasticsearch Service => Hata aldım
 apiVersion: v1
 kind: Service
 metadata:
@@ -215,7 +215,7 @@ spec:
       port: 9300
       targetPort: 9300
 ---
-# => Elasticsearch Deployment
+# => Elasticsearch Deployment => Hata aldım
 apiVersion: apps/v1
 kind: Deployment
 metadata:
