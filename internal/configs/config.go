@@ -94,7 +94,7 @@ var Configs = map[string]Config{
 			UserCollectionName  string
 			OrderCollectionName string
 		}{
-			Connection:          "mongodb://mongodb:27017",
+			Connection:          "mongodb://172.18.0.2:27017",
 			DatabaseName:        "ProjectDB",
 			UserCollectionName:  "Users",
 			OrderCollectionName: "Orders",

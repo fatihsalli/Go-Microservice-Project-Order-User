@@ -66,48 +66,6 @@ services:
     ports:
       - "5601:5601"
 
-  order-api:
-    container_name: 'order-api'
-    restart: on-failure
-    build:
-      context: .
-      dockerfile: /internal/apps/order-api/Dockerfile
-    ports:
-      - "8011:8011"
-    depends_on:
-      - mongodb
-      - kafka
-      - user-api
-
-  user-api:
-    container_name: 'user-api'
-    restart: on-failure
-    build:
-      context: .
-      dockerfile: /internal/apps/user-api/Dockerfile
-    ports:
-      - "8012:8012"
-    depends_on:
-      - mongodb
-      - kafka
-
-  order-elastic:
-    container_name: 'order-elastic'
-    restart: on-failure
-    build:
-      context: .
-      dockerfile: /internal/apps/order-elastic/Dockerfile
-    ports:
-      - "8013:8013"
-    depends_on:
-      - kafka
-      - order-api
-      - elasticsearch
-
 volumes:
   elasticsearch-data:
   mongodb-data:
-
-networks:
-  my-network:
-    driver: bridge
