@@ -1,3 +1,38 @@
+# => OrderAPI Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-api-deployment
+spec:
+  selector:
+    matchLabels:
+      app: order-api
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: order-api
+    spec:
+      containers:
+        - name: order-api
+          image: order-user-project/order-api:V01
+          ports:
+            - containerPort: 8011
+---
+# => OrderAPI Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-api
+spec:
+  selector:
+    app: order-api
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 8011
+      nodePort: 30001
+---
 # => UserAPI Deployment
 apiVersion: apps/v1
 kind: Deployment
