@@ -4,6 +4,9 @@ services:
     container_name: 'mongodb'
     image: 'mongo:latest'
     restart: always
+    networks:
+      my_network:
+        ipv4_address: 172.28.0.51
     ports:
       - '27017:27017'
     volumes:
@@ -13,6 +16,9 @@ services:
     image: 'confluentinc/cp-zookeeper:7.3.2'
     container_name: 'zookeeper'
     restart: on-failure
+    networks:
+      my_network:
+        ipv4_address: 172.28.0.52
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
@@ -21,6 +27,9 @@ services:
     image: 'confluentinc/cp-kafka:7.3.2'
     container_name: 'kafka'
     restart: on-failure
+    networks:
+      my_network:
+        ipv4_address: 172.28.0.53
     ports:
       # To learn about configuring Kafka for access across networks see
       # https://www.confluent.io/blog/kafka-client-cannot-connect-to-broker-on-aws-on-docker-etc/
@@ -31,7 +40,7 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://172.19.0.6:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://172.28.0.53:9092,PLAINTEXT_INTERNAL://kafka:29092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
@@ -42,6 +51,9 @@ services:
     ports:
       - "8080:8080"
     restart: on-failure
+    networks:
+      my_network:
+        ipv4_address: 172.28.0.54
     environment:
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
       - KAFKA_CLUSTERS_0_NAME=local
@@ -52,6 +64,9 @@ services:
     container_name: 'elasticsearch'
     image: 'docker.elastic.co/elasticsearch/elasticsearch:7.13.0'
     restart: on-failure
+    networks:
+      my_network:
+        ipv4_address: 172.28.0.55
     environment:
       - xpack.monitoring.enabled=true
       - xpack.watcher.enabled=false
@@ -67,6 +82,9 @@ services:
     container_name: 'kibana'
     image: 'docker.elastic.co/kibana/kibana:7.13.0'
     restart: on-failure
+    networks:
+      my_network:
+        ipv4_address: 172.28.0.56
     environment:
       ELASTICSEARCH_URL: http://elasticsearch:9200
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
@@ -76,3 +94,11 @@ services:
 volumes:
   elasticsearch-data:
   mongodb-data:
+
+networks:
+  my_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16
