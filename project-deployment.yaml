@@ -29,7 +29,7 @@ spec:
     app: order-api
   type: NodePort
   ports:
-    - port: 80
+    - port: 8011
       targetPort: 8011
       nodePort: 30001
 ---
@@ -64,7 +64,7 @@ spec:
     app: user-api
   type: NodePort
   ports:
-    - port: 80
+    - port: 8012
       targetPort: 8012
       nodePort: 30002
 ---
@@ -100,6 +100,6 @@ spec:
   type: NodePort
   ports:
     - name: http
-      port: 80
+      port: 8013
       targetPort: 8013
       nodePort: 30003
