@@ -19,7 +19,7 @@ func StartOrderElastic() {
 	logger.Info("Logger enabled!!")
 
 	// Get config
-	config := configs.GetConfig("development")
+	config := configs.GetConfig("test")
 
 	// Create OrderElasticRoot => Consume orderModel, save on elastic search
 	orderElasticService := order_elastic.NewOrderElasticService()
