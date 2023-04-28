@@ -38,8 +38,8 @@ There are three microservices which are **Order, User** and **OrderElastic** mic
 * Containerization of databases
 * Override Environment variables
 
-#### Kuberntes establishment with on kubernetes
-* Containerization of application with kubernetes
+#### Kubernetes establishment with on Kubernetes
+* Containerization of application with **Kubernetes**
 
 ## Run The Project
 
