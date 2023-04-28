@@ -94,7 +94,7 @@ var Configs = map[string]Config{
 			UserCollectionName  string
 			OrderCollectionName string
 		}{
-			Connection:          "mongodb://172.18.0.5:27017",
+			Connection:          "mongodb://172.19.0.4:27017",
 			DatabaseName:        "ProjectDB",
 			UserCollectionName:  "Users",
 			OrderCollectionName: "Orders",
@@ -104,7 +104,7 @@ var Configs = map[string]Config{
 			IndexName map[string]string
 		}{
 			Addresses: map[string]string{
-				"Address 1": "http://172.18.0.3:9200",
+				"Address 1": "http://172.19.0.3:9200",
 			},
 			IndexName: map[string]string{
 				"OrderSave": "order_duplicate_v01",
@@ -114,7 +114,7 @@ var Configs = map[string]Config{
 			Address   string
 			TopicName map[string]string
 		}{
-			Address: "172.18.0.6:9092",
+			Address: "172.19.0.6:9092",
 			TopicName: map[string]string{
 				"OrderID":    "orderID-created-v01",
 				"OrderModel": "orderDuplicate-created-v01",

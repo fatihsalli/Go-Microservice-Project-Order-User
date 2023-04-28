@@ -68,3 +68,38 @@ spec:
       targetPort: 8012
       nodePort: 30002
 ---
+# => OrderElastic Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-elastic-deployment
+spec:
+  selector:
+    matchLabels:
+      app: order-elastic
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: order-elastic
+    spec:
+      containers:
+        - name: order-elastic
+          image: order-user-project/order-elastic:V01
+          ports:
+            - containerPort: 8013
+---
+# => OrderElastic Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-elastic
+spec:
+  selector:
+    app: order-elastic
+  type: NodePort
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8013
+      nodePort: 30003
