@@ -34,10 +34,12 @@ There are three microservices which are **Order, User** and **OrderElastic** mic
 * Using **Confluent-kafka** for **Kafka** Message-Broker system
 * Publishing Order Create-Update-Delete event from Order microservices and Subscribing this message from OrderElastic microservices
 
-#### Docker Compose establishment with all microservices on docker
-* Containerization of microservices
+#### Docker Compose establishment with on docker
 * Containerization of databases
 * Override Environment variables
+
+#### Kuberntes establishment with on kubernetes
+* Containerization of application with kubernetes
 
 ## Run The Project
 
