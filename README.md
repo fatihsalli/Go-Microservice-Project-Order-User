@@ -43,13 +43,13 @@ There are three microservices which are **Order, User** and **OrderElastic** mic
 
 ## Run The Project
 
-1. After the cloning this repository run below command at the root directory which include docker-compose.yml files;
+**1. After the cloning this repository run below command at the root directory which include docker-compose.yml files;**
 
 ```go
 docker-compose up -d
 ```
 
-2. To create docker image run below command
+**2. To create docker image run below command**
 ```go
 docker build -t order-user-project/user-api:V01 -f internal/apps/user-api/Dockerfile .
 ```
@@ -60,11 +60,11 @@ docker build -t order-user-project/order-api:V01 -f internal/apps/order-api/Dock
 docker build -t order-user-project/order-elastic:V01 -f internal/apps/order-elastic/Dockerfile .
 ```
 
-3. Run below command to start applications with kubernetes
+**3. Run below command to start applications with kubernetes**
 ```go
 kubectl apply -f project-deployment.yaml
 ```
 
-4. You can launch microservices as below urls:
+**4. You can launch microservices as below urls:**
 * **Order API -> http://localhost:30001/swagger/index.html**
 * **User API -> http://localhost:30002/swagger/index.html**
