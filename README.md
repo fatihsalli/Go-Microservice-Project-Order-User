@@ -52,11 +52,9 @@ docker-compose up -d
 **2. To create docker image run below command**
 ```go
 docker build -t order-user-project/user-api:V01 -f internal/apps/user-api/Dockerfile .
-```
-```go
+
 docker build -t order-user-project/order-api:V01 -f internal/apps/order-api/Dockerfile .
-```
-```go
+
 docker build -t order-user-project/order-elastic:V01 -f internal/apps/order-elastic/Dockerfile .
 ```
 
