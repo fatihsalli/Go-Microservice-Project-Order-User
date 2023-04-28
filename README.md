@@ -49,13 +49,7 @@ There are three microservices which are **Order, User** and **OrderElastic** mic
 docker-compose up -d
 ```
 
-2. Applications will run with kubernetes so before running you have to do some regulations;
-```go
-docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <container_name>
-```
-  Get MongoDB, Kafka and Elasticsearch ip addresses with this command. Then enter these addresses instead of the ip addresses in the config "development"
-
-3. To create docker image run below command
+2. To create docker image run below command
 ```go
 docker build -t order-user-project/user-api:V01 -f internal/apps/user-api/Dockerfile .
 ```
@@ -66,11 +60,11 @@ docker build -t order-user-project/order-api:V01 -f internal/apps/order-api/Dock
 docker build -t order-user-project/order-elastic:V01 -f internal/apps/order-elastic/Dockerfile .
 ```
 
-4. Run below command to start applications with kubernetes
+3. Run below command to start applications with kubernetes
 ```go
 kubectl apply -f project-deployment.yaml
 ```
 
-5. You can launch microservices as below urls:
+4. You can launch microservices as below urls:
 * **Order API -> http://localhost:30001/swagger/index.html**
 * **User API -> http://localhost:30002/swagger/index.html**
