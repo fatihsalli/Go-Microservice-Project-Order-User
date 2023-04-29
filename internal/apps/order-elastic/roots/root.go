@@ -39,23 +39,3 @@ func (o OrderSyncService) Start() {
 	group.Wait()
 	log.Info("Uygulama sonlandı")
 }
-
-type MyWaitGroup struct {
-	ThreadCount int
-}
-
-func (m *MyWaitGroup) Add(count int) {
-	m.ThreadCount += count
-}
-
-func (m *MyWaitGroup) Done() {
-	m.Add(-1)
-}
-
-func (m *MyWaitGroup) Wait() {
-	for {
-		if m.ThreadCount == 0 {
-			return
-		}
-	}
-}
