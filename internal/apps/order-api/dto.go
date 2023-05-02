@@ -66,3 +66,10 @@ type OrderResponseForElastic struct {
 	OrderID string `json:"orderID" bson:"orderID"`
 	Status  string `json:"status" bson:"status"`
 }
+
+type OrderGetRequest struct {
+	ExactFilters map[string]interface{} `json:"exact_filters"`
+	Fields       []string               `json:"fields"`
+	Match        map[string]interface{} `json:"match"`
+	Sort         map[string]int         `json:"sort"`
+}

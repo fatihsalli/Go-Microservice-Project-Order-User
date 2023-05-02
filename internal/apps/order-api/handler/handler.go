@@ -29,6 +29,7 @@ func NewOrderHandler(e *echo.Echo, service *order_api.OrderService, producer *ka
 	router.GET("", b.GetAllOrders)
 	router.GET("/:id", b.GetOrderById)
 	router.POST("", b.CreateOrder)
+	router.POST("/GenericEndpoint", b.GenericEndpoint)
 	router.PUT("", b.UpdateOrder)
 	router.DELETE("/:id", b.DeleteOrder)
 	return b
@@ -258,6 +259,47 @@ func (h *OrderHandler) CreateOrder(c echo.Context) error {
 
 	c.Logger().Infof("{%v} with id is created.", jsonSuccessResultId.ID)
 	return c.JSON(http.StatusCreated, jsonSuccessResultId)
+}
+
+// GenericEndpoint godoc
+// @Summary get orders list with filter
+// @ID get-orders-with-filter
+// @Produce json
+// @Param data body order_api.OrderGetRequest true "order filter data"
+// @Success 200 {object} models.JSONSuccessResultData
+// @Success 400 {object} pkg.BadRequestError
+// @Success 404 {object} pkg.NotFoundError
+// @Router /orders/GenericEndpoint [post]
+func (h *OrderHandler) GenericEndpoint(c echo.Context) error {
+	var orderGetRequest order_api.OrderGetRequest
+
+	if err := c.Bind(&orderGetRequest); err != nil {
+		c.Logger().Errorf("Bad Request. It cannot be binding! %v", err.Error())
+		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
+			Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", err.Error()),
+		})
+	}
+
+	// Create filter and find options (exact filter,sort,field and match)
+	filter, findOptions := h.Service.FromModelConvertToFilter(orderGetRequest)
+
+	orderList, err := h.Service.GetOrdersWithFilter(filter, findOptions)
+
+	if err != nil {
+		c.Logger().Errorf("NotFoundError. %v", err.Error())
+		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
+			Message: fmt.Sprintf("NotFoundError. %v", err.Error()),
+		})
+	}
+
+	// Response success result data
+	jsonSuccessResultData := models.JSONSuccessResultData{
+		TotalItemCount: len(orderList),
+		Data:           orderList,
+	}
+
+	c.Logger().Info("Orders are successfully listed.")
+	return c.JSON(http.StatusOK, jsonSuccessResultData)
 }
 
 // UpdateOrder godoc

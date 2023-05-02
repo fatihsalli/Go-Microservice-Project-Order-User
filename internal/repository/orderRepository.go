@@ -6,6 +6,7 @@ import (
 	"errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
 )
 
@@ -25,6 +26,7 @@ type IOrderRepository interface {
 	Insert(order models.Order) (bool, error)
 	Update(user models.Order) (bool, error)
 	Delete(id string) (bool, error)
+	GetOrdersWithFilter(filter bson.M, opt *options.FindOptions) ([]interface{}, error)
 }
 
 // GetAll Method => to list every order
@@ -139,4 +141,29 @@ func (b *OrderRepository) Delete(id string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (b *OrderRepository) GetOrdersWithFilter(filter bson.M, opt *options.FindOptions) ([]interface{}, error) {
+	var order interface{}
+	var orders []interface{}
+
+	// open connection
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	//We can think of "Cursor" like a request. We pull the data from the database with the "Next" command. (C# => IQueryable)
+	result, err := b.OrderCollection.Find(ctx, filter, opt)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for result.Next(ctx) {
+		if err := result.Decode(&order); err != nil {
+			return nil, err
+		}
+		orders = append(orders, order)
+	}
+
+	return orders, nil
 }

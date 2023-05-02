@@ -7,6 +7,8 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	"github.com/labstack/gommon/log"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"io"
 	"net/http"
 	"time"
@@ -29,7 +31,9 @@ type IOrderService interface {
 	Insert(order models.Order) (models.Order, error)
 	Update(user models.Order) (bool, error)
 	Delete(id string) (bool, error)
-	GetUser(userId string) (UserResponse, error)
+	GetUser(userId string, userURL string) (UserResponse, error)
+	FromModelConvertToFilter(req OrderGetRequest) (bson.M, *options.FindOptions)
+	GetOrdersWithFilter(filter bson.M, opt *options.FindOptions) ([]interface{}, error)
 }
 
 func (b *OrderService) GetAll() ([]models.Order, error) {
@@ -136,4 +140,64 @@ func (b *OrderService) GetUser(userId string, userURL string) (UserResponse, err
 	}
 
 	return userResponse, nil
+}
+
+func (b *OrderService) FromModelConvertToFilter(req OrderGetRequest) (bson.M, *options.FindOptions) {
+
+	// Create a filter based on the exact filters and matches provided in the request
+	filter := bson.M{}
+
+	// Add exact filter criteria to filter if provided
+	if len(req.ExactFilters) > 0 {
+		for key, value := range req.ExactFilters {
+			filter[key] = value
+		}
+	}
+
+	// Add match criteria to filter if provided
+	if len(req.Match) > 0 {
+		match := bson.M{}
+		for key, value := range req.Match {
+			match[key] = value
+		}
+		filter = bson.M{
+			"$and": []bson.M{
+				filter,
+				match,
+			},
+		}
+	}
+
+	// Create options for the find operation, including the requested fields and sort order
+	findOptions := options.Find()
+
+	// Add projection criteria to find options if provided
+	if len(req.Fields) > 0 {
+		projection := bson.M{}
+		findOptions.SetProjection(projection)
+		for _, field := range req.Fields {
+			projection[field] = 1
+		}
+	}
+
+	// Add sort criteria to find options if provided
+	if len(req.Sort) > 0 {
+		sort := bson.M{}
+		for key, value := range req.Sort {
+			sort[key] = value
+		}
+		findOptions.SetSort(sort)
+	}
+
+	return filter, findOptions
+}
+
+func (b *OrderService) GetOrdersWithFilter(filter bson.M, opt *options.FindOptions) ([]interface{}, error) {
+	result, err := b.OrderRepository.GetOrdersWithFilter(filter, opt)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
