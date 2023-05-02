@@ -149,8 +149,8 @@ func (b *OrderService) FromModelConvertToFilter(req OrderGetRequest) (bson.M, *o
 
 	// Add exact filter criteria to filter if provided
 	if len(req.ExactFilters) > 0 {
-		for key, value := range req.ExactFilters {
-			filter[key] = value
+		for key, values := range req.ExactFilters {
+			filter[key] = bson.M{"$in": values}
 		}
 	}
 
