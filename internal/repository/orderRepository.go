@@ -143,6 +143,7 @@ func (b *OrderRepository) Delete(id string) (bool, error) {
 	return true, nil
 }
 
+// GetOrdersWithFilter Method => get orders with filter and find options for generic endpoint
 func (b *OrderRepository) GetOrdersWithFilter(filter bson.M, opt *options.FindOptions) ([]interface{}, error) {
 	var order interface{}
 	var orders []interface{}
