@@ -280,9 +280,10 @@ func (h *OrderHandler) GenericEndpoint(c echo.Context) error {
 		})
 	}
 
-	// Create filter and find options (exact filter,sort,field and match)
+	// Create filter and find options for mongoDB (exact filter,sort,field and match)
 	filter, findOptions := h.Service.FromModelConvertToFilter(orderGetRequest)
 
+	// Get request with filter and find options for mongoDB
 	orderList, err := h.Service.GetOrdersWithFilter(filter, findOptions)
 
 	if err != nil {
