@@ -59,23 +59,7 @@ func (e *ElasticService) GetFromElasticsearch(req OrderGetRequest) ([]interface{
 	// TODO: Match çalışmıyor kontrol edilecek
 	// Creating query for match
 	if len(req.Match) > 0 {
-		for field, value := range req.Match {
-			if query[field] != nil {
-				// Adding a match query to exist bool query
-				boolQuery := query[field].(map[string]interface{})
-				boolQuery["match"] = map[string]interface{}{
-					field: value,
-				}
-				query[field] = boolQuery
-			} else {
-				// Creating new bool query
-				boolQuery := make(map[string]interface{})
-				boolQuery["match"] = map[string]interface{}{
-					field: value,
-				}
-				query[field] = boolQuery
-			}
-		}
+
 	}
 
 	searchBody["query"] = query
