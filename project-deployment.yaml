@@ -31,7 +31,7 @@ spec:
   ports:
     - port: 8011
       targetPort: 8011
-      nodePort: 30001
+      nodePort: 30011
 ---
 # => UserAPI Deployment
 apiVersion: apps/v1
@@ -66,7 +66,7 @@ spec:
   ports:
     - port: 8012
       targetPort: 8012
-      nodePort: 30002
+      nodePort: 30012
 ---
 # => OrderElastic Deployment
 apiVersion: apps/v1
@@ -102,4 +102,4 @@ spec:
     - name: http
       port: 8013
       targetPort: 8013
-      nodePort: 30003
+      nodePort: 30013

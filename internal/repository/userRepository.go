@@ -29,7 +29,7 @@ type IUserRepository interface {
 
 // GetAll Method => to list every user
 func (b *UserRepository) GetAll() ([]models.User, error) {
-	var user models.User
+
 	var users []models.User
 
 	// to open connection
@@ -44,6 +44,7 @@ func (b *UserRepository) GetAll() ([]models.User, error) {
 	}
 
 	for result.Next(ctx) {
+		var user models.User
 		if err := result.Decode(&user); err != nil {
 			return nil, err
 		}

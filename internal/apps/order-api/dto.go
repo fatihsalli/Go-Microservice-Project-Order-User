@@ -68,12 +68,12 @@ type OrderResponseForElastic struct {
 }
 
 type OrderGenericResponse struct {
-	ID             string          `json:"id,omitempty" bson:"_id"`
-	UserId         string          `json:"userId,omitempty" bson:"userId"`
-	Status         string          `json:"status,omitempty" bson:"status"`
-	Address        AddressResponse `json:"address,omitempty" bson:"address"`
-	InvoiceAddress AddressResponse `json:"invoiceAddress,omitempty" bson:"invoiceAddress"`
-	Product        []struct {
+	ID               string `json:"id,omitempty" bson:"_id"`
+	UserId           string `json:"userId,omitempty" bson:"userId"`
+	Status           string `json:"status,omitempty" bson:"status"`
+	AddressID        string `json:"addressID,omitempty" bson:"addressID"`
+	InvoiceAddressID string `json:"invoiceAddressID,omitempty" bson:"invoiceAddressID"`
+	Product          []struct {
 		Name     string  `json:"name" bson:"name"`
 		Quantity int     `json:"quantity" bson:"quantity"`
 		Price    float64 `json:"price" bson:"price"`

@@ -15,21 +15,23 @@ import (
 )
 
 type OrderHandler struct {
-	Service   *order_api.OrderService
-	Producer  *kafka.ProducerKafka
-	Config    *configs.Config
-	Validator *validator.Validate
+	Service        *order_api.OrderService
+	ElasticService *order_api.ElasticService
+	Producer       *kafka.ProducerKafka
+	Config         *configs.Config
+	Validator      *validator.Validate
 }
 
-func NewOrderHandler(e *echo.Echo, service *order_api.OrderService, producer *kafka.ProducerKafka, config *configs.Config, v *validator.Validate) *OrderHandler {
+func NewOrderHandler(e *echo.Echo, service *order_api.OrderService, producer *kafka.ProducerKafka, config *configs.Config, v *validator.Validate, elasticService *order_api.ElasticService) *OrderHandler {
 	router := e.Group("api/orders")
-	b := &OrderHandler{Service: service, Producer: producer, Config: config, Validator: v}
+	b := &OrderHandler{Service: service, Producer: producer, Config: config, Validator: v, ElasticService: elasticService}
 
 	//Routes
 	router.GET("", b.GetAllOrders)
 	router.GET("/:id", b.GetOrderById)
 	router.POST("", b.CreateOrder)
-	router.POST("/GenericEndpoint", b.GenericEndpoint)
+	router.POST("/GenericEndpointFromMongo", b.GenericEndpointFromMongo)
+	router.POST("/GenericEndpointFromElastic", b.GenericEndpointFromElastic)
 	router.PUT("", b.UpdateOrder)
 	router.DELETE("/:id", b.DeleteOrder)
 	return b
@@ -261,16 +263,16 @@ func (h *OrderHandler) CreateOrder(c echo.Context) error {
 	return c.JSON(http.StatusCreated, jsonSuccessResultId)
 }
 
-// GenericEndpoint godoc
+// GenericEndpointFromMongo godoc
 // @Summary get orders list with filter
-// @ID get-orders-with-filter
+// @ID get-orders-with-filter-from-mongoDB
 // @Produce json
 // @Param data body order_api.OrderGetRequest true "order filter data"
 // @Success 200 {object} models.JSONSuccessResultData
 // @Success 400 {object} pkg.BadRequestError
 // @Success 404 {object} pkg.NotFoundError
-// @Router /orders/GenericEndpoint [post]
-func (h *OrderHandler) GenericEndpoint(c echo.Context) error {
+// @Router /orders/GenericEndpointFromMongo [post]
+func (h *OrderHandler) GenericEndpointFromMongo(c echo.Context) error {
 	var orderGetRequest order_api.OrderGetRequest
 
 	if err := c.Bind(&orderGetRequest); err != nil {
@@ -301,8 +303,8 @@ func (h *OrderHandler) GenericEndpoint(c echo.Context) error {
 		orderGeneric.ID = order.ID
 		orderGeneric.UserId = order.UserId
 		orderGeneric.Status = order.Status
-		orderGeneric.Address.Address = order.Address.Address
-		orderGeneric.InvoiceAddress.Address = order.InvoiceAddress.Address
+		orderGeneric.AddressID = order.Address.ID
+		orderGeneric.InvoiceAddressID = order.InvoiceAddress.ID
 		orderGeneric.Product = order.Product
 		orderGeneric.Total = order.Total
 
@@ -319,6 +321,44 @@ func (h *OrderHandler) GenericEndpoint(c echo.Context) error {
 		}
 
 		orderGenericList = append(orderGenericList, orderGeneric)
+	}
+
+	// Response success result data
+	jsonSuccessResultData := models.JSONSuccessResultData{
+		TotalItemCount: len(orderGenericList),
+		Data:           orderGenericList,
+	}
+
+	c.Logger().Info("Orders are successfully listed.")
+	return c.JSON(http.StatusOK, jsonSuccessResultData)
+}
+
+// GenericEndpointFromElastic godoc
+// @Summary get orders list with filter
+// @ID get-orders-with-filter-from-elasticsearch
+// @Produce json
+// @Param data body order_api.OrderGetRequest true "order filter data"
+// @Success 200 {object} models.JSONSuccessResultData
+// @Success 400 {object} pkg.BadRequestError
+// @Success 404 {object} pkg.NotFoundError
+// @Router /orders/GenericEndpointFromElastic [post]
+func (h *OrderHandler) GenericEndpointFromElastic(c echo.Context) error {
+	var orderGetRequest order_api.OrderGetRequest
+
+	if err := c.Bind(&orderGetRequest); err != nil {
+		c.Logger().Errorf("Bad Request. It cannot be binding! %v", err.Error())
+		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
+			Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", err.Error()),
+		})
+	}
+
+	// Create filter and find options (exact filter,sort,field and match)
+	orderList, err := h.ElasticService.GetFromElasticsearch(orderGetRequest)
+	if err != nil {
+		c.Logger().Errorf("InternalServerError. %v", err.Error())
+		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
+			Message: fmt.Sprintf("InternalServerError. %v", err.Error()),
+		})
 	}
 
 	// Response success result data

@@ -54,14 +54,15 @@ func (h *UserHandler) GetAllUsers(c echo.Context) error {
 	}
 
 	// We can use automapper, but it will cause performance loss.
-	var userResponse user_api.UserResponse
 	var usersResponse []user_api.UserResponse
-	var addressResponse user_api.AddressResponse
+
 	for _, user := range userList {
+		var userResponse user_api.UserResponse
 		userResponse.ID = user.ID
 		userResponse.Name = user.Name
 		userResponse.Email = user.Email
 		for _, address := range user.Addresses {
+			var addressResponse user_api.AddressResponse
 			addressResponse.ID = address.ID
 			addressResponse.Address = address.Address
 			addressResponse.City = address.City
