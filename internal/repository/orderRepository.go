@@ -144,9 +144,9 @@ func (b *OrderRepository) Delete(id string) (bool, error) {
 }
 
 // GetOrdersWithFilter Method => get orders with filter and find options for generic endpoint
-func (b *OrderRepository) GetOrdersWithFilter(filter bson.M, opt *options.FindOptions) ([]interface{}, error) {
-	var order interface{}
-	var orders []interface{}
+func (b *OrderRepository) GetOrdersWithFilter(filter bson.M, opt *options.FindOptions) ([]models.Order, error) {
+	var order models.Order
+	var orders []models.Order
 
 	// open connection
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)

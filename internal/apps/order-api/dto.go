@@ -67,6 +67,22 @@ type OrderResponseForElastic struct {
 	Status  string `json:"status" bson:"status"`
 }
 
+type OrderGenericResponse struct {
+	ID             string          `json:"id,omitempty" bson:"_id"`
+	UserId         string          `json:"userId,omitempty" bson:"userId"`
+	Status         string          `json:"status,omitempty" bson:"status"`
+	Address        AddressResponse `json:"address,omitempty" bson:"address"`
+	InvoiceAddress AddressResponse `json:"invoiceAddress,omitempty" bson:"invoiceAddress"`
+	Product        []struct {
+		Name     string  `json:"name" bson:"name"`
+		Quantity int     `json:"quantity" bson:"quantity"`
+		Price    float64 `json:"price" bson:"price"`
+	} `json:"product,omitempty" bson:"product"`
+	Total     float64 `json:"total,omitempty" bson:"total"`
+	CreatedAt string  `json:"createdAt,omitempty" bson:"createdAt"`
+	UpdatedAt string  `json:"updatedAt,omitempty" bson:"updatedAt"`
+}
+
 type OrderGetRequest struct {
 	ExactFilters map[string][]interface{} `json:"exact_filters"`
 	Fields       []string                 `json:"fields"`

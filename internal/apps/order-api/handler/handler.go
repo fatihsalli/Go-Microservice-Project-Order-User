@@ -293,6 +293,34 @@ func (h *OrderHandler) GenericEndpoint(c echo.Context) error {
 		})
 	}
 
+	// Mapping
+	var orderGeneric order_api.OrderGenericResponse
+	var orderGenericList []order_api.OrderGenericResponse
+
+	for _, order := range orderList {
+		orderGeneric.ID = order.ID
+		orderGeneric.UserId = order.UserId
+		orderGeneric.Status = order.Status
+		orderGeneric.Address.Address = order.Address.Address
+		orderGeneric.InvoiceAddress.Address = order.InvoiceAddress.Address
+		orderGeneric.Product = order.Product
+		orderGeneric.Total = order.Total
+
+		if order.CreatedAt.String() == "0001-01-01 00:00:00 +0000 UTC" {
+			orderGeneric.CreatedAt = ""
+		} else {
+			orderGeneric.CreatedAt = order.CreatedAt.String()
+		}
+
+		if order.UpdatedAt.String() == "0001-01-01 00:00:00 +0000 UTC" {
+			orderGeneric.UpdatedAt = ""
+		} else {
+			orderGeneric.UpdatedAt = order.UpdatedAt.String()
+		}
+
+		orderGenericList = append(orderGenericList, orderGeneric)
+	}
+
 	// Response success result data
 	jsonSuccessResultData := models.JSONSuccessResultData{
 		TotalItemCount: len(orderList),
