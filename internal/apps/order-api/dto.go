@@ -74,14 +74,17 @@ type OrderGenericResponse struct {
 	AddressID        string `json:"addressID,omitempty" bson:"addressID"`
 	InvoiceAddressID string `json:"invoiceAddressID,omitempty" bson:"invoiceAddressID"`
 	Product          []struct {
-		Name     string  `json:"name" bson:"name"`
-		Quantity int     `json:"quantity" bson:"quantity"`
-		Price    float64 `json:"price" bson:"price"`
+		Name     string  `json:"name,omitempty" bson:"name"`
+		Quantity int     `json:"quantity,omitempty" bson:"quantity"`
+		Price    float64 `json:"price,omitempty" bson:"price"`
 	} `json:"product,omitempty" bson:"product"`
 	Total     float64 `json:"total,omitempty" bson:"total"`
 	CreatedAt string  `json:"createdAt,omitempty" bson:"createdAt"`
 	UpdatedAt string  `json:"updatedAt,omitempty" bson:"updatedAt"`
 }
+
+// TODO:
+// TODO: Turkish normalizer veya keyword alarak ya da direkt olarak Turkish normalizer verebiliriz. Seçilecek
 
 type OrderGetRequest struct {
 	ExactFilters map[string][]interface{} `json:"exact_filters"`

@@ -305,7 +305,8 @@ func (h *OrderHandler) GenericEndpointFromMongo(c echo.Context) error {
 		orderGeneric.Status = order.Status
 		orderGeneric.AddressID = order.Address.ID
 		orderGeneric.InvoiceAddressID = order.InvoiceAddress.ID
-		orderGeneric.Product = order.Product
+		//TODO: Bug fix
+		//orderGeneric.Product = order.Product
 		orderGeneric.Total = order.Total
 
 		if order.CreatedAt.String() == "0001-01-01 00:00:00 +0000 UTC" {
@@ -332,6 +333,8 @@ func (h *OrderHandler) GenericEndpointFromMongo(c echo.Context) error {
 	c.Logger().Info("Orders are successfully listed.")
 	return c.JSON(http.StatusOK, jsonSuccessResultData)
 }
+
+// TODO:
 
 // GenericEndpointFromElastic godoc
 // @Summary get orders list with filter
