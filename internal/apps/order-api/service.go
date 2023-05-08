@@ -143,19 +143,40 @@ func (b *OrderService) GetUser(userId string, userURL string) (UserResponse, err
 }
 
 func (b *OrderService) FromModelConvertToFilter(req OrderGetRequest) (bson.M, *options.FindOptions) {
+	// Get config for generic endpoint
+	config := GetGenericConfig("mongoDB")
 
 	// Create a filter based on the exact filters and matches provided in the request
 	filter := bson.M{}
 
 	// Add exact filter criteria to filter if provided
 	if len(req.ExactFilters) > 0 {
-		for key, values := range req.ExactFilters {
-			filter[key] = bson.M{"$in": values}
+		for keyModel, values := range req.ExactFilters {
+			keyMongo := config.ExactFilterArea[keyModel]
+			// TODO: null check if keyMongo==""{filter[keyModel] = bson.M{"$in": values}}
+			filter[keyMongo] = bson.M{"$in": values}
 		}
 	}
 
 	// Add match criteria to filter if provided
 	if len(req.Match) > 0 {
+		match := bson.M{}
+		for _, model := range req.Match {
+			parameter := config.MatchFilterParameter[model.Parameter]
+			query := make(map[string]interface{})
+			query[parameter] = model.Value
+			match[model.MatchField] = query
+		}
+		filter = bson.M{
+			"$and": []bson.M{
+				filter,
+				match,
+			},
+		}
+	}
+
+	// Add match criteria to filter if provided
+	/*	if len(req.Match) > 0 {
 		match := bson.M{}
 		for key, value := range req.Match {
 			match[key] = value
@@ -166,7 +187,7 @@ func (b *OrderService) FromModelConvertToFilter(req OrderGetRequest) (bson.M, *o
 				match,
 			},
 		}
-	}
+	}*/
 
 	// Create options for the find operation, including the requested fields and sort order
 	findOptions := options.Find()

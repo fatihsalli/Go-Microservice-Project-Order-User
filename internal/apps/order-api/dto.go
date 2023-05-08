@@ -89,6 +89,70 @@ type OrderGenericResponse struct {
 type OrderGetRequest struct {
 	ExactFilters map[string][]interface{} `json:"exact_filters"`
 	Fields       []string                 `json:"fields"`
-	Match        map[string]interface{}   `json:"match"`
-	Sort         map[string]int           `json:"sort"`
+	Match        []struct {
+		MatchField string      `json:"match_field"`
+		Parameter  string      `json:"parameter"`
+		Value      interface{} `json:"value"`
+	} `json:"match"`
+	Sort map[string]int `json:"sort"`
+}
+
+type ConfigGenericEndpoint struct {
+	ExactFilterArea      map[string]string
+	MatchFilterParameter map[string]string
+}
+
+var ConfigsGeneric = map[string]ConfigGenericEndpoint{
+	"mongoDB": {
+		ExactFilterArea: map[string]string{
+			"id":                      "_id",
+			"_id":                     "_id",
+			"userId":                  "userId",
+			"userID":                  "userId",
+			"status":                  "status",
+			"address":                 "address",
+			"address.id":              "address.id",
+			"address.address":         "address.address",
+			"address.city":            "address.city",
+			"address.district":        "address.district",
+			"address.type":            "address.type",
+			"address.default":         "address.default",
+			"invoiceAddress":          "invoiceAddress",
+			"invoiceAddress.id":       "invoiceAddress.id",
+			"invoiceAddress.address":  "invoiceAddress.address",
+			"invoiceAddress.city":     "invoiceAddress.city",
+			"invoiceAddress.district": "invoiceAddress.district",
+			"invoiceAddress.type":     "invoiceAddress.type",
+			"invoiceAddress.default":  "invoiceAddress.default",
+			"product":                 "product",
+			"product.name":            "product.name",
+			"product.quantity":        "product.quantity",
+			"product.price":           "product.price",
+			"total":                   "total",
+			"createdAt":               "createdAt",
+			"createdAT":               "createdAt",
+			"updatedAt":               "updatedAt",
+			"updatedAT":               "updatedAt",
+		}, MatchFilterParameter: map[string]string{
+			"equal":            "$eq",
+			"eq":               "$eq",
+			"notEqual":         "$ne",
+			"ne":               "$ne",
+			"greaterThan":      "$gt",
+			"gt":               "$gt",
+			"greaterThanEqual": "$gte",
+			"gte":              "$gte",
+			"lessThan":         "$lt",
+			"lt":               "$lt",
+			"lessThanEqual":    "$lte",
+			"lte":              "$lte",
+			"in":               "$in",
+			"nin":              "$nin",
+			"exists":           "$exists",
+			"regex":            "$regex",
+		}},
+}
+
+func GetGenericConfig(database string) ConfigGenericEndpoint {
+	return ConfigsGeneric[database]
 }
