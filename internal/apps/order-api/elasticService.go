@@ -33,25 +33,25 @@ func NewElasticService(config *configs.Config) *ElasticService {
 }
 
 func (e *ElasticService) GetFromElasticsearch(req OrderGetRequest) ([]interface{}, error) {
+	// Get config for generic endpoint
+	config := configs.GetGenericEndpointConfig("elasticsearch")
 
 	searchBody := make(map[string]interface{})
 	query := make(map[string]interface{})
+	boolQuery := make(map[string]interface{})
+	mustClauses := make([]map[string]interface{}, 0)
 
 	// Creating query for exact filters
 	if len(req.ExactFilters) > 0 {
-		boolQuery := make(map[string]interface{})
-		mustClauses := make([]map[string]interface{}, 0)
-
 		for field, values := range req.ExactFilters {
 			if len(values) > 0 {
 				mustClause := make(map[string]interface{})
 				mustClause["terms"] = map[string]interface{}{
-					field: values,
+					config.ExactFilterArea[field]: values,
 				}
 				mustClauses = append(mustClauses, mustClause)
 			}
 		}
-
 		boolQuery["must"] = mustClauses
 		query["bool"] = boolQuery
 	}
@@ -91,7 +91,6 @@ func (e *ElasticService) GetFromElasticsearch(req OrderGetRequest) ([]interface{
 		if !idCheck {
 			req.Fields = append(req.Fields, "id")
 		}
-
 		searchBody["_source"] = req.Fields
 	}
 
