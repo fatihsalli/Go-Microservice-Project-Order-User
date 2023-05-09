@@ -32,7 +32,7 @@ func NewElasticService(config *configs.Config) *ElasticService {
 	return elasticService
 }
 
-func (e *ElasticService) GetFromElasticsearch(req OrderGetRequest) ([]interface{}, error) {
+func (e *ElasticService) FromModelConvertToElasticQuery(req OrderGetRequest) map[string]interface{} {
 	// Get config for generic endpoint
 	config := configs.GetGenericEndpointConfig("elasticsearch")
 
@@ -148,6 +148,7 @@ func (e *ElasticService) GetFromElasticsearch(req OrderGetRequest) ([]interface{
 
 	searchBody["query"] = query
 
+	// Creating sort area
 	if len(req.Sort) > 0 {
 		for field, value := range req.Sort {
 			if value == -1 {
@@ -162,6 +163,7 @@ func (e *ElasticService) GetFromElasticsearch(req OrderGetRequest) ([]interface{
 		}
 	}
 
+	// Creating fields area
 	if len(req.Fields) > 0 {
 		var idCheck bool
 		for _, value := range req.Fields {
@@ -179,14 +181,21 @@ func (e *ElasticService) GetFromElasticsearch(req OrderGetRequest) ([]interface{
 		searchBody["_source"] = req.Fields
 	}
 
+	return searchBody
+}
+
+func (e *ElasticService) GetFromElasticsearch(query map[string]interface{}) ([]interface{}, error) {
+
 	buf := new(bytes.Buffer)
-	if err := json.NewEncoder(buf).Encode(searchBody); err != nil {
+	if err := json.NewEncoder(buf).Encode(query); err != nil {
 		fmt.Println("Error encoding the query: ", err)
 		return nil, err
 	}
 
 	res, err := e.ElasticClient.Search(
 		e.ElasticClient.Search.WithIndex(e.Config.Elasticsearch.IndexName["OrderSave"]),
+		// If we don't put this elasticsearch gives us just 10 models
+		e.ElasticClient.Search.WithSize(20),
 		e.ElasticClient.Search.WithBody(buf),
 	)
 	if err != nil {

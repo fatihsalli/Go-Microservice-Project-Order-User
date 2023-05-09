@@ -325,7 +325,11 @@ func (h *OrderHandler) GenericEndpointFromElastic(c echo.Context) error {
 	}
 
 	// Create filter and find options (exact filter,sort,field and match)
-	orderList, err := h.ElasticService.GetFromElasticsearch(orderGetRequest)
+	elasticQuery := h.ElasticService.FromModelConvertToElasticQuery(orderGetRequest)
+
+	// Get orders from elasticsearch
+	orderList, err := h.ElasticService.GetFromElasticsearch(elasticQuery)
+
 	if err != nil {
 		c.Logger().Errorf("InternalServerError. %v", err.Error())
 		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{

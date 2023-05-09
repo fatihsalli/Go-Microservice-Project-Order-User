@@ -204,11 +204,12 @@ func (b *OrderService) FromModelConvertToFilter(req OrderGetRequest) (bson.M, *o
 
 	// Add sort criteria to find options if provided
 	if len(req.Sort) > 0 {
-		sort := bson.M{}
+		sortFields := bson.D{}
 		for key, value := range req.Sort {
-			sort[key] = value
+			// We can use multiple sorts with bson.E (=> bson.D {"total":-1,"createdAt":-1})
+			sortFields = append(sortFields, bson.E{Key: key, Value: value})
 		}
-		findOptions.SetSort(sort)
+		findOptions.SetSort(sortFields)
 	}
 
 	return filter, findOptions
