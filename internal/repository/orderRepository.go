@@ -144,27 +144,30 @@ func (b *OrderRepository) Delete(id string) (bool, error) {
 }
 
 // GetOrdersWithFilter Method => get orders with filter and find options for generic endpoint
-func (b *OrderRepository) GetOrdersWithFilter(filter bson.M, opt *options.FindOptions) ([]models.Order, error) {
-	var order models.Order
-	var orders []models.Order
-
+func (b *OrderRepository) GetOrdersWithFilter(filter bson.M, opt *options.FindOptions) ([]interface{}, error) {
 	// open connection
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	//We can think of "Cursor" like a request. We pull the data from the database with the "Next" command. (C# => IQueryable)
 	result, err := b.OrderCollection.Find(ctx, filter, opt)
 
 	if err != nil {
 		return nil, err
 	}
 
+	var orders []map[string]interface{}
 	for result.Next(ctx) {
+		var order map[string]interface{}
 		if err := result.Decode(&order); err != nil {
 			return nil, err
 		}
 		orders = append(orders, order)
 	}
 
-	return orders, nil
+	var resultOrders []interface{}
+	for _, obj := range orders {
+		resultOrders = append(resultOrders, obj)
+	}
+
+	return resultOrders, nil
 }

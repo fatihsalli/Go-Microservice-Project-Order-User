@@ -213,7 +213,7 @@ func (b *OrderService) FromModelConvertToFilter(req OrderGetRequest) (bson.M, *o
 	return filter, findOptions
 }
 
-func (b *OrderService) GetOrdersWithFilter(filter bson.M, opt *options.FindOptions) ([]models.Order, error) {
+func (b *OrderService) GetOrdersWithFilter(filter bson.M, opt *options.FindOptions) ([]interface{}, error) {
 	result, err := b.OrderRepository.GetOrdersWithFilter(filter, opt)
 
 	if err != nil {

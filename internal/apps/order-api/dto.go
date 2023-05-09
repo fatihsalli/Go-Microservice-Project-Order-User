@@ -83,9 +83,6 @@ type OrderGenericResponse struct {
 	UpdatedAt string  `json:"updatedAt,omitempty" bson:"updatedAt"`
 }
 
-// TODO:
-// TODO: Turkish normalizer veya keyword alarak ya da direkt olarak Turkish normalizer verebiliriz. Seçilecek
-
 type OrderGetRequest struct {
 	ExactFilters map[string][]interface{} `json:"exact_filters"`
 	Fields       []string                 `json:"fields"`
