@@ -371,6 +371,7 @@ func (h *OrderHandler) UpdateOrder(c echo.Context) error {
 		})
 	}
 
+	//
 	// Check order using with service
 	if _, err := h.Service.GetOrderById(orderUpdateRequest.ID); err != nil {
 		c.Logger().Errorf("Not found exception: {%v} with id not found!", orderUpdateRequest.ID)
