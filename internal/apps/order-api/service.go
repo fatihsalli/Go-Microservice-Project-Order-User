@@ -161,16 +161,31 @@ func (b *OrderService) FromModelConvertToFilter(req OrderGetRequest) (bson.M, *o
 	// Add match criteria to filter if provided
 	if len(req.Match) > 0 {
 		for _, model := range req.Match {
-			match := bson.M{}
-			parameter := config.MatchFilterParameter[model.Parameter]
-			query := make(map[string]interface{})
-			query[parameter] = model.Value
-			match[model.MatchField] = query
-			filter = bson.M{
-				"$and": []bson.M{
-					filter,
-					match,
-				},
+			if model.MatchField == "createdAt" || model.MatchField == "updatedAt" {
+				parsedTime, _ := time.Parse("2006-01-02", model.Value.(string))
+				dateQuery := bson.M{
+					model.MatchField: bson.M{
+						config.MatchFilterParameter[model.Parameter]: parsedTime,
+					},
+				}
+				filter = bson.M{
+					"$and": []bson.M{
+						filter,
+						dateQuery,
+					},
+				}
+			} else {
+				match := bson.M{}
+				parameter := config.MatchFilterParameter[model.Parameter]
+				query := make(map[string]interface{})
+				query[parameter] = model.Value
+				match[model.MatchField] = query
+				filter = bson.M{
+					"$and": []bson.M{
+						filter,
+						match,
+					},
+				}
 			}
 		}
 	}
