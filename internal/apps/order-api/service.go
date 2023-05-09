@@ -1,6 +1,7 @@
 package order_api
 
 import (
+	"OrderUserProject/internal/configs"
 	"OrderUserProject/internal/models"
 	"OrderUserProject/internal/repository"
 	"encoding/json"
@@ -144,7 +145,7 @@ func (b *OrderService) GetUser(userId string, userURL string) (UserResponse, err
 
 func (b *OrderService) FromModelConvertToFilter(req OrderGetRequest) (bson.M, *options.FindOptions) {
 	// Get config for generic endpoint
-	config := GetGenericConfig("mongoDB")
+	config := configs.GetGenericEndpointConfig("mongoDB")
 
 	// Create a filter based on the exact filters and matches provided in the request
 	filter := bson.M{}
@@ -153,7 +154,6 @@ func (b *OrderService) FromModelConvertToFilter(req OrderGetRequest) (bson.M, *o
 	if len(req.ExactFilters) > 0 {
 		for keyModel, values := range req.ExactFilters {
 			keyMongo := config.ExactFilterArea[keyModel]
-			// TODO: null check if keyMongo==""{filter[keyModel] = bson.M{"$in": values}}
 			filter[keyMongo] = bson.M{"$in": values}
 		}
 	}
@@ -174,20 +174,6 @@ func (b *OrderService) FromModelConvertToFilter(req OrderGetRequest) (bson.M, *o
 			},
 		}
 	}
-
-	// Add match criteria to filter if provided
-	/*	if len(req.Match) > 0 {
-		match := bson.M{}
-		for key, value := range req.Match {
-			match[key] = value
-		}
-		filter = bson.M{
-			"$and": []bson.M{
-				filter,
-				match,
-			},
-		}
-	}*/
 
 	// Create options for the find operation, including the requested fields and sort order
 	findOptions := options.Find()

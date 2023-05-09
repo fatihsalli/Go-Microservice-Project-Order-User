@@ -139,3 +139,109 @@ func GetConfig(env string) Config {
 
 	return Configs["test"]
 }
+
+type GenericEndpointConfig struct {
+	ExactFilterArea      map[string]string
+	MatchFilterParameter map[string]string
+}
+
+var GenericEndpointConfigs = map[string]GenericEndpointConfig{
+	"mongoDB": {
+		ExactFilterArea: map[string]string{
+			"id":                      "_id",
+			"_id":                     "_id",
+			"userId":                  "userId",
+			"userID":                  "userId",
+			"status":                  "status",
+			"product.name":            "product.name",
+			"product.quantity":        "product.quantity",
+			"product.price":           "product.price",
+			"total":                   "total",
+			"createdAt":               "createdAt",
+			"createdAT":               "createdAt",
+			"updatedAt":               "updatedAt",
+			"updatedAT":               "updatedAt",
+			"address.id":              "address.id",
+			"address.address":         "address.address",
+			"address.city":            "address.city",
+			"address.district":        "address.district",
+			"address.type":            "address.type",
+			"invoiceAddress.id":       "invoiceAddress.id",
+			"invoiceAddress.address":  "invoiceAddress.address",
+			"invoiceAddress.city":     "invoiceAddress.city",
+			"invoiceAddress.district": "invoiceAddress.district",
+			"invoiceAddress.type":     "invoiceAddress.type",
+			"address.default.isDefaultInvoiceAddress":        "address.default.isDefaultInvoiceAddress",
+			"address.default.isDefaultRegularAddress":        "address.default.isDefaultRegularAddress",
+			"invoiceAddress.default.isDefaultInvoiceAddress": "invoiceAddress.default.isDefaultInvoiceAddress",
+			"invoiceAddress.default.isDefaultRegularAddress": "invoiceAddress.default.isDefaultRegularAddress",
+		}, MatchFilterParameter: map[string]string{
+			"equal":            "$eq",
+			"eq":               "$eq",
+			"notEqual":         "$ne",
+			"ne":               "$ne",
+			"greaterThan":      "$gt",
+			"gt":               "$gt",
+			"greaterThanEqual": "$gte",
+			"gte":              "$gte",
+			"lessThan":         "$lt",
+			"lt":               "$lt",
+			"lessThanEqual":    "$lte",
+			"lte":              "$lte",
+			"in":               "$in",
+			"nin":              "$nin",
+			"exists":           "$exists",
+			"regex":            "$regex",
+		}},
+	"elasticsearch": {
+		ExactFilterArea: map[string]string{
+			"id":                      "id.keyword",
+			"_id":                     "id.keyword",
+			"userId":                  "userId.keyword",
+			"userID":                  "userId.keyword",
+			"status":                  "status.keyword",
+			"product.name":            "product.name.keyword",
+			"product.quantity":        "product.quantity",
+			"product.price":           "product.price",
+			"total":                   "total",
+			"createdAt":               "createdAt",
+			"createdAT":               "createdAt",
+			"updatedAt":               "updatedAt",
+			"updatedAT":               "updatedAt",
+			"address.id":              "address.id.keyword",
+			"address.address":         "address.address.keyword",
+			"address.city":            "address.city.keyword",
+			"address.district":        "address.district.keyword",
+			"address.type":            "address.type.keyword",
+			"invoiceAddress.id":       "invoiceAddress.id.keyword",
+			"invoiceAddress.address":  "invoiceAddress.address.keyword",
+			"invoiceAddress.city":     "invoiceAddress.city.keyword",
+			"invoiceAddress.district": "invoiceAddress.district.keyword",
+			"invoiceAddress.type":     "invoiceAddress.type.keyword",
+			"address.default.isDefaultInvoiceAddress":        "address.default.isDefaultInvoiceAddress",
+			"address.default.isDefaultRegularAddress":        "address.default.isDefaultRegularAddress",
+			"invoiceAddress.default.isDefaultInvoiceAddress": "invoiceAddress.default.isDefaultInvoiceAddress",
+			"invoiceAddress.default.isDefaultRegularAddress": "invoiceAddress.default.isDefaultRegularAddress",
+		}, MatchFilterParameter: map[string]string{
+			"equal":            "$eq",
+			"eq":               "$eq",
+			"notEqual":         "$ne",
+			"ne":               "$ne",
+			"greaterThan":      "$gt",
+			"gt":               "$gt",
+			"greaterThanEqual": "$gte",
+			"gte":              "$gte",
+			"lessThan":         "$lt",
+			"lt":               "$lt",
+			"lessThanEqual":    "$lte",
+			"lte":              "$lte",
+			"in":               "$in",
+			"nin":              "$nin",
+			"exists":           "$exists",
+			"regex":            "$regex",
+		}},
+}
+
+func GetGenericEndpointConfig(database string) GenericEndpointConfig {
+	return GenericEndpointConfigs[database]
+}
