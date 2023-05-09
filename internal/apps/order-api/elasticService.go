@@ -56,7 +56,6 @@ func (e *ElasticService) GetFromElasticsearch(req OrderGetRequest) ([]interface{
 		query["bool"] = boolQuery
 	}
 
-	// TODO: Match çalışmıyor kontrol edilecek
 	// Creating query for match
 	if len(req.Match) > 0 {
 
@@ -79,6 +78,20 @@ func (e *ElasticService) GetFromElasticsearch(req OrderGetRequest) ([]interface{
 	}
 
 	if len(req.Fields) > 0 {
+		var idCheck bool
+		for _, value := range req.Fields {
+			if value == "id" {
+				idCheck = true
+				break
+			} else {
+				idCheck = false
+			}
+		}
+
+		if !idCheck {
+			req.Fields = append(req.Fields, "id")
+		}
+
 		searchBody["_source"] = req.Fields
 	}
 
