@@ -100,28 +100,48 @@ func (e *ElasticService) GetFromElasticsearch(req OrderGetRequest) ([]interface{
 				query["bool"] = boolQuery
 			} else if config.MatchFilterParameter[model.Parameter] == "in" {
 				// => "terms":{"total":[1800,2000,2200]}
-				mustNotClause := make(map[string]interface{})
-				mustNotClause["terms"] = map[string]interface{}{
+				mustClause := make(map[string]interface{})
+				mustClause["terms"] = map[string]interface{}{
 					config.ExactFilterArea[model.MatchField]: model.Value,
 				}
-				mustClauses = append(mustClauses, mustNotClause)
+				mustClauses = append(mustClauses, mustClause)
 				// => "must": ["terms":{"total":[1800,2000,2200]}]
 				boolQuery["must"] = mustClauses
 				// =>  "bool": {"must": ["terms":{"total":[1800,2000,2200]}]}
 				query["bool"] = boolQuery
 			} else if config.MatchFilterParameter[model.Parameter] == "nin" {
 				// => "terms":{"total":[1900,2000,2200]}
-				mustClause := make(map[string]interface{})
-				mustClause["terms"] = map[string]interface{}{
+				mustNotClause := make(map[string]interface{})
+				mustNotClause["terms"] = map[string]interface{}{
 					config.ExactFilterArea[model.MatchField]: model.Value,
 				}
-				mustNotClauses = append(mustNotClauses, mustClause)
+				mustNotClauses = append(mustNotClauses, mustNotClause)
 				// => "must_not": ["terms":{"total":[1900,2000,2200]}]
 				boolQuery["must_not"] = mustNotClauses
 				// =>  "bool": {"must_not": ["terms":{"total":[1900,2000,2200]}]}
 				query["bool"] = boolQuery
 			} else if config.MatchFilterParameter[model.Parameter] == "exists" {
+				// => "exists":{"field":"total"}
+				mustClause := make(map[string]interface{})
+				mustClause["exists"] = map[string]interface{}{
+					"field": model.Value,
+				}
+				mustClauses = append(mustClauses, mustClause)
+				// => "must": ["exists":{"field":"total"}]
+				boolQuery["must"] = mustClauses
+				// =>  "bool": {"must": ["exists":{"field":"total"}]}
+				query["bool"] = boolQuery
 			} else if config.MatchFilterParameter[model.Parameter] == "regex" {
+				// => "regexp":{"product.name": ".*a.*"}
+				mustClause := make(map[string]interface{})
+				mustClause["regexp"] = map[string]interface{}{
+					model.MatchField: model.Value,
+				}
+				mustClauses = append(mustClauses, mustClause)
+				// => "must": ["regexp":{"product.name": ".*a.*"}]
+				boolQuery["must"] = mustClauses
+				// =>  "bool": {"must": ["regexp":{"product.name": ".*a.*"}]}
+				query["bool"] = boolQuery
 			}
 		}
 	}

@@ -160,18 +160,18 @@ func (b *OrderService) FromModelConvertToFilter(req OrderGetRequest) (bson.M, *o
 
 	// Add match criteria to filter if provided
 	if len(req.Match) > 0 {
-		match := bson.M{}
 		for _, model := range req.Match {
+			match := bson.M{}
 			parameter := config.MatchFilterParameter[model.Parameter]
 			query := make(map[string]interface{})
 			query[parameter] = model.Value
 			match[model.MatchField] = query
-		}
-		filter = bson.M{
-			"$and": []bson.M{
-				filter,
-				match,
-			},
+			filter = bson.M{
+				"$and": []bson.M{
+					filter,
+					match,
+				},
+			}
 		}
 	}
 
