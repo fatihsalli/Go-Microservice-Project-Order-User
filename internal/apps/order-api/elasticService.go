@@ -40,6 +40,7 @@ func (e *ElasticService) GetFromElasticsearch(req OrderGetRequest) ([]interface{
 	query := make(map[string]interface{})
 	boolQuery := make(map[string]interface{})
 	mustClauses := make([]map[string]interface{}, 0)
+	mustNotClauses := make([]map[string]interface{}, 0)
 
 	// Creating query for exact filters
 	if len(req.ExactFilters) > 0 {
@@ -58,7 +59,51 @@ func (e *ElasticService) GetFromElasticsearch(req OrderGetRequest) ([]interface{
 
 	// Creating query for match
 	if len(req.Match) > 0 {
-
+		for _, model := range req.Match {
+			if config.MatchFilterParameter[model.Parameter] == "eq" {
+				// => "match":{"total":1800}
+				mustClause := make(map[string]interface{})
+				mustClause["match"] = map[string]interface{}{
+					config.ExactFilterArea[model.MatchField]: model.Value,
+				}
+				mustClauses = append(mustClauses, mustClause)
+				// => "must": [{"match": {"total": 1800}}]
+				boolQuery["must"] = mustClauses
+				// =>  "bool": {"must": [{"match": {"total": 1800}}]}
+				query["bool"] = boolQuery
+			} else if config.MatchFilterParameter[model.Parameter] == "ne" {
+				// => "match":{"total":1800}
+				mustNotClause := make(map[string]interface{})
+				mustNotClause["match"] = map[string]interface{}{
+					config.ExactFilterArea[model.MatchField]: model.Value,
+				}
+				mustNotClauses = append(mustNotClauses, mustNotClause)
+				// => "must_not": [{"match": {"total": 1800}}]
+				boolQuery["must_not"] = mustNotClauses
+				// =>  "bool": {"must_not": [{"match": {"total": 1800}}]}
+				query["bool"] = boolQuery
+			} else if config.MatchFilterParameter[model.Parameter] == "gt" || config.MatchFilterParameter[model.Parameter] == "gte" ||
+				config.MatchFilterParameter[model.Parameter] == "lt" || config.MatchFilterParameter[model.Parameter] == "lte" {
+				// => "lt":2000
+				parameterQuery := make(map[string]interface{})
+				parameterQuery[config.MatchFilterParameter[model.Parameter]] = model.Value
+				// => "total":{"lt":2000}
+				rangeQuery := make(map[string]interface{})
+				rangeQuery[model.MatchField] = parameterQuery
+				// => "range": {"total":{"lt": 2000}}
+				mustClause := make(map[string]interface{})
+				mustClause["range"] = rangeQuery
+				mustClauses = append(mustClauses, mustClause)
+				// => "must": [{"range": {"total":{"lt": 2000}}}]
+				boolQuery["must"] = mustClauses
+				// =>  "bool": {"must": [{"range": {"total":{"lt": 2000}}}]}
+				query["bool"] = boolQuery
+			} else if config.MatchFilterParameter[model.Parameter] == "in" {
+			} else if config.MatchFilterParameter[model.Parameter] == "nin" {
+			} else if config.MatchFilterParameter[model.Parameter] == "exists" {
+			} else if config.MatchFilterParameter[model.Parameter] == "regex" {
+			}
+		}
 	}
 
 	searchBody["query"] = query
