@@ -359,15 +359,17 @@ func (h *OrderHandler) GenericEndpointFromElastic(c echo.Context) error {
 // @Success 500 {object} pkg.InternalServerError
 // @Router /orders [put]
 func (h *OrderHandler) UpdateOrder(c echo.Context) error {
+	// Get order model from middleware because we bind it within middleware
+	orderUpdateRequest := c.Get("order").(*order_api.OrderUpdateRequest)
 
 	// We parse the data as json into the struct
-	var orderUpdateRequest order_api.OrderUpdateRequest
-	if err := c.Bind(&orderUpdateRequest); err != nil {
-		c.Logger().Errorf("Bad Request! %v", err)
-		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
-			Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", err.Error()),
-		})
-	}
+	/*	var orderUpdateRequest order_api.OrderUpdateRequest
+		if err := c.Bind(&orderUpdateRequest); err != nil {
+			c.Logger().Errorf("Bad Request! %v", err)
+			return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
+				Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", err.Error()),
+			})
+		}*/
 
 	// Validate user input using the validator instance
 	if err := h.Validator.Struct(orderUpdateRequest); err != nil {
