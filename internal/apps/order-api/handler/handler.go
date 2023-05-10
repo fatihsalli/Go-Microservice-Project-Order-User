@@ -29,10 +29,10 @@ func NewOrderHandler(e *echo.Echo, service *order_api.OrderService, producer *ka
 	//Routes
 	router.GET("", b.GetAllOrders)
 	router.GET("/:id", b.GetOrderById)
-	router.POST("", b.CreateOrder)
+	router.POST("", b.CreateOrder, pkg.CheckOrderStatus)
 	router.POST("/GenericEndpointFromMongo", b.GenericEndpointFromMongo)
 	router.POST("/GenericEndpointFromElastic", b.GenericEndpointFromElastic)
-	router.PUT("", b.UpdateOrder)
+	router.PUT("", b.UpdateOrder, pkg.CheckOrderStatus)
 	router.DELETE("/:id", b.DeleteOrder)
 	return b
 }
