@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"OrderUserProject/internal/apps/order-api"
+	"fmt"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -112,5 +113,23 @@ func CheckOrderStatus(next echo.HandlerFunc) echo.HandlerFunc {
 		return echo.NewHTTPError(http.StatusBadRequest, BadRequestError{
 			Message: "Something wrong! Type of model inconsistent.",
 		})
+	}
+}
+
+// PanicMiddleware => Middleware: To return custom error while panic situation
+func PanicMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		defer func() {
+			// To find panic error
+			if r := recover(); r != nil {
+				err := fmt.Errorf("panic occurred: %v", r)
+				c.JSON(http.StatusInternalServerError, InternalServerError{
+					Message: err.Error(),
+				})
+			}
+		}()
+
+		// Call next middleware
+		return next(c)
 	}
 }

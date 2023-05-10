@@ -26,6 +26,8 @@ func NewOrderHandler(e *echo.Echo, service *order_api.OrderService, producer *ka
 	router := e.Group("api/orders")
 	b := &OrderHandler{Service: service, Producer: producer, Config: config, Validator: v, ElasticService: elasticService}
 
+	e.Use(pkg.PanicMiddleware)
+
 	//Routes
 	router.GET("", b.GetAllOrders)
 	router.GET("/:id", b.GetOrderById)
