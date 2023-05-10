@@ -66,9 +66,11 @@ func CheckOrderStatus(next echo.HandlerFunc) echo.HandlerFunc {
 		var orderType reflect.Type
 
 		if method == http.MethodPost {
+			// To work with reflection we use pointer
 			order = &order_api.OrderCreateRequest{}
 			orderType = reflect.TypeOf(&order_api.OrderCreateRequest{})
 		} else if method == http.MethodPut {
+			// To work with reflection we use pointer
 			order = &order_api.OrderUpdateRequest{}
 			orderType = reflect.TypeOf(&order_api.OrderUpdateRequest{})
 		}
@@ -79,7 +81,10 @@ func CheckOrderStatus(next echo.HandlerFunc) echo.HandlerFunc {
 			})
 		}
 
+		// It is not necessary, it made to learn reflection
+		// Checking if it is assignable to the order model
 		if reflect.TypeOf(order).AssignableTo(orderType) {
+
 			statusList := []string{
 				"Shipped",
 				"Not Shipped",
@@ -89,11 +94,14 @@ func CheckOrderStatus(next echo.HandlerFunc) echo.HandlerFunc {
 				"Closed",
 			}
 
+			// If "order" represents the "pointer" then "Elem()" is used to reach the target value of "pointer"
 			orderValue := reflect.ValueOf(order).Elem()
 			orderStatusValue := orderValue.FieldByName("Status").String()
 			for _, status := range statusList {
 				if orderStatusValue == status {
-					return next(c) // Aynı context ile devam et
+					// To reach value of order we can c.Set and c.Get.Otherwise we cannot bind context twice
+					c.Set("order", order)
+					return next(c)
 				}
 			}
 			return echo.NewHTTPError(http.StatusBadRequest, BadRequestError{
@@ -101,6 +109,8 @@ func CheckOrderStatus(next echo.HandlerFunc) echo.HandlerFunc {
 			})
 		}
 
-		return next(c)
+		return echo.NewHTTPError(http.StatusBadRequest, BadRequestError{
+			Message: "Something wrong! Type of model inconsistent.",
+		})
 	}
 }

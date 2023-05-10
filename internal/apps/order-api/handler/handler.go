@@ -156,15 +156,17 @@ func (h *OrderHandler) GetOrderById(c echo.Context) error {
 // @Success 500 {object} pkg.InternalServerError
 // @Router /orders [post]
 func (h *OrderHandler) CreateOrder(c echo.Context) error {
+	// Get order model from middleware because we bind it within middleware
+	orderRequest := c.Get("order").(*order_api.OrderCreateRequest)
 
 	// We parse the data as json into the struct
-	var orderRequest order_api.OrderCreateRequest
-	if err := c.Bind(&orderRequest); err != nil {
-		c.Logger().Errorf("Bad Request. It cannot be binding! %v", err.Error())
-		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
-			Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", err.Error()),
-		})
-	}
+	/*	var orderRequest order_api.OrderCreateRequest
+		if err := c.Bind(&orderRequest); err != nil {
+			c.Logger().Errorf("Bad Request. It cannot be binding! %v", err.Error())
+			return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
+				Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", err.Error()),
+			})
+		}*/
 
 	// Validate user input using the validator instance
 	if err := h.Validator.Struct(orderRequest); err != nil {
