@@ -130,6 +130,15 @@ func PanicMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		}()
 
 		// Call next middleware
-		return next(c)
+		err := next(c)
+
+		// Handle error if occurred in subsequent middleware or handler
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, InternalServerError{
+				Message: err.Error(),
+			})
+		}
+
+		return err
 	}
 }
