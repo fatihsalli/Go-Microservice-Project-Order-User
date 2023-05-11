@@ -123,7 +123,7 @@ func PanicMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 			// To find panic error
 			if r := recover(); r != nil {
 				err := fmt.Errorf("panic occurred: %v", r)
-				c.JSON(http.StatusInternalServerError, InternalServerError{
+				_ = c.JSON(http.StatusInternalServerError, InternalServerError{
 					Message: err.Error(),
 				})
 			}
@@ -134,7 +134,7 @@ func PanicMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		// Handle error if occurred in subsequent middleware or handler
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, InternalServerError{
+			_ = c.JSON(http.StatusInternalServerError, InternalServerError{
 				Message: err.Error(),
 			})
 		}
