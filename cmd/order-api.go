@@ -31,7 +31,7 @@ import (
 // @license.name  Apache 2.0
 // @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host      localhost:8011
+// @host      localhost:30011
 // @BasePath  /api
 func StartOrderAPI() {
 	// Echo instance
@@ -49,7 +49,7 @@ func StartOrderAPI() {
 	log.Info("Logger enabled!!")
 
 	// Get config
-	config := configs.GetConfig("test")
+	config := configs.GetConfig("development")
 
 	// Create Kafka producer
 	producer := kafka.NewProducerKafka(config.Kafka.Address)
@@ -64,7 +64,7 @@ func StartOrderAPI() {
 	handler.NewOrderHandler(e, OrderService, producer, &config, v, ElasticService)
 
 	// If we don't use this swagger give an error
-	docs.SwaggerInfoorderAPI.Host = "localhost:8011"
+	docs.SwaggerInfoorderAPI.Host = "localhost:30011"
 	// Add swagger
 	e.GET("/swagger/*", echoSwagger.EchoWrapHandler(echoSwagger.InstanceName("orderAPI")))
 
