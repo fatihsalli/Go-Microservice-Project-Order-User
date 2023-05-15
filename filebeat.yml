@@ -11,5 +11,3 @@ data:
       processors:
         - add_kubernetes_metadata:
             in_cluster: true
-    output.elasticsearch:
-      hosts: ["172.28.0.55:9200"]
