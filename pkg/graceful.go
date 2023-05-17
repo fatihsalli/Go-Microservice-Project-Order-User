@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// GracefulShutdown => when stop request process before response, waiting for to complete response process
 func GracefulShutdown(instance *echo.Echo, timeout time.Duration) {
 	stop := make(chan os.Signal, 1)
 
