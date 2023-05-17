@@ -92,6 +92,17 @@ services:
     ports:
       - "5601:5601"
 
+  # Logstash for logging
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:7.15.1
+    volumes:
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml
+      - /var/log:/var/log
+      - /var/lib/docker/containers:/var/lib/docker/containers
+    user: root
+    command: [ "filebeat", "-e", "-strict.perms=false" ]
+    restart: on-failure
+
 volumes:
   elasticsearch-data:
   mongodb-data:
