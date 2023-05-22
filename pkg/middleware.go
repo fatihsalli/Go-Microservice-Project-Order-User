@@ -122,6 +122,7 @@ func PanicMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		defer func() {
 			// To find panic error
 			if r := recover(); r != nil {
+				// TODO: loglama -- clienta custom hata yazarak kendi hatamızı dönmeyeceğiz!!!
 				err := fmt.Errorf("panic occurred: %v", r)
 				_ = c.JSON(http.StatusInternalServerError, InternalServerError{
 					Message: err.Error(),

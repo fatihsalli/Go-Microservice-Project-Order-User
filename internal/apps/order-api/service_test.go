@@ -5,6 +5,7 @@ import (
 	"testing"
 )
 
+// mock kütüphanesi
 func TestOrderService_Insert(t *testing.T) {
 	assert.Equal(t, "value", "value")
 }

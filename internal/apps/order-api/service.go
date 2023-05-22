@@ -161,6 +161,7 @@ func (b *OrderService) FromModelConvertToFilter(req OrderGetRequest) (bson.M, *o
 	// Add match criteria to filter if provided
 	if len(req.Match) > 0 {
 		for _, model := range req.Match {
+			// TODO: config datefield alanı da eklenebilir
 			if model.MatchField == "createdAt" || model.MatchField == "updatedAt" {
 				parsedTime, _ := time.Parse("2006-01-02", model.Value.(string))
 				dateQuery := bson.M{
