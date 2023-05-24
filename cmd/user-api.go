@@ -48,10 +48,10 @@ func StartUserAPI() {
 	log.Info("Logger enabled!!")
 
 	// Environment value
-	value := os.Getenv("environment")
+	env := os.Getenv("environment")
 
 	// Get config
-	config := configs.GetConfig(value)
+	config := configs.GetConfig(env)
 
 	// Create new repo and new service
 	mongoUserCollection := configs.ConnectDB(config.Database.Connection).Database(config.Database.DatabaseName).Collection(config.Database.UserCollectionName)

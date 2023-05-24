@@ -49,10 +49,10 @@ func StartOrderAPI() {
 	log.Info("Logger enabled!!")
 
 	// Environment value
-	value := os.Getenv("environment")
+	env := os.Getenv("environment")
 
 	// Get config
-	config := configs.GetConfig(value)
+	config := configs.GetConfig(env)
 
 	// Create Kafka producer
 	producer := kafka.NewProducerKafka(config.Kafka.Address)
