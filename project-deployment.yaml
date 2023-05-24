@@ -18,6 +18,9 @@ spec:
           image: order-user-project/order-api:V01
           ports:
             - containerPort: 8011
+          env:
+        - name: environment
+          value: production
 ---
 # => OrderAPI Service
 apiVersion: v1

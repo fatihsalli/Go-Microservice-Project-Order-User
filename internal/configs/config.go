@@ -32,8 +32,8 @@ var Configs = map[string]Config{
 			Host string
 		}{
 			Port: map[string]string{
-				"orderAPI": ":8011",
-				"userAPI":  ":8012",
+				"orderAPI": ":30011",
+				"userAPI":  ":30012",
 			},
 			Host: "localhost",
 		},
@@ -73,11 +73,11 @@ var Configs = map[string]Config{
 			UserAPI  string
 			OrderAPI string
 		}{
-			UserAPI:  "http://localhost:8012/api/users",
-			OrderAPI: "http://localhost:8011/api/orders",
+			UserAPI:  "http://localhost:30012/api/users",
+			OrderAPI: "http://localhost:30011/api/orders",
 		},
 	},
-	"development": {
+	"production": {
 		Server: struct {
 			Port map[string]string
 			Host string
@@ -128,8 +128,7 @@ var Configs = map[string]Config{
 			OrderAPI: "http://order-api:8011/api/orders",
 		},
 	},
-	"qa":   {},
-	"prod": {},
+	"qa": {},
 }
 
 func GetConfig(env string) Config {

@@ -18,8 +18,11 @@ func StartOrderElastic() {
 	logger.SetFormatter(&logrus.JSONFormatter{TimestampFormat: time.RFC3339})
 	logger.Info("Logger enabled!!")
 
+	// Environment value
+	value := os.Getenv("environment")
+
 	// Get config
-	config := configs.GetConfig("test")
+	config := configs.GetConfig(value)
 
 	// Create OrderElasticRoot => Consume orderModel, save on elastic search
 	orderElasticService := order_elastic.NewOrderElasticService()
