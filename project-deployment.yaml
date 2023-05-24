@@ -17,10 +17,10 @@ spec:
         - name: order-api
           image: order-user-project/order-api:V01
           ports:
-            - containerPort: 8011
+            - containerPort: 80
           env:
-        - name: environment
-          value: production
+            - name: environment
+              value: production
 ---
 # => OrderAPI Service
 apiVersion: v1
@@ -32,7 +32,7 @@ spec:
     app: order-api
   type: NodePort
   ports:
-    - port: 8011
+    - port: 80
       targetPort: 8011
       nodePort: 30011
 ---
@@ -55,7 +55,10 @@ spec:
         - name: user-api
           image: order-user-project/user-api:V01
           ports:
-            - containerPort: 8012
+            - containerPort: 80
+          env:
+            - name: environment
+              value: production
 ---
 # => UserAPI Service
 apiVersion: v1
@@ -67,7 +70,7 @@ spec:
     app: user-api
   type: NodePort
   ports:
-    - port: 8012
+    - port: 80
       targetPort: 8012
       nodePort: 30012
 ---
@@ -90,7 +93,10 @@ spec:
         - name: order-elastic
           image: order-user-project/order-elastic:V01
           ports:
-            - containerPort: 8013
+            - containerPort: 80
+          env:
+            - name: environment
+              value: production
 ---
 # => OrderElastic Service
 apiVersion: v1
@@ -103,6 +109,6 @@ spec:
   type: NodePort
   ports:
     - name: http
-      port: 8013
+      port: 80
       targetPort: 8013
       nodePort: 30013
