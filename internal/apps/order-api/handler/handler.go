@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-playground/validator/v10"
+	"github.com/graphql-go/graphql"
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
@@ -361,47 +362,52 @@ func (h *OrderHandler) GenericEndpointFromElastic(c echo.Context) error {
 // @Success 200 {object} models.JSONSuccessResultData
 // @Success 400 {object} pkg.BadRequestError
 // @Success 404 {object} pkg.NotFoundError
-// @Router /orders/GenericEndpointFromElastic [post]
+// @Router /orders/{status} [get]
 func (h *OrderHandler) GetOrdersWithStatus(c echo.Context) error {
 	// Create GraphQL query
-	query := `
-		query($status: String!) {
-			ordersWithStatus(status: $status) {
-				id
-				userId
-				status
-				address {
-					id
-					address
-					city
-					district
-					type
-					default
-				}
-				invoiceAddress {
-					id
-					address
-					city
-					district
-					type
-					default
-				}
-				product {
-					name
-					quantity
-					price
-				}
-				total
-				createdAt
-				updatedAt
-			}
-		}
-	`
+	var orderType = graphql.NewObject(
+		graphql.ObjectConfig{
+			Name: "Order",
+			Fields: graphql.Fields{
+				"id":     &graphql.Field{Type: graphql.String},
+				"status": &graphql.Field{Type: graphql.String},
+				"userId": &graphql.Field{Type: graphql.String},
+			},
+		},
+	)
+
+	var queryType = graphql.NewObject(
+		graphql.ObjectConfig{
+			Name: "Query",
+			Fields: graphql.Fields{
+				"getOrdersByStatus": &graphql.Field{
+					Type: graphql.NewList(orderType),
+					Args: graphql.FieldConfigArgument{
+						"status": &graphql.ArgumentConfig{
+							Type: graphql.String,
+						},
+					},
+					Resolve: h.Service.GetOrdersByStatusResolver,
+				},
+			},
+		},
+	)
+
+	var schema, _ = graphql.NewSchema(
+		graphql.SchemaConfig{
+			Query: queryType,
+		},
+	)
+
+	result := graphql.Do(graphql.Params{
+		Schema:        schema,
+		RequestString: c.Param("status"),
+	})
 
 	// Response success result data
 	jsonSuccessResultData := models.JSONSuccessResultData{
-		TotalItemCount: len(query),
-		Data:           query,
+		TotalItemCount: 1,
+		Data:           result.Data,
 	}
 
 	c.Logger().Info("Orders are successfully listed.")
