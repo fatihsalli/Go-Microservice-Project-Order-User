@@ -21,6 +21,12 @@ spec:
           env:
             - name: environment
               value: production
+          volumeMounts:
+            - name: log-volume
+              mountPath: /var/log/containers
+      volumes:
+        - name: log-volume
+          emptyDir: { }
 ---
 # => OrderAPI Service
 apiVersion: v1

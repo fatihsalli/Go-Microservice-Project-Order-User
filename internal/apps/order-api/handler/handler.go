@@ -31,6 +31,7 @@ func NewOrderHandler(e *echo.Echo, service *order_api.OrderService, producer *ka
 	//Routes
 	router.GET("", b.GetAllOrders)
 	router.GET("/:id", b.GetOrderById)
+	router.GET("/:city", b.GetOrdersWithStatus)
 	router.POST("", b.CreateOrder, pkg.CheckOrderStatus)
 	router.POST("/GenericEndpointFromMongo", b.GenericEndpointFromMongo)
 	router.POST("/GenericEndpointFromElastic", b.GenericEndpointFromElastic)
@@ -346,6 +347,61 @@ func (h *OrderHandler) GenericEndpointFromElastic(c echo.Context) error {
 	jsonSuccessResultData := models.JSONSuccessResultData{
 		TotalItemCount: len(orderList),
 		Data:           orderList,
+	}
+
+	c.Logger().Info("Orders are successfully listed.")
+	return c.JSON(http.StatusOK, jsonSuccessResultData)
+}
+
+// GetOrdersWithStatus godoc
+// @Summary get orders list with filter status area
+// @ID get-orders-with-filter-from-graphQL
+// @Produce json
+// @Param status path string true "status"
+// @Success 200 {object} models.JSONSuccessResultData
+// @Success 400 {object} pkg.BadRequestError
+// @Success 404 {object} pkg.NotFoundError
+// @Router /orders/GenericEndpointFromElastic [post]
+func (h *OrderHandler) GetOrdersWithStatus(c echo.Context) error {
+	// Create GraphQL query
+	query := `
+		query($status: String!) {
+			ordersWithStatus(status: $status) {
+				id
+				userId
+				status
+				address {
+					id
+					address
+					city
+					district
+					type
+					default
+				}
+				invoiceAddress {
+					id
+					address
+					city
+					district
+					type
+					default
+				}
+				product {
+					name
+					quantity
+					price
+				}
+				total
+				createdAt
+				updatedAt
+			}
+		}
+	`
+
+	// Response success result data
+	jsonSuccessResultData := models.JSONSuccessResultData{
+		TotalItemCount: len(query),
+		Data:           query,
 	}
 
 	c.Logger().Info("Orders are successfully listed.")
