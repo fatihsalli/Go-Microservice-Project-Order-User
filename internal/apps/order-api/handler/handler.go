@@ -2,7 +2,7 @@ package handler
 
 import (
 	"OrderUserProject/internal/apps/order-api"
-	graphQL_Query "OrderUserProject/internal/apps/order-api/graphQL-Query"
+	"OrderUserProject/internal/apps/order-api/graphQL"
 	"OrderUserProject/internal/configs"
 	"OrderUserProject/internal/models"
 	"OrderUserProject/pkg"
@@ -357,7 +357,7 @@ func (h *OrderHandler) GenericEndpointFromElastic(c echo.Context) error {
 
 // GenericEndpointFromGraphQL godoc
 // @Summary get orders list with filter
-// @ID get-orders-with-filter-from-graphQL-Query
+// @ID get-orders-with-filter-from-graphQL
 // @Produce json
 // @Param data body order_api.OrderGetRequest true "order filter data"
 // @Success 200 {object} models.JSONSuccessResultData
@@ -375,16 +375,8 @@ func (h *OrderHandler) GenericEndpointFromGraphQL(c echo.Context) error {
 	}
 
 	params := graphql.Params{
-		Schema: graphQL_Query.Schema,
-		RequestString: `
-		query {
-			orders (status:"Shipped") {
-				id
-				userId
-				status
-			}
-		}
-		`,
+		Schema:         graphQL.Schema,
+		RequestString:  graphQL.GenerateGraphQLQuery("85bbf8ca-ea96-40c9-b221-8ae96c498ea5", "Shipped"),
 		VariableValues: nil,
 	}
 	result := graphql.Do(params)

@@ -1,4 +1,4 @@
-package graphQL_Query
+package graphQL
 
 import (
 	"OrderUserProject/internal/configs"
@@ -38,6 +38,9 @@ var (
 						"status": &graphql.ArgumentConfig{
 							Type: graphql.String,
 						},
+						"userId": &graphql.ArgumentConfig{
+							Type: graphql.String,
+						},
 					},
 					Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 						// Environment value
@@ -49,10 +52,12 @@ var (
 						// Get collection
 						mongoOrderCollection := configs.ConnectDB(config.Database.Connection).Database(config.Database.DatabaseName).Collection(config.Database.OrderCollectionName)
 
-						statusArg, ok := params.Args["status"].(string)
+						statusArg, ok1 := params.Args["status"].(string)
+						userArg, ok2 := params.Args["userId"].(string)
 
-						if ok {
-							cursor, err := mongoOrderCollection.Find(context.Background(), bson.M{"status": statusArg})
+						if ok1 && ok2 {
+							cursor, err := mongoOrderCollection.Find(context.Background(),
+								bson.M{"status": statusArg, "userId": userArg})
 							if err != nil {
 								return nil, err
 							}
