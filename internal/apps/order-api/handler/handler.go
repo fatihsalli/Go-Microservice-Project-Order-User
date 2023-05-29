@@ -177,7 +177,7 @@ func (h *OrderHandler) GraphQLWithStatus(c echo.Context) error {
 	}
 
 	// Count orders
-	ordersData, _ := result.Data.(map[string]interface{})
+	ordersData := result.Data.(map[string]interface{})
 	orders := ordersData["orders"].([]interface{})
 
 	// Response success result data
