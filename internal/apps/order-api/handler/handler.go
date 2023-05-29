@@ -33,10 +33,10 @@ func NewOrderHandler(e *echo.Echo, service *order_api.OrderService, producer *ka
 	//Routes
 	router.GET("", b.GetAllOrders)
 	router.GET("/:id", b.GetOrderById)
+	router.GET("/:status", b.GraphQLWithStatus)
 	router.POST("", b.CreateOrder, pkg.CheckOrderStatus)
 	router.POST("/GenericEndpointFromMongo", b.GenericEndpointFromMongo)
 	router.POST("/GenericEndpointFromElastic", b.GenericEndpointFromElastic)
-	router.POST("/GenericEndpointFromGraphQL", b.GenericEndpointFromGraphQL)
 	router.PUT("", b.UpdateOrder, pkg.CheckOrderStatus)
 	router.DELETE("/:id", b.DeleteOrder)
 	return b
@@ -148,6 +148,46 @@ func (h *OrderHandler) GetOrderById(c echo.Context) error {
 
 	c.Logger().Info("{%v} with id is listed.", orderResponse.ID)
 	return c.JSON(http.StatusOK, orderResponse)
+}
+
+// GraphQLWithStatus godoc
+// @Summary get orders by status
+// @ID get-order-by-status
+// @Produce json
+// @Param status path string true "status"
+// @Success 200 {object} order_api.OrderResponse
+// @Success 404 {object} pkg.NotFoundError
+// @Success 500 {object} pkg.InternalServerError
+// @Router /orders/{status} [get]
+func (h *OrderHandler) GraphQLWithStatus(c echo.Context) error {
+	query := c.Param("status")
+
+	params := graphql.Params{
+		Schema:         graphQL.Schema,
+		RequestString:  graphQL.GenerateGraphQLQuery(query),
+		VariableValues: nil,
+	}
+	result := graphql.Do(params)
+
+	if len(result.Errors) > 0 {
+		c.Logger().Errorf("Bad Request. It cannot be reading! %v", result.Errors)
+		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
+			Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", result.Errors),
+		})
+	}
+
+	// Count orders
+	ordersData, _ := result.Data.(map[string]interface{})
+	orders := ordersData["orders"].([]interface{})
+
+	// Response success result data
+	jsonSuccessResultData := models.JSONSuccessResultData{
+		TotalItemCount: len(orders),
+		Data:           orders,
+	}
+
+	c.Logger().Info("Orders are successfully listed.")
+	return c.JSON(http.StatusOK, jsonSuccessResultData)
 }
 
 // CreateOrder godoc
@@ -349,49 +389,6 @@ func (h *OrderHandler) GenericEndpointFromElastic(c echo.Context) error {
 	jsonSuccessResultData := models.JSONSuccessResultData{
 		TotalItemCount: len(orderList),
 		Data:           orderList,
-	}
-
-	c.Logger().Info("Orders are successfully listed.")
-	return c.JSON(http.StatusOK, jsonSuccessResultData)
-}
-
-// GenericEndpointFromGraphQL godoc
-// @Summary get orders list with filter
-// @ID get-orders-with-filter-from-graphQL
-// @Produce json
-// @Param data body order_api.OrderGetRequest true "order filter data"
-// @Success 200 {object} models.JSONSuccessResultData
-// @Success 400 {object} pkg.BadRequestError
-// @Success 404 {object} pkg.NotFoundError
-// @Router /orders/GenericEndpointFromGraphQL [post]
-func (h *OrderHandler) GenericEndpointFromGraphQL(c echo.Context) error {
-	var orderGetRequest order_api.OrderGetRequest
-
-	if err := c.Bind(&orderGetRequest); err != nil {
-		c.Logger().Errorf("Bad Request. It cannot be binding! %v", err.Error())
-		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
-			Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", err.Error()),
-		})
-	}
-
-	params := graphql.Params{
-		Schema:         graphQL.Schema,
-		RequestString:  graphQL.GenerateGraphQLQuery("85bbf8ca-ea96-40c9-b221-8ae96c498ea5", "Shipped"),
-		VariableValues: nil,
-	}
-	result := graphql.Do(params)
-
-	if len(result.Errors) > 0 {
-		c.Logger().Errorf("Bad Request. It cannot be reading! %v", result.Errors)
-		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
-			Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", result.Errors),
-		})
-	}
-
-	// Response success result data
-	jsonSuccessResultData := models.JSONSuccessResultData{
-		TotalItemCount: 1,
-		Data:           result,
 	}
 
 	c.Logger().Info("Orders are successfully listed.")
