@@ -27,7 +27,6 @@ type IOrderRepository interface {
 	Update(user models.Order) (bool, error)
 	Delete(id string) (bool, error)
 	GetOrdersWithFilter(filter bson.M, opt *options.FindOptions) ([]interface{}, error)
-	GetOrderByStatus(status string) ([]models.Order, error)
 }
 
 // GetAll Method => to list every order
@@ -171,35 +170,4 @@ func (b *OrderRepository) GetOrdersWithFilter(filter bson.M, opt *options.FindOp
 	}
 
 	return resultOrders, nil
-}
-
-// GetOrderByStatus Method => to find orders with status
-func (b *OrderRepository) GetOrderByStatus(status string) ([]models.Order, error) {
-	var order models.Order
-	var orders []models.Order
-
-	// to open connection
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	defer cancel()
-
-	filter := bson.M{"status": status}
-	projection := bson.M{"_id": 1, "status": 1, "userId": 1}
-	findOptions := options.Find()
-	findOptions.SetSort(projection)
-
-	result, err := b.OrderCollection.Find(ctx, filter, findOptions)
-
-	if err != nil {
-		return nil, err
-	}
-
-	for result.Next(ctx) {
-		if err := result.Decode(&order); err != nil {
-			return nil, err
-		}
-		// for appending book to books
-		orders = append(orders, order)
-	}
-
-	return orders, nil
 }

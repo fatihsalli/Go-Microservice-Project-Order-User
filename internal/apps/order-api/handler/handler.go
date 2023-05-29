@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-playground/validator/v10"
-	"github.com/graphql-go/graphql"
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
@@ -32,10 +31,10 @@ func NewOrderHandler(e *echo.Echo, service *order_api.OrderService, producer *ka
 	//Routes
 	router.GET("", b.GetAllOrders)
 	router.GET("/:id", b.GetOrderById)
-	router.GET("/:city", b.GetOrdersWithStatus)
 	router.POST("", b.CreateOrder, pkg.CheckOrderStatus)
 	router.POST("/GenericEndpointFromMongo", b.GenericEndpointFromMongo)
 	router.POST("/GenericEndpointFromElastic", b.GenericEndpointFromElastic)
+	router.POST("/GenericEndpointFromGraphQL", b.GenericEndpointFromGraphQL)
 	router.PUT("", b.UpdateOrder, pkg.CheckOrderStatus)
 	router.DELETE("/:id", b.DeleteOrder)
 	return b
@@ -354,60 +353,42 @@ func (h *OrderHandler) GenericEndpointFromElastic(c echo.Context) error {
 	return c.JSON(http.StatusOK, jsonSuccessResultData)
 }
 
-// GetOrdersWithStatus godoc
-// @Summary get orders list with filter status area
+// GenericEndpointFromGraphQL godoc
+// @Summary get orders list with filter
 // @ID get-orders-with-filter-from-graphQL
 // @Produce json
-// @Param status path string true "status"
+// @Param data body order_api.OrderGetRequest true "order filter data"
 // @Success 200 {object} models.JSONSuccessResultData
 // @Success 400 {object} pkg.BadRequestError
 // @Success 404 {object} pkg.NotFoundError
-// @Router /orders/{status} [get]
-func (h *OrderHandler) GetOrdersWithStatus(c echo.Context) error {
-	// Create GraphQL query
-	var orderType = graphql.NewObject(
-		graphql.ObjectConfig{
-			Name: "Order",
-			Fields: graphql.Fields{
-				"id":     &graphql.Field{Type: graphql.String},
-				"status": &graphql.Field{Type: graphql.String},
-				"userId": &graphql.Field{Type: graphql.String},
-			},
-		},
-	)
+// @Router /orders/GenericEndpointFromGraphQL [post]
+func (h *OrderHandler) GenericEndpointFromGraphQL(c echo.Context) error {
+	var orderGetRequest order_api.OrderGetRequest
 
-	var queryType = graphql.NewObject(
-		graphql.ObjectConfig{
-			Name: "Query",
-			Fields: graphql.Fields{
-				"getOrdersByStatus": &graphql.Field{
-					Type: graphql.NewList(orderType),
-					Args: graphql.FieldConfigArgument{
-						"status": &graphql.ArgumentConfig{
-							Type: graphql.String,
-						},
-					},
-					Resolve: h.Service.GetOrdersByStatusResolver,
-				},
-			},
-		},
-	)
+	if err := c.Bind(&orderGetRequest); err != nil {
+		c.Logger().Errorf("Bad Request. It cannot be binding! %v", err.Error())
+		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
+			Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", err.Error()),
+		})
+	}
 
-	var schema, _ = graphql.NewSchema(
-		graphql.SchemaConfig{
-			Query: queryType,
-		},
-	)
+	// Create filter and find options (exact filter,sort,field and match)
+	elasticQuery := h.ElasticService.FromModelConvertToElasticQuery(orderGetRequest)
 
-	result := graphql.Do(graphql.Params{
-		Schema:        schema,
-		RequestString: c.Param("status"),
-	})
+	// Get orders from elasticsearch
+	orderList, err := h.ElasticService.GetFromElasticsearch(elasticQuery)
+
+	if err != nil {
+		c.Logger().Errorf("InternalServerError. %v", err.Error())
+		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
+			Message: fmt.Sprintf("InternalServerError. %v", err.Error()),
+		})
+	}
 
 	// Response success result data
 	jsonSuccessResultData := models.JSONSuccessResultData{
-		TotalItemCount: 1,
-		Data:           result.Data,
+		TotalItemCount: len(orderList),
+		Data:           orderList,
 	}
 
 	c.Logger().Info("Orders are successfully listed.")

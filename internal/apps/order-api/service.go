@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/google/uuid"
-	"github.com/graphql-go/graphql"
 	"github.com/labstack/gommon/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -36,7 +35,6 @@ type IOrderService interface {
 	GetUser(userId string, userURL string) (UserResponse, error)
 	FromModelConvertToFilter(req OrderGetRequest) (bson.M, *options.FindOptions)
 	GetOrdersWithFilter(filter bson.M, opt *options.FindOptions) ([]interface{}, error)
-	GetOrdersByStatusResolver(params graphql.ResolveParams) (interface{}, error)
 }
 
 func (b *OrderService) GetAll() ([]models.Order, error) {
@@ -219,18 +217,6 @@ func (b *OrderService) FromModelConvertToFilter(req OrderGetRequest) (bson.M, *o
 
 func (b *OrderService) GetOrdersWithFilter(filter bson.M, opt *options.FindOptions) ([]interface{}, error) {
 	result, err := b.OrderRepository.GetOrdersWithFilter(filter, opt)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
-func (b *OrderService) GetOrdersByStatusResolver(params graphql.ResolveParams) (interface{}, error) {
-	status := params.Args["status"].(string)
-
-	result, err := b.OrderRepository.GetOrderByStatus(status)
 
 	if err != nil {
 		return nil, err
