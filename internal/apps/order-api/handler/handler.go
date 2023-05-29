@@ -2,6 +2,7 @@ package handler
 
 import (
 	"OrderUserProject/internal/apps/order-api"
+	graphQL_Query "OrderUserProject/internal/apps/order-api/graphQL-Query"
 	"OrderUserProject/internal/configs"
 	"OrderUserProject/internal/models"
 	"OrderUserProject/pkg"
@@ -9,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-playground/validator/v10"
+	"github.com/graphql-go/graphql"
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
@@ -355,7 +357,7 @@ func (h *OrderHandler) GenericEndpointFromElastic(c echo.Context) error {
 
 // GenericEndpointFromGraphQL godoc
 // @Summary get orders list with filter
-// @ID get-orders-with-filter-from-graphQL
+// @ID get-orders-with-filter-from-graphQL-Query
 // @Produce json
 // @Param data body order_api.OrderGetRequest true "order filter data"
 // @Success 200 {object} models.JSONSuccessResultData
@@ -372,23 +374,32 @@ func (h *OrderHandler) GenericEndpointFromGraphQL(c echo.Context) error {
 		})
 	}
 
-	// Create filter and find options (exact filter,sort,field and match)
-	elasticQuery := h.ElasticService.FromModelConvertToElasticQuery(orderGetRequest)
+	params := graphql.Params{
+		Schema: graphQL_Query.Schema,
+		RequestString: `
+		query {
+			orders (status:"Shipped") {
+				id
+				userId
+				status
+			}
+		}
+		`,
+		VariableValues: nil,
+	}
+	result := graphql.Do(params)
 
-	// Get orders from elasticsearch
-	orderList, err := h.ElasticService.GetFromElasticsearch(elasticQuery)
-
-	if err != nil {
-		c.Logger().Errorf("InternalServerError. %v", err.Error())
-		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
-			Message: fmt.Sprintf("InternalServerError. %v", err.Error()),
+	if len(result.Errors) > 0 {
+		c.Logger().Errorf("Bad Request. It cannot be reading! %v", result.Errors)
+		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
+			Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", result.Errors),
 		})
 	}
 
 	// Response success result data
 	jsonSuccessResultData := models.JSONSuccessResultData{
-		TotalItemCount: len(orderList),
-		Data:           orderList,
+		TotalItemCount: 1,
+		Data:           result,
 	}
 
 	c.Logger().Info("Orders are successfully listed.")
