@@ -1,8 +1,17 @@
 package pkg
 
-type InternalServerError struct {
+type CustomError struct {
 	Message    string
 	StatusCode int
+}
+
+func (err CustomError) Error() string {
+	return err.Message
+}
+
+type InternalServerError struct {
+	Message    string `json:"Message"`
+	StatusCode int    `json:"-"`
 }
 
 func (err InternalServerError) Error() string {
@@ -10,8 +19,8 @@ func (err InternalServerError) Error() string {
 }
 
 type NotFoundError struct {
-	Message    string
-	StatusCode int
+	Message    string `json:"Message"`
+	StatusCode int    `json:"-"`
 }
 
 func (err NotFoundError) Error() string {

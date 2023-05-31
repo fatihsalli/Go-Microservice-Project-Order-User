@@ -132,12 +132,45 @@ func PanicMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		// Call next middleware
 		err := next(c)
+		return err
+	}
+}
 
-		// Handle error if occurred in subsequent middleware or handler
-		if err != nil {
-			_ = c.JSON(http.StatusInternalServerError, InternalServerError{
-				Message: err.Error(),
-			})
+// CustomErrorMiddleware => Middleware: To control log level and return error model
+func CustomErrorMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Call next middleware
+		err := next(c)
+
+		// CustomError check
+		if customError, ok := err.(CustomError); ok {
+			if customError.StatusCode == 400 {
+				c.Logger().Info(customError.Message)
+				return c.JSON(http.StatusBadRequest, BadRequestError{
+					Message: customError.Message,
+				})
+			}
+
+			if customError.StatusCode == 404 {
+				c.Logger().Info(customError.Message)
+				return c.JSON(http.StatusNotFound, NotFoundError{
+					Message: customError.Message,
+				})
+			}
+
+			if customError.StatusCode >= 400 && customError.StatusCode <= 499 {
+				c.Logger().Info(customError.Message)
+				return c.JSON(customError.StatusCode, ClientSideError{
+					Message: customError.Message,
+				})
+			}
+
+			if customError.StatusCode >= 500 {
+				c.Logger().Error(customError.Message)
+				return c.JSON(http.StatusInternalServerError, InternalServerError{
+					Message: "Oops. Something wrong!",
+				})
+			}
 		}
 
 		return err

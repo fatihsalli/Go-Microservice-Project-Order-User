@@ -29,6 +29,7 @@ func NewOrderHandler(e *echo.Echo, service *order_api.OrderService, producer *ka
 	b := &OrderHandler{Service: service, Producer: producer, Config: config, Validator: v, ElasticService: elasticService}
 
 	e.Use(pkg.PanicMiddleware)
+	e.Use(pkg.CustomErrorMiddleware)
 
 	//Routes
 	router.GET("", b.GetAllOrders)
@@ -102,7 +103,7 @@ func (h *OrderHandler) GetAllOrders(c echo.Context) error {
 // @Produce json
 // @Param id path string true "order ID"
 // @Success 200 {object} order_api.OrderResponse
-// @Success 404 {object} pkg.NotFoundError
+// @Success 404 {object} pkg.CustomError
 // @Success 500 {object} pkg.InternalServerError
 // @Router /orders/{id} [get]
 func (h *OrderHandler) GetOrderById(c echo.Context) error {
@@ -112,10 +113,15 @@ func (h *OrderHandler) GetOrderById(c echo.Context) error {
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			c.Logger().Errorf("Not found exception: {%v} with id not found!", query)
+			customErr := pkg.CustomError{
+				Message:    fmt.Sprintf("Not found exception: {%v} with id not found!", query),
+				StatusCode: http.StatusNotFound,
+			}
+			return customErr
+			/*c.Logger().Errorf("Not found exception: {%v} with id not found!", query)
 			return c.JSON(http.StatusNotFound, pkg.NotFoundError{
 				Message: fmt.Sprintf("Not found exception: {%v} with id not found!", query),
-			})
+			})*/
 		}
 		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
 		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
