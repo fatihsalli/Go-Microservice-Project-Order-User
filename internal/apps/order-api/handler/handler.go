@@ -118,10 +118,6 @@ func (h *OrderHandler) GetOrderById(c echo.Context) error {
 				StatusCode: http.StatusNotFound,
 			}
 			return customErr
-			/*c.Logger().Errorf("Not found exception: {%v} with id not found!", query)
-			return c.JSON(http.StatusNotFound, pkg.NotFoundError{
-				Message: fmt.Sprintf("Not found exception: {%v} with id not found!", query),
-			})*/
 		}
 		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
 		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{

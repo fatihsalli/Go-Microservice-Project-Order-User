@@ -28,8 +28,8 @@ func (err NotFoundError) Error() string {
 }
 
 type BadRequestError struct {
-	Message    string
-	StatusCode int
+	Message    string `json:"Message"`
+	StatusCode int    `json:"-"`
 }
 
 func (err BadRequestError) Error() string {
@@ -37,8 +37,8 @@ func (err BadRequestError) Error() string {
 }
 
 type ClientSideError struct {
-	Message    string
-	StatusCode int
+	Message    string `json:"Message"`
+	StatusCode int    `json:"-"`
 }
 
 func (err ClientSideError) Error() string {
