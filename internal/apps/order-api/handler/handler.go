@@ -33,7 +33,7 @@ func NewOrderHandler(e *echo.Echo, service *order_api.OrderService, producer *ka
 	//Routes
 	router.GET("", b.GetAllOrders)
 	router.GET("/:id", b.GetOrderById)
-	router.GET("/:status", b.GraphQLWithStatus)
+	router.GET("/GraphQLWithStatus/:status", b.GraphQLWithStatus)
 	router.POST("", b.CreateOrder, pkg.CheckOrderStatus)
 	router.POST("/GenericEndpointFromMongo", b.GenericEndpointFromMongo)
 	router.POST("/GenericEndpointFromElastic", b.GenericEndpointFromElastic)
@@ -158,7 +158,7 @@ func (h *OrderHandler) GetOrderById(c echo.Context) error {
 // @Success 200 {object} order_api.OrderResponse
 // @Success 404 {object} pkg.NotFoundError
 // @Success 500 {object} pkg.InternalServerError
-// @Router /orders/{status} [get]
+// @Router /orders/GraphQLWithStatus/{status} [get]
 func (h *OrderHandler) GraphQLWithStatus(c echo.Context) error {
 	query := c.Param("status")
 
