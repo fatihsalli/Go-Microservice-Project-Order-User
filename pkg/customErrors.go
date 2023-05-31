@@ -1,17 +1,21 @@
 package pkg
 
 type InternalServerError struct {
-	Message string
+	Message    string
+	StatusCode int
 }
 
 type NotFoundError struct {
-	Message string
+	Message    string
+	StatusCode int
 }
 
 type BadRequestError struct {
-	Message string
+	Message    string
+	StatusCode int
 }
 
 type ClientSideError struct {
-	Message string
+	Message    string
+	StatusCode int
 }

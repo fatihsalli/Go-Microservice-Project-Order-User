@@ -224,6 +224,7 @@ func (h *OrderHandler) CreateOrder(c echo.Context) error {
 	// TODO: logger middleware ile custom error ile kullanabiliriz. Status code ekleyerek ilave. Response ve request ile(hatanın öenmine göre)
 	// Check user with http.Client
 	user, err := h.Service.GetUser(orderRequest.UserId, h.Config.HttpClient.UserAPI)
+
 	if err != nil {
 		c.Logger().Errorf("Not Found Exception: %v", err.Error())
 		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
