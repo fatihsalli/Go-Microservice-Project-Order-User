@@ -116,29 +116,20 @@ func CheckOrderStatus(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
-// PanicMiddleware => Middleware: To return custom error while panic situation
-func PanicMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+// CustomErrorMiddleware => Middleware: To control log level and return error model
+func CustomErrorMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		defer func() {
 			// To find panic error
 			if r := recover(); r != nil {
-				// TODO: loglama -- clienta custom hata yazarak kendi hatamızı dönmeyeceğiz!!!
 				err := fmt.Errorf("panic occurred: %v", r)
+				c.Logger().Error(err)
 				_ = c.JSON(http.StatusInternalServerError, InternalServerError{
-					Message: err.Error(),
+					Message: "Oops. Something wrong!",
 				})
 			}
 		}()
 
-		// Call next middleware
-		err := next(c)
-		return err
-	}
-}
-
-// CustomErrorMiddleware => Middleware: To control log level and return error model
-func CustomErrorMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
 		// Call next middleware
 		err := next(c)
 
@@ -171,6 +162,14 @@ func CustomErrorMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 					Message: "Oops. Something wrong!",
 				})
 			}
+		}
+
+		// Handle error if occurred in subsequent middleware or handler
+		if err != nil {
+			c.Logger().Error(err)
+			return c.JSON(http.StatusInternalServerError, InternalServerError{
+				Message: "Oops. Something wrong!",
+			})
 		}
 
 		return err

@@ -28,7 +28,7 @@ func NewOrderHandler(e *echo.Echo, service *order_api.OrderService, producer *ka
 	router := e.Group("api/orders")
 	b := &OrderHandler{Service: service, Producer: producer, Config: config, Validator: v, ElasticService: elasticService}
 
-	e.Use(pkg.PanicMiddleware)
+	//e.Use(pkg.PanicMiddleware)
 	e.Use(pkg.CustomErrorMiddleware)
 
 	//Routes
@@ -119,10 +119,11 @@ func (h *OrderHandler) GetOrderById(c echo.Context) error {
 			}
 			return customErr
 		}
-		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
-		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
-			Message: "Something went wrong!",
-		})
+		customErr := pkg.CustomError{
+			Message:    fmt.Sprintf("StatusInternalServerError: %v", err.Error()),
+			StatusCode: http.StatusInternalServerError,
+		}
+		return customErr
 	}
 
 	// We can use automapper, but it will cause performance loss.
