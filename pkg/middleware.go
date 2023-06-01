@@ -144,7 +144,7 @@ func CustomErrorMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		if notFoundError, ok := err.(NotFoundError); ok {
 			c.Logger().Info(notFoundError.Message)
-			return c.JSON(http.StatusBadRequest, notFoundError)
+			return c.JSON(http.StatusNotFound, notFoundError)
 		}
 
 		if clientSideError, ok := err.(ClientSideError); ok {

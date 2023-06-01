@@ -290,6 +290,14 @@ func (h *OrderHandler) CreateOrder(c echo.Context) error {
 	// Service => Insert
 	result, err := h.Service.Insert(order)
 
+	if err != nil {
+		internalServerError := pkg.InternalServerError{
+			Message:    fmt.Sprintf("StatusInternalServerError: {%v} ", err),
+			StatusCode: http.StatusInternalServerError,
+		}
+		return internalServerError
+	}
+
 	// => SEND MESSAGE (OrderID)
 	var orderKafka order_api.OrderResponseForElastic
 	orderKafka.OrderID = result.ID
@@ -324,7 +332,7 @@ func (h *OrderHandler) CreateOrder(c echo.Context) error {
 // @Param data body order_api.OrderGetRequest true "order filter data"
 // @Success 200 {object} models.JSONSuccessResultData
 // @Success 400 {object} pkg.BadRequestError
-// @Success 404 {object} pkg.NotFoundError
+// @Success 500 {object} pkg.InternalServerError
 // @Router /orders/GenericEndpointFromMongo [post]
 func (h *OrderHandler) GenericEndpointFromMongo(c echo.Context) error {
 	var orderGetRequest order_api.OrderGetRequest
@@ -344,11 +352,11 @@ func (h *OrderHandler) GenericEndpointFromMongo(c echo.Context) error {
 	orderList, err := h.Service.GetOrdersWithFilter(filter, findOptions)
 
 	if err != nil {
-		notFoundErr := pkg.NotFoundError{
-			Message:    fmt.Sprintf("NotFoundError. %v", err),
-			StatusCode: http.StatusNotFound,
+		internalServerErr := pkg.InternalServerError{
+			Message:    fmt.Sprintf("InternalServerError. %v", err),
+			StatusCode: http.StatusInternalServerError,
 		}
-		return notFoundErr
+		return internalServerErr
 	}
 
 	// Response success result data
@@ -368,7 +376,7 @@ func (h *OrderHandler) GenericEndpointFromMongo(c echo.Context) error {
 // @Param data body order_api.OrderGetRequest true "order filter data"
 // @Success 200 {object} models.JSONSuccessResultData
 // @Success 400 {object} pkg.BadRequestError
-// @Success 404 {object} pkg.NotFoundError
+// @Success 500 {object} pkg.InternalServerError
 // @Router /orders/GenericEndpointFromElastic [post]
 func (h *OrderHandler) GenericEndpointFromElastic(c echo.Context) error {
 	var orderGetRequest order_api.OrderGetRequest
@@ -412,6 +420,7 @@ func (h *OrderHandler) GenericEndpointFromElastic(c echo.Context) error {
 // @Param data body order_api.OrderUpdateRequest true "order data"
 // @Success 200 {object} models.JSONSuccessResultId
 // @Success 400 {object} pkg.BadRequestError
+// @Success 404 {object} pkg.NotFoundError
 // @Success 500 {object} pkg.InternalServerError
 // @Router /orders [put]
 func (h *OrderHandler) UpdateOrder(c echo.Context) error {
