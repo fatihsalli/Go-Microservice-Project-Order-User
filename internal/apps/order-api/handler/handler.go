@@ -17,16 +17,18 @@ import (
 )
 
 type OrderHandler struct {
-	Service        *order_api.OrderService
+	Service        order_api.IOrderService
 	ElasticService *order_api.ElasticService
 	Producer       *kafka.ProducerKafka
 	Config         *configs.Config
 	Validator      *validator.Validate
 }
 
-func NewOrderHandler(e *echo.Echo, service *order_api.OrderService, producer *kafka.ProducerKafka, config *configs.Config, v *validator.Validate, elasticService *order_api.ElasticService) *OrderHandler {
+func NewOrderHandler(e *echo.Echo, service order_api.IOrderService, producer *kafka.ProducerKafka, config *configs.Config, v *validator.Validate, elasticService *order_api.ElasticService) *OrderHandler {
 	router := e.Group("api/orders")
 	b := &OrderHandler{Service: service, Producer: producer, Config: config, Validator: v, ElasticService: elasticService}
+
+	fmt.Printf("%p\n", service)
 
 	e.Use(pkg.CustomErrorMiddleware)
 

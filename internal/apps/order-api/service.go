@@ -6,6 +6,7 @@ import (
 	"OrderUserProject/internal/repository"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/labstack/gommon/log"
 	"go.mongodb.org/mongo-driver/bson"
@@ -19,10 +20,12 @@ type OrderService struct {
 	OrderRepository *repository.OrderRepository
 }
 
-func NewOrderService(orderRepository *repository.OrderRepository) *OrderService {
+func NewOrderService(orderRepository *repository.OrderRepository) IOrderService {
 	orderService := &OrderService{
 		OrderRepository: orderRepository,
 	}
+
+	fmt.Printf("%p\n", orderService)
 	return orderService
 }
 

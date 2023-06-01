@@ -8,6 +8,7 @@ import (
 	"OrderUserProject/internal/repository"
 	"OrderUserProject/pkg"
 	"OrderUserProject/pkg/kafka"
+	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	echoLog "github.com/labstack/gommon/log"
@@ -62,6 +63,9 @@ func StartOrderAPI() {
 	OrderRepository := repository.NewOrderRepository(mongoOrderCollection)
 	OrderService := order_api.NewOrderService(OrderRepository)
 	ElasticService := order_api.NewElasticService(&config)
+
+	// Pointer address check
+	fmt.Printf("%p\n", OrderService)
 
 	// Create handler
 	handler.NewOrderHandler(e, OrderService, producer, &config, v, ElasticService)
