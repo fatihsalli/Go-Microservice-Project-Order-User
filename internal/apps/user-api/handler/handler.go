@@ -22,6 +22,8 @@ func NewUserHandler(e *echo.Echo, service *user_api.UserService, v *validator.Va
 	router := e.Group("api/users")
 	b := &UserHandler{Service: service, Validator: v}
 
+	e.Use(pkg.CustomErrorMiddleware)
+
 	//Routes
 	router.GET("", b.GetAllUsers)
 	router.GET("/:id", b.GetUserById)
