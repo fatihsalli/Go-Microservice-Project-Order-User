@@ -4,7 +4,6 @@ import (
 	"OrderUserProject/internal/apps/user-api"
 	"OrderUserProject/internal/models"
 	"OrderUserProject/pkg"
-	"errors"
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -47,10 +46,11 @@ func (h *UserHandler) GetAllUsers(c echo.Context) error {
 	userList, err := h.Service.GetAll()
 
 	if err != nil {
-		c.Logger().Errorf("StatusInternalServerError: %v", err)
-		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
-			Message: "Something went wrong!",
-		})
+		internalServerError := pkg.InternalServerError{
+			Message:    fmt.Sprintf("StatusInternalServerError: %v", err),
+			StatusCode: http.StatusInternalServerError,
+		}
+		return internalServerError
 	}
 
 	// We can use automapper, but it will cause performance loss.
@@ -100,15 +100,17 @@ func (h *UserHandler) GetUserById(c echo.Context) error {
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			c.Logger().Errorf("Not found exception: {%v} with id not found!", query)
-			return c.JSON(http.StatusNotFound, pkg.NotFoundError{
-				Message: fmt.Sprintf("Not found exception: {%v} with id not found!", query),
-			})
+			notFoundError := pkg.NotFoundError{
+				Message:    fmt.Sprintf("Not found exception: {%v} with id not found!", query),
+				StatusCode: http.StatusNotFound,
+			}
+			return notFoundError
 		}
-		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
-		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
-			Message: "Something went wrong!",
-		})
+		internalServerError := pkg.InternalServerError{
+			Message:    fmt.Sprintf("StatusInternalServerError: %v", err),
+			StatusCode: http.StatusInternalServerError,
+		}
+		return internalServerError
 	}
 
 	// We can use automapper, but it will cause performance loss.
@@ -146,26 +148,29 @@ func (h *UserHandler) CreateUser(c echo.Context) error {
 
 	// We parse the data as json into the struct
 	if err := c.Bind(&userRequest); err != nil {
-		c.Logger().Errorf("Bad Request. It cannot be binding! %v", err.Error())
-		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
-			Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", err.Error()),
-		})
+		badRequestError := pkg.BadRequestError{
+			Message:    fmt.Sprintf("Bad Request. It cannot be binding! %v", err),
+			StatusCode: http.StatusBadRequest,
+		}
+		return badRequestError
 	}
 
 	// Check address
 	if len(userRequest.Addresses) < 1 {
-		c.Logger().Error("Address value is empty.")
-		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
-			Message: "Address value cannot empty. At least you have to put one address!",
-		})
+		badRequestError := pkg.BadRequestError{
+			Message:    "Address value cannot empty. At least you have to put one address!",
+			StatusCode: http.StatusBadRequest,
+		}
+		return badRequestError
 	}
 
 	// Validate user input using the validator instance
 	if err := h.Validator.Struct(userRequest); err != nil {
-		c.Logger().Errorf("Bad Request. Please put valid user model ! %v", err.Error())
-		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
-			Message: fmt.Sprintf("Bad Request. Please put valid user model! %v", err.Error()),
-		})
+		badRequestError := pkg.BadRequestError{
+			Message:    fmt.Sprintf("Bad Request. Please put valid user model! %v", err),
+			StatusCode: http.StatusBadRequest,
+		}
+		return badRequestError
 	}
 
 	// We can use automapper, but it will cause performance loss.
@@ -187,29 +192,32 @@ func (h *UserHandler) CreateUser(c echo.Context) error {
 	password := []byte(userRequest.Password)
 	hashedPassword, err := bcrypt.GenerateFromPassword(password, bcrypt.DefaultCost)
 	if err != nil {
-		c.Logger().Errorf("Bad Request. It cannot be hashing! %v", err.Error())
-		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
-			Message: fmt.Sprintf("Bad Request. It cannot be hashing! %v", err.Error()),
-		})
+		badRequestError := pkg.BadRequestError{
+			Message:    fmt.Sprintf("Bad Request. It cannot be hashing! %v", err),
+			StatusCode: http.StatusBadRequest,
+		}
+		return badRequestError
 	}
 	user.Password = hashedPassword
 
 	// Invoice and regular addresses check
 	userAddressCheck, err := h.Service.InvoiceRegularAddressCheck(user)
 	if err != nil {
-		c.Logger().Errorf("BadRequestError: %v", err)
-		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
-			Message: fmt.Sprintf("BadRequestError: %v", err),
-		})
+		badRequestError := pkg.BadRequestError{
+			Message:    fmt.Sprintf("BadRequestError: %v", err),
+			StatusCode: http.StatusBadRequest,
+		}
+		return badRequestError
 	}
 
 	result, err := h.Service.Insert(userAddressCheck)
 
 	if err != nil {
-		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
-		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
-			Message: "Book cannot create! Something went wrong.",
-		})
+		internalServerError := pkg.InternalServerError{
+			Message:    fmt.Sprintf("StatusInternalServerError: %v", err),
+			StatusCode: http.StatusInternalServerError,
+		}
+		return internalServerError
 	}
 
 	// Response id and success boolean
@@ -229,6 +237,7 @@ func (h *UserHandler) CreateUser(c echo.Context) error {
 // @Param data body user_api.UserUpdateRequest true "user data"
 // @Success 200 {object} models.JSONSuccessResultId
 // @Success 400 {object} pkg.BadRequestError
+// @Success 404 {object} pkg.NotFoundError
 // @Success 500 {object} pkg.InternalServerError
 // @Router /users [put]
 func (h *UserHandler) UpdateUser(c echo.Context) error {
@@ -236,27 +245,30 @@ func (h *UserHandler) UpdateUser(c echo.Context) error {
 
 	// We parse the data as json into the struct
 	if err := c.Bind(&userUpdateRequest); err != nil {
-		c.Logger().Errorf("Bad Request! %v", err)
-		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
-			Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", err.Error()),
-		})
+		badRequestError := pkg.BadRequestError{
+			Message:    fmt.Sprintf("Bad Request. It cannot be binding! %v", err),
+			StatusCode: http.StatusBadRequest,
+		}
+		return badRequestError
 	}
 
 	// Validate user input using the validator instance
 	if err := h.Validator.Struct(userUpdateRequest); err != nil {
-		c.Logger().Errorf("Bad Request. Please put valid user model ! %v", err.Error())
-		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
-			Message: fmt.Sprintf("Bad Request. Please put valid user model! %v", err.Error()),
-		})
+		badRequestError := pkg.BadRequestError{
+			Message:    fmt.Sprintf("Bad Request. Please put valid user model ! %v", err),
+			StatusCode: http.StatusBadRequest,
+		}
+		return badRequestError
 	}
 
 	// To find user
 	userExist, err := h.Service.GetUserById(userUpdateRequest.ID)
 	if err != nil {
-		c.Logger().Errorf("Not found exception: {%v} with id not found!", userUpdateRequest.ID)
-		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
-			Message: fmt.Sprintf("Not found exception: {%v} with id not found!", userUpdateRequest.ID),
-		})
+		notFoundError := pkg.NotFoundError{
+			Message:    fmt.Sprintf("Not found exception: {%v} with id not found!", userUpdateRequest.ID),
+			StatusCode: http.StatusNotFound,
+		}
+		return notFoundError
 	}
 
 	// We can use automapper, but it will cause performance loss.
@@ -269,19 +281,21 @@ func (h *UserHandler) UpdateUser(c echo.Context) error {
 	// Using 'bcrypt' to check password (tested)
 	err = bcrypt.CompareHashAndPassword(userExist.Password, []byte(userUpdateRequest.Password))
 	if err != nil {
-		c.Logger().Error("Password is wrong. Please put correct password!")
-		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
-			Message: fmt.Sprint("Password is wrong. Please put correct password!"),
-		})
+		badRequestError := pkg.BadRequestError{
+			Message:    "Password is wrong. Please put correct password!",
+			StatusCode: http.StatusBadRequest,
+		}
+		return badRequestError
 	}
 
 	result, err := h.Service.Update(user)
 
 	if err != nil || result == false {
-		c.Logger().Errorf("StatusInternalServerError: {%v} ", err.Error())
-		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
-			Message: "User cannot update! Something went wrong.",
-		})
+		internalServerError := pkg.InternalServerError{
+			Message:    fmt.Sprintf("StatusInternalServerError: {%v} ", err),
+			StatusCode: http.StatusInternalServerError,
+		}
+		return internalServerError
 	}
 
 	// Response id and success boolean
@@ -308,10 +322,11 @@ func (h *UserHandler) DeleteUser(c echo.Context) error {
 	result, err := h.Service.Delete(query)
 
 	if err != nil || result == false {
-		c.Logger().Errorf("Not found exception: {%v} with id not found!", query)
-		return c.JSON(http.StatusNotFound, pkg.NotFoundError{
-			Message: fmt.Sprintf("Not found exception: {%v} with id not found!", query),
-		})
+		notFoundError := pkg.NotFoundError{
+			Message:    fmt.Sprintf("Not found exception: {%v} with id not found!", query),
+			StatusCode: http.StatusNotFound,
+		}
+		return notFoundError
 	}
 
 	// Response id and success boolean
@@ -331,6 +346,7 @@ func (h *UserHandler) DeleteUser(c echo.Context) error {
 // @Param id path string true "user ID"
 // @Param data body user_api.AddressCreateRequest true "address data"
 // @Success 200 {object} models.JSONSuccessResultId
+// @Success 400 {object} pkg.BadRequestError
 // @Success 404 {object} pkg.NotFoundError
 // @Success 500 {object} pkg.InternalServerError
 // @Router /users/add-address/{id} [put]
@@ -341,33 +357,37 @@ func (h *UserHandler) AddAddress(c echo.Context) error {
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			c.Logger().Errorf("Not found exception: {%v} with id not found!", query)
-			return c.JSON(http.StatusNotFound, pkg.NotFoundError{
-				Message: fmt.Sprintf("Not found exception: {%v} with id not found!", query),
-			})
+			notFoundError := pkg.NotFoundError{
+				Message:    fmt.Sprintf("Not found exception: {%v} with id not found!", query),
+				StatusCode: http.StatusNotFound,
+			}
+			return notFoundError
 		}
-		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
-		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
-			Message: "Something went wrong!",
-		})
+		internalServerError := pkg.InternalServerError{
+			Message:    fmt.Sprintf("StatusInternalServerError: {%v} ", err),
+			StatusCode: http.StatusInternalServerError,
+		}
+		return internalServerError
 	}
 
 	var userAddress user_api.AddressCreateRequest
 
 	// We parse the data as json into the struct
 	if err := c.Bind(&userAddress); err != nil {
-		c.Logger().Errorf("Bad Request! %v", err)
-		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
-			Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", err.Error()),
-		})
+		badRequestError := pkg.BadRequestError{
+			Message:    fmt.Sprintf("Bad Request. It cannot be binding! %v", err),
+			StatusCode: http.StatusBadRequest,
+		}
+		return badRequestError
 	}
 
 	// Validate user input using the validator instance
 	if err := h.Validator.Struct(userAddress); err != nil {
-		c.Logger().Errorf("Bad Request. Please put valid user address model ! %v", err.Error())
-		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
-			Message: fmt.Sprintf("Bad Request. Please put valid user address model! %v", err.Error()),
-		})
+		badRequestError := pkg.BadRequestError{
+			Message:    fmt.Sprintf("Bad Request. Please put valid user address model ! %v", err),
+			StatusCode: http.StatusBadRequest,
+		}
+		return badRequestError
 	}
 
 	var userAddressModel models.Address
@@ -382,19 +402,21 @@ func (h *UserHandler) AddAddress(c echo.Context) error {
 
 	userAddressCheck, err := h.Service.InvoiceRegularAddressCheck(user)
 	if err != nil {
-		c.Logger().Errorf("BadRequestError: %v", err)
-		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
-			Message: fmt.Sprintf("BadRequestError: %v", err),
-		})
+		badRequestError := pkg.BadRequestError{
+			Message:    fmt.Sprintf("BadRequestError: %v", err),
+			StatusCode: http.StatusBadRequest,
+		}
+		return badRequestError
 	}
 
 	result, err := h.Service.Update(userAddressCheck)
 
 	if err != nil || result == false {
-		c.Logger().Errorf("StatusInternalServerError: {%v} ", err.Error())
-		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
-			Message: "User cannot update! Something went wrong.",
-		})
+		internalServerError := pkg.InternalServerError{
+			Message:    fmt.Sprintf("StatusInternalServerError: {%v} ", err),
+			StatusCode: http.StatusInternalServerError,
+		}
+		return internalServerError
 	}
 
 	// Response id and success boolean
@@ -414,6 +436,7 @@ func (h *UserHandler) AddAddress(c echo.Context) error {
 // @Param id path string true "user ID"
 // @Param data body user_api.AddressUpdateRequest true "address data"
 // @Success 200 {object} models.JSONSuccessResultId
+// @Success 400 {object} pkg.BadRequestError
 // @Success 404 {object} pkg.NotFoundError
 // @Success 500 {object} pkg.InternalServerError
 // @Router /users/change-address/{id} [put]
@@ -424,33 +447,37 @@ func (h *UserHandler) ChangeAddress(c echo.Context) error {
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			c.Logger().Errorf("Not found exception: {%v} with id not found!", query)
-			return c.JSON(http.StatusNotFound, pkg.NotFoundError{
-				Message: fmt.Sprintf("Not found exception: {%v} with id not found!", query),
-			})
+			notFoundError := pkg.NotFoundError{
+				Message:    fmt.Sprintf("Not found exception: {%v} with id not found!", query),
+				StatusCode: http.StatusNotFound,
+			}
+			return notFoundError
 		}
-		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
-		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
-			Message: "Something went wrong!",
-		})
+		internalServerError := pkg.InternalServerError{
+			Message:    fmt.Sprintf("StatusInternalServerError: {%v} ", err),
+			StatusCode: http.StatusInternalServerError,
+		}
+		return internalServerError
 	}
 
 	var userAddress user_api.AddressUpdateRequest
 
 	// We parse the data as json into the struct
 	if err := c.Bind(&userAddress); err != nil {
-		c.Logger().Errorf("Bad Request! %v", err)
-		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
-			Message: fmt.Sprintf("Bad Request. It cannot be binding! %v", err.Error()),
-		})
+		badRequestError := pkg.BadRequestError{
+			Message:    fmt.Sprintf("Bad Request. It cannot be binding! %v", err),
+			StatusCode: http.StatusBadRequest,
+		}
+		return badRequestError
 	}
 
 	// Validate user input using the validator instance
 	if err := h.Validator.Struct(userAddress); err != nil {
-		c.Logger().Errorf("Bad Request. Please put valid user address model ! %v", err.Error())
-		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
-			Message: fmt.Sprintf("Bad Request. Please put valid user address model! %v", err.Error()),
-		})
+		badRequestError := pkg.BadRequestError{
+			Message:    fmt.Sprintf("Bad Request. Please put valid user address model ! %v", err),
+			StatusCode: http.StatusBadRequest,
+		}
+		return badRequestError
 	}
 
 	var userAddressModel models.Address
@@ -469,19 +496,21 @@ func (h *UserHandler) ChangeAddress(c echo.Context) error {
 
 	userAddressCheck, err := h.Service.InvoiceRegularAddressCheck(user)
 	if err != nil {
-		c.Logger().Errorf("BadRequestError: %v", err)
-		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
-			Message: fmt.Sprintf("BadRequestError: %v", err),
-		})
+		badRequestError := pkg.BadRequestError{
+			Message:    fmt.Sprintf("BadRequestError: %v", err),
+			StatusCode: http.StatusBadRequest,
+		}
+		return badRequestError
 	}
 
 	result, err := h.Service.Update(userAddressCheck)
 
 	if err != nil || result == false {
-		c.Logger().Errorf("StatusInternalServerError: {%v} ", err.Error())
-		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
-			Message: "User cannot update! Something went wrong.",
-		})
+		internalServerError := pkg.InternalServerError{
+			Message:    fmt.Sprintf("StatusInternalServerError: {%v} ", err),
+			StatusCode: http.StatusInternalServerError,
+		}
+		return internalServerError
 	}
 
 	// Response id and success boolean
@@ -501,6 +530,7 @@ func (h *UserHandler) ChangeAddress(c echo.Context) error {
 // @Param id path string true "user ID"
 // @Param address_id path string true "address ID"
 // @Success 200 {object} models.JSONSuccessResultId
+// @Success 400 {object} pkg.BadRequestError
 // @Success 404 {object} pkg.NotFoundError
 // @Success 500 {object} pkg.InternalServerError
 // @Router /users/delete-address/{id}/{address_id} [put]
@@ -512,22 +542,25 @@ func (h *UserHandler) DeleteAddress(c echo.Context) error {
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			c.Logger().Errorf("Not found exception: {%v} with id not found!", queryID)
-			return c.JSON(http.StatusNotFound, pkg.NotFoundError{
-				Message: fmt.Sprintf("Not found exception: {%v} with id not found!", queryID),
-			})
+			notFoundError := pkg.NotFoundError{
+				Message:    fmt.Sprintf("Not found exception: {%v} with id not found!", queryID),
+				StatusCode: http.StatusNotFound,
+			}
+			return notFoundError
 		}
-		c.Logger().Errorf("StatusInternalServerError: %v", err.Error())
-		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
-			Message: "Something went wrong!",
-		})
+		internalServerError := pkg.InternalServerError{
+			Message:    fmt.Sprintf("StatusInternalServerError: {%v} ", err),
+			StatusCode: http.StatusInternalServerError,
+		}
+		return internalServerError
 	}
 
 	if len(user.Addresses) < 2 {
-		c.Logger().Errorf("BadRequestError: %v", errors.New("you cannot delete user's address"))
-		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
-			Message: "You cannot delete user's address. Because there is just one address. Please add an address after that you can delete this address.",
-		})
+		badRequestError := pkg.BadRequestError{
+			Message:    "You cannot delete user's address. Because there is just one address. Please add an address after that you can delete this address.",
+			StatusCode: http.StatusBadRequest,
+		}
+		return badRequestError
 	}
 
 	for i, address := range user.Addresses {
@@ -538,19 +571,21 @@ func (h *UserHandler) DeleteAddress(c echo.Context) error {
 
 	userAddressCheck, err := h.Service.InvoiceRegularAddressCheck(user)
 	if err != nil {
-		c.Logger().Errorf("BadRequestError: %v", err)
-		return c.JSON(http.StatusBadRequest, pkg.BadRequestError{
-			Message: fmt.Sprintf("BadRequestError: %v", err),
-		})
+		badRequestError := pkg.BadRequestError{
+			Message:    fmt.Sprintf("BadRequestError: %v", err),
+			StatusCode: http.StatusBadRequest,
+		}
+		return badRequestError
 	}
 
 	result, err := h.Service.Update(userAddressCheck)
 
 	if err != nil || result == false {
-		c.Logger().Errorf("StatusInternalServerError: {%v} ", err.Error())
-		return c.JSON(http.StatusInternalServerError, pkg.InternalServerError{
-			Message: "User cannot update! Something went wrong.",
-		})
+		internalServerError := pkg.InternalServerError{
+			Message:    fmt.Sprintf("StatusInternalServerError: {%v} ", err),
+			StatusCode: http.StatusInternalServerError,
+		}
+		return internalServerError
 	}
 
 	// Response id and success boolean
