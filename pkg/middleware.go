@@ -54,7 +54,7 @@ func Logger() echo.MiddlewareFunc {
 	}
 }
 
-// CheckOrderStatus => Middleware: Status Check using Reflection for Update and Post method
+// CheckOrderStatus => Middleware: Status Check using Reflection for Update and Post method (Learning Reflection!)
 func CheckOrderStatus(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		method := c.Request().Method
