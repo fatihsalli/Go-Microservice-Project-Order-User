@@ -1,14 +1,5 @@
 package pkg
 
-type CustomError struct {
-	Message    string
-	StatusCode int
-}
-
-func (err CustomError) Error() string {
-	return err.Message
-}
-
 type InternalServerError struct {
 	Message    string `json:"Message"`
 	StatusCode int    `json:"-"`
