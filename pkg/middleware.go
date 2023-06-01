@@ -122,8 +122,11 @@ func CustomErrorMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		defer func() {
 			// To find panic error
 			if r := recover(); r != nil {
-				err := fmt.Errorf("panic occurred: %v", r)
-				c.Logger().Error(err)
+				err := fmt.Errorf("!Panic occurred: %v", r)
+				c.Response().Status = 500
+				logMessage := fmt.Sprintf("Error: %v | Request: %v | Response: %v",
+					err, c.Request(), c.Response())
+				c.Logger().Error(logMessage)
 				_ = c.JSON(http.StatusInternalServerError, InternalServerError{
 					Message: "Oops. Something wrong!",
 				})
@@ -150,7 +153,10 @@ func CustomErrorMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		if internalServerError, ok := err.(InternalServerError); ok {
-			c.Logger().Error(internalServerError.Message)
+			c.Response().Status = 500
+			logMessage := fmt.Sprintf("Error: %v | Request: %v | Response: %v",
+				internalServerError.Message, c.Request(), c.Response())
+			c.Logger().Error(logMessage)
 			return c.JSON(http.StatusInternalServerError, InternalServerError{
 				Message: "Oops. Something wrong!",
 			})
@@ -158,7 +164,10 @@ func CustomErrorMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		// Handle error if occurred in subsequent middleware or handler
 		if err != nil {
-			c.Logger().Error(err)
+			c.Response().Status = 500
+			logMessage := fmt.Sprintf("Error: %v | Request: %v | Response: %v",
+				err, c.Request(), c.Response())
+			c.Logger().Error(logMessage)
 			return c.JSON(http.StatusInternalServerError, InternalServerError{
 				Message: "Oops. Something wrong!",
 			})
