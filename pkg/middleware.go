@@ -133,35 +133,27 @@ func CustomErrorMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		// Call next middleware
 		err := next(c)
 
-		// CustomError check
-		if customError, ok := err.(CustomError); ok {
-			if customError.StatusCode == 400 {
-				c.Logger().Info(customError.Message)
-				return c.JSON(http.StatusBadRequest, BadRequestError{
-					Message: customError.Message,
-				})
-			}
+		// Find error type
+		if badRequestError, ok := err.(BadRequestError); ok {
+			c.Logger().Info(badRequestError.Message)
+			return c.JSON(http.StatusBadRequest, badRequestError)
+		}
 
-			if customError.StatusCode == 404 {
-				c.Logger().Info(customError.Message)
-				return c.JSON(http.StatusNotFound, NotFoundError{
-					Message: customError.Message,
-				})
-			}
+		if notFoundError, ok := err.(NotFoundError); ok {
+			c.Logger().Info(notFoundError.Message)
+			return c.JSON(http.StatusBadRequest, notFoundError)
+		}
 
-			if customError.StatusCode >= 400 && customError.StatusCode <= 499 {
-				c.Logger().Info(customError.Message)
-				return c.JSON(customError.StatusCode, ClientSideError{
-					Message: customError.Message,
-				})
-			}
+		if clientSideError, ok := err.(ClientSideError); ok {
+			c.Logger().Info(clientSideError.Message)
+			return c.JSON(http.StatusBadRequest, clientSideError)
+		}
 
-			if customError.StatusCode >= 500 {
-				c.Logger().Error(customError.Message)
-				return c.JSON(http.StatusInternalServerError, InternalServerError{
-					Message: "Oops. Something wrong!",
-				})
-			}
+		if internalServerError, ok := err.(InternalServerError); ok {
+			c.Logger().Error(internalServerError.Message)
+			return c.JSON(http.StatusInternalServerError, InternalServerError{
+				Message: "Oops. Something wrong!",
+			})
 		}
 
 		// Handle error if occurred in subsequent middleware or handler

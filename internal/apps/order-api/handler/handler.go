@@ -28,7 +28,6 @@ func NewOrderHandler(e *echo.Echo, service *order_api.OrderService, producer *ka
 	router := e.Group("api/orders")
 	b := &OrderHandler{Service: service, Producer: producer, Config: config, Validator: v, ElasticService: elasticService}
 
-	//e.Use(pkg.PanicMiddleware)
 	e.Use(pkg.CustomErrorMiddleware)
 
 	//Routes
@@ -103,7 +102,7 @@ func (h *OrderHandler) GetAllOrders(c echo.Context) error {
 // @Produce json
 // @Param id path string true "order ID"
 // @Success 200 {object} order_api.OrderResponse
-// @Success 404 {object} pkg.CustomError
+// @Success 404 {object} pkg.NotFoundError
 // @Success 500 {object} pkg.InternalServerError
 // @Router /orders/{id} [get]
 func (h *OrderHandler) GetOrderById(c echo.Context) error {
@@ -113,17 +112,17 @@ func (h *OrderHandler) GetOrderById(c echo.Context) error {
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			customErr := pkg.CustomError{
+			notFoundErr := pkg.NotFoundError{
 				Message:    fmt.Sprintf("Not found exception: {%v} with id not found!", query),
 				StatusCode: http.StatusNotFound,
 			}
-			return customErr
+			return notFoundErr
 		}
-		customErr := pkg.CustomError{
+		internalServerError := pkg.InternalServerError{
 			Message:    fmt.Sprintf("StatusInternalServerError: %v", err.Error()),
 			StatusCode: http.StatusInternalServerError,
 		}
-		return customErr
+		return internalServerError
 	}
 
 	// We can use automapper, but it will cause performance loss.
