@@ -24,7 +24,7 @@ func NewOrderService(orderRepository repository.IOrderRepository) IOrderService 
 	orderService := &OrderService{
 		OrderRepository: orderRepository,
 	}
-
+	// Check ram address
 	fmt.Printf("%s%p\n", "Order Service(service.go):", orderService)
 	return orderService
 }

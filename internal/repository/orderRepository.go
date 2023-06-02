@@ -17,7 +17,7 @@ type OrderRepository struct {
 
 func NewOrderRepository(mongoCollection *mongo.Collection) IOrderRepository {
 	orderRepository := &OrderRepository{OrderCollection: mongoCollection}
-
+	// Check ram address
 	fmt.Printf("%s%p\n", "Order Repository(orderRepository.go):", orderRepository)
 	return orderRepository
 }
