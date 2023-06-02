@@ -13,7 +13,7 @@ type UserRepository struct {
 	UserCollection *mongo.Collection
 }
 
-func NewUserRepository(mongoCollection *mongo.Collection) *UserRepository {
+func NewUserRepository(mongoCollection *mongo.Collection) IUserRepository {
 	userRepository := &UserRepository{UserCollection: mongoCollection}
 	return userRepository
 }

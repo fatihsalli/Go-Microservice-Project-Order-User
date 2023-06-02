@@ -9,11 +9,13 @@ import (
 )
 
 type UserService struct {
-	Repository *repository.UserRepository
+	Repository repository.IUserRepository
 }
 
-func NewUserService(repository *repository.UserRepository) *UserService {
-	userService := &UserService{Repository: repository}
+func NewUserService(repository repository.IUserRepository) IUserService {
+	userService := &UserService{
+		Repository: repository,
+	}
 	return userService
 }
 
@@ -23,7 +25,7 @@ type IUserService interface {
 	Insert(user models.User) (models.User, error)
 	Update(user models.User) (bool, error)
 	Delete(id string) (bool, error)
-	InvoiceRegularAddressCheck(user models.User) models.User
+	InvoiceRegularAddressCheck(user models.User) (models.User, error)
 }
 
 func (b *UserService) GetAll() ([]models.User, error) {

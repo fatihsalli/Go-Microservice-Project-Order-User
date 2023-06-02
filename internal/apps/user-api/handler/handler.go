@@ -14,11 +14,11 @@ import (
 )
 
 type UserHandler struct {
-	Service   *user_api.UserService
+	Service   user_api.IUserService
 	Validator *validator.Validate
 }
 
-func NewUserHandler(e *echo.Echo, service *user_api.UserService, v *validator.Validate) *UserHandler {
+func NewUserHandler(e *echo.Echo, service user_api.IUserService, v *validator.Validate) *UserHandler {
 	router := e.Group("api/users")
 	b := &UserHandler{Service: service, Validator: v}
 
