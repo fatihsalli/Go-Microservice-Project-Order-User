@@ -28,7 +28,8 @@ func NewOrderHandler(e *echo.Echo, service order_api.IOrderService, producer *ka
 	router := e.Group("api/orders")
 	b := &OrderHandler{Service: service, Producer: producer, Config: config, Validator: v, ElasticService: elasticService}
 
-	fmt.Printf("%p\n", service)
+	// Check ram address
+	fmt.Printf("%s%p\n", "Order Service(handler.go):", service)
 
 	e.Use(pkg.CustomErrorMiddleware)
 

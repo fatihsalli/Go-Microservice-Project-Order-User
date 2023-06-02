@@ -17,15 +17,15 @@ import (
 )
 
 type OrderService struct {
-	OrderRepository *repository.OrderRepository
+	OrderRepository repository.IOrderRepository
 }
 
-func NewOrderService(orderRepository *repository.OrderRepository) IOrderService {
+func NewOrderService(orderRepository repository.IOrderRepository) IOrderService {
 	orderService := &OrderService{
 		OrderRepository: orderRepository,
 	}
 
-	fmt.Printf("%p\n", orderService)
+	fmt.Printf("%s%p\n", "Order Service(service.go):", orderService)
 	return orderService
 }
 

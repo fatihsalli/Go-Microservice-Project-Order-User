@@ -4,6 +4,7 @@ import (
 	"OrderUserProject/internal/models"
 	"context"
 	"errors"
+	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -14,8 +15,10 @@ type OrderRepository struct {
 	OrderCollection *mongo.Collection
 }
 
-func NewOrderRepository(mongoCollection *mongo.Collection) *OrderRepository {
+func NewOrderRepository(mongoCollection *mongo.Collection) IOrderRepository {
 	orderRepository := &OrderRepository{OrderCollection: mongoCollection}
+
+	fmt.Printf("%s%p\n", "Order Repository(orderRepository.go):", orderRepository)
 	return orderRepository
 }
 

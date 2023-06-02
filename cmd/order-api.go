@@ -58,14 +58,20 @@ func StartOrderAPI() {
 	// Create Kafka producer
 	producer := kafka.NewProducerKafka(config.Kafka.Address)
 
-	// Create repo and service
-	mongoOrderCollection := configs.ConnectDB(config.Database.Connection).Database(config.Database.DatabaseName).Collection(config.Database.OrderCollectionName)
+	// Connection with mongoDB and create collection
+	mongoOrderCollection := configs.
+		ConnectDB(config.Database.Connection).
+		Database(config.Database.DatabaseName).
+		Collection(config.Database.OrderCollectionName)
+
+	// Create repo and services (Scope)
 	OrderRepository := repository.NewOrderRepository(mongoOrderCollection)
 	OrderService := order_api.NewOrderService(OrderRepository)
 	ElasticService := order_api.NewElasticService(&config)
 
-	// Pointer address check
-	fmt.Printf("%p\n", OrderService)
+	// Check ram address
+	fmt.Printf("%s%p\n", "Order Repository(order-api.go):", OrderRepository)
+	fmt.Printf("%s%p\n", "Order Service(order-api.go):", OrderService)
 
 	// Create handler
 	handler.NewOrderHandler(e, OrderService, producer, &config, v, ElasticService)
