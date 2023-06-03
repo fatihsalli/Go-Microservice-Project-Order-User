@@ -318,10 +318,12 @@ func TestOrderService_Insert_Success(t *testing.T) {
 	}
 
 	// Assert the result
+	assert.Equal(t, order.UserId, result.UserId)
 	assert.Equal(t, order.Status, result.Status)
-	assert.Equal(t, order.Status, result.Status)
-	assert.Equal(t, order.Status, result.Status)
-	assert.Equal(t, order.Status, result.Status)
+	assert.Equal(t, float64(22500), result.Total)
+	assert.Equal(t, order.Product, result.Product)
+	assert.Equal(t, order.Address, result.Address)
+	assert.Equal(t, order.InvoiceAddress, result.InvoiceAddress)
 
 	// We don't know exact order model because in service we have changed order model
 	mockRepo.AssertCalled(t, "Insert", mock.AnythingOfType("models.Order"))
