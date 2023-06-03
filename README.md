@@ -64,5 +64,5 @@ kubectl apply -f project-deployment.yaml
 ```
 
 **4. You can launch microservices as below urls:**
-* **Order API -> http://localhost:30001/swagger/index.html**
-* **User API -> http://localhost:30002/swagger/index.html**
+* **Order API -> http://localhost:30011/swagger/index.html**
+* **User API -> http://localhost:30012/swagger/index.html**
