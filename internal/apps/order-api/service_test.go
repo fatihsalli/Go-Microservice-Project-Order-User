@@ -393,6 +393,35 @@ func TestOrderService_Delete_Success(t *testing.T) {
 	mockRepo.AssertCalled(t, "Delete", id)
 }
 
+func TestOrderService_Delete_NotFoundFail(t *testing.T) {
+	// Create a mock instance
+	mockRepo := new(MockOrderRepository)
+
+	expectedError := errors.New("not found error")
+
+	id := "2b45ac31-6906-4e1e-82db-d9bcdbdb2143"
+
+	// We don't know exact order model because in service we have changed order model
+	mockRepo.On("Delete", id).Return(false, expectedError)
+
+	// Create an instance of OrderService with the mock repository
+	orderService := NewOrderService(mockRepo)
+
+	// Call the Insert method
+	result, err := orderService.Delete(id)
+
+	// Check error
+	if !errors.Is(err, expectedError) {
+		t.Errorf("Expected error: %v, but got: %v", expectedError, err)
+	}
+
+	// Assert the result
+	assert.Equal(t, false, result)
+
+	// We don't know exact order model because in service we have changed order model
+	mockRepo.AssertCalled(t, "Delete", id)
+}
+
 func TestOrderService_GetOrdersWithFilter_Success(t *testing.T) {
 	// Create a mock instance
 	mockRepo := new(MockOrderRepository)
