@@ -151,9 +151,12 @@ func (m *MockOrderRepository) Insert(order models.Order) (bool, error) {
 	return true, nil
 }
 
-func (m *MockOrderRepository) Update(user models.Order) (bool, error) {
-	args := m.Called()
-	return args.Get(0).(bool), args.Error(1)
+func (m *MockOrderRepository) Update(order models.Order) (bool, error) {
+	args := m.Called(order)
+	if args.Error(1) != nil {
+		return false, args.Error(1)
+	}
+	return true, nil
 }
 
 func (m *MockOrderRepository) Delete(id string) (bool, error) {
