@@ -160,13 +160,19 @@ func (m *MockOrderRepository) Update(order models.Order) (bool, error) {
 }
 
 func (m *MockOrderRepository) Delete(id string) (bool, error) {
-	args := m.Called()
-	return args.Get(0).(bool), args.Error(1)
+	args := m.Called(id)
+	if args.Error(1) != nil {
+		return false, args.Error(1)
+	}
+	return true, nil
 }
 
 func (m *MockOrderRepository) GetOrdersWithFilter(filter bson.M, opt *options.FindOptions) ([]interface{}, error) {
-	args := m.Called()
-	return args.Get(0).([]interface{}), args.Error(1)
+	args := m.Called(filter, opt)
+	if args.Error(1) != nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]interface{}), nil
 }
 
 func TestOrderService_GetAll_Success(t *testing.T) {
@@ -358,4 +364,97 @@ func TestOrderService_Update_Success(t *testing.T) {
 
 	// We don't know exact order model because in service we have changed order model
 	mockRepo.AssertCalled(t, "Update", mock.AnythingOfType("models.Order"))
+}
+
+func TestOrderService_Delete_Success(t *testing.T) {
+	// Create a mock instance
+	mockRepo := new(MockOrderRepository)
+
+	id := "2b45ac31-6906-4e1e-82db-d9bcdbdb2143"
+
+	// We don't know exact order model because in service we have changed order model
+	mockRepo.On("Delete", id).Return(true, nil)
+
+	// Create an instance of OrderService with the mock repository
+	orderService := NewOrderService(mockRepo)
+
+	// Call the Insert method
+	result, err := orderService.Delete(id)
+
+	// Assert the result
+	if err != nil {
+		t.Error(err)
+	}
+
+	// Assert the result
+	assert.Equal(t, true, result)
+
+	// We don't know exact order model because in service we have changed order model
+	mockRepo.AssertCalled(t, "Delete", id)
+}
+
+func TestOrderService_GetOrdersWithFilter_Success(t *testing.T) {
+	// Create a mock instance
+	mockRepo := new(MockOrderRepository)
+
+	orderRequest := OrderGetRequest{
+		ExactFilters: map[string][]interface{}{
+			"address.city": {"İzmir"},
+		},
+		Fields: []string{
+			"userId", "status", "total",
+		},
+		Match: []struct {
+			MatchField string      `json:"match_field"`
+			Parameter  string      `json:"parameter"`
+			Value      interface{} `json:"value"`
+		}{{
+			MatchField: "address.address",
+			Parameter:  "eq",
+			Value:      "Narlıdere",
+		}},
+		Sort: map[string]int{"total": -1},
+	}
+
+	// Create an instance of OrderService with the mock repository
+	orderService := NewOrderService(mockRepo)
+
+	selectedOrder := ordersList[0]
+	filteredOrder := struct {
+		id     string
+		userId string
+		status string
+		total  float64
+	}{
+		id:     selectedOrder.ID,
+		userId: selectedOrder.UserId,
+		status: selectedOrder.Status,
+		total:  selectedOrder.Total,
+	}
+
+	orderAsInterface := interface{}(filteredOrder)
+
+	var orders []interface{}
+	orders = append(orders, orderAsInterface)
+
+	filter, opt := orderService.FromModelConvertToFilter(orderRequest)
+
+	// We don't know exact order model because in service we have changed order model
+	mockRepo.On("GetOrdersWithFilter", filter, opt).Return(orders, nil)
+
+	orderServiceLast := NewOrderService(mockRepo)
+
+	// Call the Insert method
+	result, err := orderServiceLast.GetOrdersWithFilter(filter, opt)
+
+	// Assert the result
+	if err != nil {
+		t.Error(err)
+	}
+
+	// Assert the result
+	assert.Equal(t, orders, result)
+
+	// We don't know exact order model because in service we have changed order model
+	mockRepo.AssertCalled(t, "GetOrdersWithFilter", filter, opt)
 }
