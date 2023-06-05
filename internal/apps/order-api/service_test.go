@@ -331,3 +331,31 @@ func TestOrderService_Insert_Success(t *testing.T) {
 	// We don't know exact order model because in service we have changed order model
 	mockRepo.AssertCalled(t, "Insert", mock.AnythingOfType("models.Order"))
 }
+
+func TestOrderService_Update_Success(t *testing.T) {
+	// Create a mock instance
+	mockRepo := new(MockOrderRepository)
+
+	// Define the input and expected result
+	order := ordersList[0]
+
+	// We don't know exact order model because in service we have changed order model
+	mockRepo.On("Update", mock.AnythingOfType("models.Order")).Return(true, nil)
+
+	// Create an instance of OrderService with the mock repository
+	orderService := NewOrderService(mockRepo)
+
+	// Call the Insert method
+	result, err := orderService.Update(order)
+
+	// Assert the result
+	if err != nil {
+		t.Error(err)
+	}
+
+	// Assert the result
+	assert.Equal(t, true, result)
+
+	// We don't know exact order model because in service we have changed order model
+	mockRepo.AssertCalled(t, "Update", mock.AnythingOfType("models.Order"))
+}
