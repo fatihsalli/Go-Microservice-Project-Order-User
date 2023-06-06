@@ -90,7 +90,7 @@ func (m *MockUserRepository) GetAll() ([]models.User, error) {
 	if args.Error(1) != nil {
 		return nil, args.Error(1)
 	}
-	// []models.Order => 1.Return model || error => 2.Return model
+	// []models.User => 1.Return model || error => 2.Return model
 	return args.Get(0).([]models.User), nil
 }
 
@@ -132,7 +132,7 @@ func TestUserService_GetAll_Success(t *testing.T) {
 
 	mockRepo.On("GetAll").Return(userList, nil)
 
-	// Create an instance of OrderService with the mock repository
+	// Create an instance of UserService with the mock repository
 	userService := NewUserService(mockRepo)
 
 	// Call the GetAll method
@@ -149,7 +149,7 @@ func TestUserService_GetAll_Success(t *testing.T) {
 	mockRepo.AssertCalled(t, "GetAll")
 }
 
-func TestUserService_GetOrderById_Success(t *testing.T) {
+func TestUserService_GetUserById_Success(t *testing.T) {
 	// Create a mock instance
 	mockRepo := new(MockUserRepository)
 
@@ -158,10 +158,10 @@ func TestUserService_GetOrderById_Success(t *testing.T) {
 	// Define the expected result
 	mockRepo.On("GetUserById", id).Return(userList[0], nil)
 
-	// Create an instance of OrderService with the mock repository
+	// Create an instance of UserService with the mock repository
 	userService := NewUserService(mockRepo)
 
-	// Call the GetOrderById method
+	// Call the GetUserById method
 	user, err := userService.GetUserById(id)
 
 	// Assert the result
@@ -176,30 +176,30 @@ func TestUserService_GetOrderById_Success(t *testing.T) {
 	mockRepo.AssertCalled(t, "GetUserById", id)
 }
 
-func TestUserService_GetOrderById_NotFoundFail(t *testing.T) {
+func TestUserService_GetUserById_NotFoundFail(t *testing.T) {
 	// Create a mock instance
 	mockRepo := new(MockUserRepository)
 
+	id := "4f6f687e-522a-4203-810b-827bc6c09185"
 	expectedError := errors.New("not found error")
 
 	// Define the expected result
-	mockRepo.On("GetUserById", "4f6f687e-522a-4203-810b-827bc6c09185").
-		Return(models.User{}, expectedError)
+	mockRepo.On("GetUserById", id).Return(models.User{}, expectedError)
 
-	// Create an instance of OrderService with the mock repository
-	orderService := NewUserService(mockRepo)
+	// Create an instance of UserService with the mock repository
+	userService := NewUserService(mockRepo)
 
-	// Call the GetOrderById method
-	order, err := orderService.GetUserById("4f6f687e-522a-4203-810b-827bc6c09185")
+	// Call the GetUserById method
+	user, err := userService.GetUserById(id)
 
 	// Check error
 	if !errors.Is(err, expectedError) {
 		t.Errorf("Expected error: %v, but got: %v", expectedError, err)
 	}
 
-	// Check nil order model
-	if order.ID != "" {
-		t.Error("Expected empty order model, but got a non-empty model!")
+	// Check nil user model
+	if user.ID != "" {
+		t.Error("Expected empty user model, but got a non-empty model!")
 	}
 }
 
@@ -209,19 +209,36 @@ func TestUserService_Insert_Success(t *testing.T) {
 
 	// Define the input and expected result
 	user := models.User{
-		ID:        "",
-		Name:      "",
-		Email:     "",
-		Password:  nil,
-		Addresses: nil,
+		ID:       "",
+		Name:     "Fatih Şallı",
+		Email:    "sallifatih@hotmail.com",
+		Password: []byte("Password12*"),
+		Addresses: []models.Address{
+			{
+				ID:       "2a98a38e-3e0c-4485-b124-7c216c91333a",
+				Address:  "Levent",
+				City:     "İstanbul",
+				District: "Beşiktaş",
+				Type: []string{
+					"Regular", "Invoice",
+				},
+				Default: struct {
+					IsDefaultInvoiceAddress bool `json:"isDefaultInvoiceAddress" bson:"isDefaultInvoiceAddress"`
+					IsDefaultRegularAddress bool `json:"isDefaultRegularAddress" bson:"isDefaultRegularAddress"`
+				}{
+					IsDefaultInvoiceAddress: true,
+					IsDefaultRegularAddress: true,
+				},
+			},
+		},
 		CreatedAt: time.Time{},
 		UpdatedAt: time.Time{},
 	}
 
-	// We don't know exact order model because in service we have changed order model
+	// We don't know exact user model because in service we have changed user model
 	mockRepo.On("Insert", mock.AnythingOfType("models.User")).Return(true, nil)
 
-	// Create an instance of OrderService with the mock repository
+	// Create an instance of UserService with the mock repository
 	userService := NewUserService(mockRepo)
 
 	// Call the Insert method
@@ -233,9 +250,11 @@ func TestUserService_Insert_Success(t *testing.T) {
 	}
 
 	// Assert the result
-	assert.Equal(t, user.ID, result.ID)
+	assert.Equal(t, user.Name, result.Name)
+	assert.Equal(t, user.Addresses, result.Addresses)
+	assert.Equal(t, user.Email, result.Email)
 
-	// We don't know exact order model because in service we have changed order model
+	// We don't know exact user model because in service we have changed user model
 	mockRepo.AssertCalled(t, "Insert", mock.AnythingOfType("models.User"))
 }
 
@@ -245,11 +264,12 @@ func TestUserService_Update_Success(t *testing.T) {
 
 	// Define the input and expected result
 	user := userList[0]
+	user.Name = "Emine Gamsız"
 
-	// We don't know exact order model because in service we have changed order model
+	// We don't know exact user model because in service we have changed user model
 	mockRepo.On("Update", mock.AnythingOfType("models.User")).Return(true, nil)
 
-	// Create an instance of OrderService with the mock repository
+	// Create an instance of UserService with the mock repository
 	userService := NewUserService(mockRepo)
 
 	// Call the Insert method
@@ -262,8 +282,9 @@ func TestUserService_Update_Success(t *testing.T) {
 
 	// Assert the result
 	assert.Equal(t, true, result)
+	assert.Equal(t, "Emine Gamsız", user.Name)
 
-	// We don't know exact order model because in service we have changed order model
+	// We don't know exact user model because in service we have changed user model
 	mockRepo.AssertCalled(t, "Update", mock.AnythingOfType("models.User"))
 }
 
@@ -273,10 +294,10 @@ func TestUserService_Delete_Success(t *testing.T) {
 
 	id := "4f6f687e-522a-4203-810b-827bc6c09180"
 
-	// We don't know exact order model because in service we have changed order model
+	// Define the expected result
 	mockRepo.On("Delete", id).Return(true, nil)
 
-	// Create an instance of OrderService with the mock repository
+	// Create an instance of UserService with the mock repository
 	userService := NewUserService(mockRepo)
 
 	// Call the Insert method
@@ -290,7 +311,7 @@ func TestUserService_Delete_Success(t *testing.T) {
 	// Assert the result
 	assert.Equal(t, true, result)
 
-	// We don't know exact order model because in service we have changed order model
+	// We don't know exact user model because in service we have changed user model
 	mockRepo.AssertCalled(t, "Delete", id)
 }
 
@@ -299,13 +320,12 @@ func TestUserService_Delete_NotFoundFail(t *testing.T) {
 	mockRepo := new(MockUserRepository)
 
 	expectedError := errors.New("not found error")
-
 	id := "2b45ac31-6906-4e1e-82db-d9bcdbdb2143"
 
-	// We don't know exact order model because in service we have changed order model
+	// Define the expected result
 	mockRepo.On("Delete", id).Return(false, expectedError)
 
-	// Create an instance of OrderService with the mock repository
+	// Create an instance of UserService with the mock repository
 	userService := NewUserService(mockRepo)
 
 	// Call the Insert method
@@ -319,6 +339,6 @@ func TestUserService_Delete_NotFoundFail(t *testing.T) {
 	// Assert the result
 	assert.Equal(t, false, result)
 
-	// We don't know exact order model because in service we have changed order model
+	// We don't know exact user model because in service we have changed user model
 	mockRepo.AssertCalled(t, "Delete", id)
 }
