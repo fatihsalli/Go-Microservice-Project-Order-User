@@ -2,6 +2,7 @@ package user_api
 
 import (
 	"OrderUserProject/internal/models"
+	"errors"
 	"github.com/go-playground/assert/v2"
 	"github.com/stretchr/testify/mock"
 	"testing"
@@ -146,4 +147,178 @@ func TestUserService_GetAll_Success(t *testing.T) {
 
 	// Verify that the mock method was called
 	mockRepo.AssertCalled(t, "GetAll")
+}
+
+func TestUserService_GetOrderById_Success(t *testing.T) {
+	// Create a mock instance
+	mockRepo := new(MockUserRepository)
+
+	id := "4f6f687e-522a-4203-810b-827bc6c09180"
+
+	// Define the expected result
+	mockRepo.On("GetUserById", id).Return(userList[0], nil)
+
+	// Create an instance of OrderService with the mock repository
+	userService := NewUserService(mockRepo)
+
+	// Call the GetOrderById method
+	user, err := userService.GetUserById(id)
+
+	// Assert the result
+	if err != nil {
+		t.Error(err)
+	}
+
+	// Assert the result
+	assert.Equal(t, userList[0], user)
+
+	// Verify that the mock method was called
+	mockRepo.AssertCalled(t, "GetUserById", id)
+}
+
+func TestUserService_GetOrderById_NotFoundFail(t *testing.T) {
+	// Create a mock instance
+	mockRepo := new(MockUserRepository)
+
+	expectedError := errors.New("not found error")
+
+	// Define the expected result
+	mockRepo.On("GetUserById", "4f6f687e-522a-4203-810b-827bc6c09185").
+		Return(models.User{}, expectedError)
+
+	// Create an instance of OrderService with the mock repository
+	orderService := NewUserService(mockRepo)
+
+	// Call the GetOrderById method
+	order, err := orderService.GetUserById("4f6f687e-522a-4203-810b-827bc6c09185")
+
+	// Check error
+	if !errors.Is(err, expectedError) {
+		t.Errorf("Expected error: %v, but got: %v", expectedError, err)
+	}
+
+	// Check nil order model
+	if order.ID != "" {
+		t.Error("Expected empty order model, but got a non-empty model!")
+	}
+}
+
+func TestUserService_Insert_Success(t *testing.T) {
+	// Create a mock instance
+	mockRepo := new(MockUserRepository)
+
+	// Define the input and expected result
+	user := models.User{
+		ID:        "",
+		Name:      "",
+		Email:     "",
+		Password:  nil,
+		Addresses: nil,
+		CreatedAt: time.Time{},
+		UpdatedAt: time.Time{},
+	}
+
+	// We don't know exact order model because in service we have changed order model
+	mockRepo.On("Insert", mock.AnythingOfType("models.User")).Return(true, nil)
+
+	// Create an instance of OrderService with the mock repository
+	userService := NewUserService(mockRepo)
+
+	// Call the Insert method
+	result, err := userService.Insert(user)
+
+	// Assert the result
+	if err != nil {
+		t.Error(err)
+	}
+
+	// Assert the result
+	assert.Equal(t, user.ID, result.ID)
+
+	// We don't know exact order model because in service we have changed order model
+	mockRepo.AssertCalled(t, "Insert", mock.AnythingOfType("models.User"))
+}
+
+func TestUserService_Update_Success(t *testing.T) {
+	// Create a mock instance
+	mockRepo := new(MockUserRepository)
+
+	// Define the input and expected result
+	user := userList[0]
+
+	// We don't know exact order model because in service we have changed order model
+	mockRepo.On("Update", mock.AnythingOfType("models.User")).Return(true, nil)
+
+	// Create an instance of OrderService with the mock repository
+	userService := NewUserService(mockRepo)
+
+	// Call the Insert method
+	result, err := userService.Update(user)
+
+	// Assert the result
+	if err != nil {
+		t.Error(err)
+	}
+
+	// Assert the result
+	assert.Equal(t, true, result)
+
+	// We don't know exact order model because in service we have changed order model
+	mockRepo.AssertCalled(t, "Update", mock.AnythingOfType("models.User"))
+}
+
+func TestUserService_Delete_Success(t *testing.T) {
+	// Create a mock instance
+	mockRepo := new(MockUserRepository)
+
+	id := "4f6f687e-522a-4203-810b-827bc6c09180"
+
+	// We don't know exact order model because in service we have changed order model
+	mockRepo.On("Delete", id).Return(true, nil)
+
+	// Create an instance of OrderService with the mock repository
+	userService := NewUserService(mockRepo)
+
+	// Call the Insert method
+	result, err := userService.Delete(id)
+
+	// Assert the result
+	if err != nil {
+		t.Error(err)
+	}
+
+	// Assert the result
+	assert.Equal(t, true, result)
+
+	// We don't know exact order model because in service we have changed order model
+	mockRepo.AssertCalled(t, "Delete", id)
+}
+
+func TestUserService_Delete_NotFoundFail(t *testing.T) {
+	// Create a mock instance
+	mockRepo := new(MockUserRepository)
+
+	expectedError := errors.New("not found error")
+
+	id := "2b45ac31-6906-4e1e-82db-d9bcdbdb2143"
+
+	// We don't know exact order model because in service we have changed order model
+	mockRepo.On("Delete", id).Return(false, expectedError)
+
+	// Create an instance of OrderService with the mock repository
+	userService := NewUserService(mockRepo)
+
+	// Call the Insert method
+	result, err := userService.Delete(id)
+
+	// Check error
+	if !errors.Is(err, expectedError) {
+		t.Errorf("Expected error: %v, but got: %v", expectedError, err)
+	}
+
+	// Assert the result
+	assert.Equal(t, false, result)
+
+	// We don't know exact order model because in service we have changed order model
+	mockRepo.AssertCalled(t, "Delete", id)
 }
