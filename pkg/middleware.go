@@ -77,8 +77,9 @@ func CheckOrderStatus(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		if err := c.Bind(order); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, BadRequestError{
-				Message: "Invalid request payload!",
+			return echo.NewHTTPError(http.StatusBadRequest, CustomError{
+				Message:    "Invalid request payload!",
+				StatusCode: http.StatusBadRequest,
 			})
 		}
 
@@ -105,13 +106,15 @@ func CheckOrderStatus(next echo.HandlerFunc) echo.HandlerFunc {
 					return next(c)
 				}
 			}
-			return echo.NewHTTPError(http.StatusBadRequest, BadRequestError{
-				Message: "Please write a valid status value!",
+			return echo.NewHTTPError(http.StatusBadRequest, CustomError{
+				Message:    "Please write a valid status value!",
+				StatusCode: http.StatusBadRequest,
 			})
 		}
 
-		return echo.NewHTTPError(http.StatusBadRequest, BadRequestError{
-			Message: "Something wrong! Type of model inconsistent.",
+		return echo.NewHTTPError(http.StatusBadRequest, CustomError{
+			Message:    "Something wrong! Type of model inconsistent.",
+			StatusCode: http.StatusBadRequest,
 		})
 	}
 }
@@ -127,8 +130,9 @@ func CustomErrorMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 				logMessage := fmt.Sprintf("Error: %v | Request: %v | Response: %v",
 					err, c.Request(), c.Response())
 				c.Logger().Error(logMessage)
-				_ = c.JSON(http.StatusInternalServerError, InternalServerError{
-					Message: "Oops. Something wrong!",
+				_ = c.JSON(http.StatusInternalServerError, CustomError{
+					Message:    "Oops. Something wrong!",
+					StatusCode: http.StatusInternalServerError,
 				})
 			}
 		}()
@@ -136,30 +140,38 @@ func CustomErrorMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		// Call next middleware
 		err := next(c)
 
-		// Find error type
-		if badRequestError, ok := err.(BadRequestError); ok {
-			c.Logger().Info(badRequestError.Message)
-			return c.JSON(http.StatusBadRequest, badRequestError)
-		}
+		// CustomError check
+		if customError, ok := err.(CustomError); ok {
+			if customError.StatusCode == 400 {
+				c.Logger().Info(customError.Message)
+				return c.JSON(http.StatusBadRequest, CustomError{
+					Message: customError.Message,
+				})
+			}
 
-		if notFoundError, ok := err.(NotFoundError); ok {
-			c.Logger().Info(notFoundError.Message)
-			return c.JSON(http.StatusNotFound, notFoundError)
-		}
+			if customError.StatusCode == 404 {
+				c.Logger().Info(customError.Message)
+				return c.JSON(http.StatusNotFound, CustomError{
+					Message: customError.Message,
+				})
+			}
 
-		if clientSideError, ok := err.(ClientSideError); ok {
-			c.Logger().Info(clientSideError.Message)
-			return c.JSON(http.StatusBadRequest, clientSideError)
-		}
+			if customError.StatusCode >= 400 && customError.StatusCode <= 499 {
+				c.Logger().Info(customError.Message)
+				return c.JSON(customError.StatusCode, CustomError{
+					Message: customError.Message,
+				})
+			}
 
-		if internalServerError, ok := err.(InternalServerError); ok {
-			c.Response().Status = 500
-			logMessage := fmt.Sprintf("Error: %v | Request: %v | Response: %v",
-				internalServerError.Message, c.Request(), c.Response())
-			c.Logger().Error(logMessage)
-			return c.JSON(http.StatusInternalServerError, InternalServerError{
-				Message: "Oops. Something wrong!",
-			})
+			if customError.StatusCode >= 500 {
+				c.Response().Status = customError.StatusCode
+				logMessage := fmt.Sprintf("Error: %v | Request: %v | Response: %v",
+					customError.Message, c.Request(), c.Response())
+				c.Logger().Error(logMessage)
+				return c.JSON(http.StatusInternalServerError, CustomError{
+					Message: "Oops. Something wrong!",
+				})
+			}
 		}
 
 		// Handle error if occurred in subsequent middleware or handler
@@ -168,7 +180,7 @@ func CustomErrorMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 			logMessage := fmt.Sprintf("Error: %v | Request: %v | Response: %v",
 				err, c.Request(), c.Response())
 			c.Logger().Error(logMessage)
-			return c.JSON(http.StatusInternalServerError, InternalServerError{
+			return c.JSON(http.StatusInternalServerError, CustomError{
 				Message: "Oops. Something wrong!",
 			})
 		}
