@@ -56,7 +56,7 @@ func (h *OrderHandler) GetAllOrders(c echo.Context) error {
 	orderList, err := h.Service.GetAll()
 
 	if err != nil {
-		internalServerError := pkg.InternalServerError{
+		internalServerError := pkg.CustomError{
 			Message:    fmt.Sprintf("StatusInternalServerError: %v", err),
 			StatusCode: http.StatusInternalServerError,
 		}
@@ -116,13 +116,13 @@ func (h *OrderHandler) GetOrderById(c echo.Context) error {
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			notFoundErr := pkg.NotFoundError{
+			notFoundErr := pkg.CustomError{
 				Message:    fmt.Sprintf("Not found exception: {%v} with id not found!", query),
 				StatusCode: http.StatusNotFound,
 			}
 			return notFoundErr
 		}
-		internalServerError := pkg.InternalServerError{
+		internalServerError := pkg.CustomError{
 			Message:    fmt.Sprintf("StatusInternalServerError: %v", err),
 			StatusCode: http.StatusInternalServerError,
 		}
@@ -175,11 +175,11 @@ func (h *OrderHandler) GraphQLWithStatus(c echo.Context) error {
 	result := graphql.Do(params)
 
 	if len(result.Errors) > 0 {
-		badRequestErr := pkg.BadRequestError{
+		badRequestError := pkg.CustomError{
 			Message:    fmt.Sprintf("Bad Request. It cannot be reading! %v", result.Errors),
 			StatusCode: http.StatusBadRequest,
 		}
-		return badRequestErr
+		return badRequestError
 	}
 
 	// Count orders
@@ -219,9 +219,10 @@ func (h *OrderHandler) CreateOrder(c echo.Context) error {
 			})
 		}*/
 
+	// TODO: Validation için test yazabiliriz
 	// Validate user input using the validator instance
 	if err := h.Validator.Struct(orderRequest); err != nil {
-		badRequestErr := pkg.BadRequestError{
+		badRequestErr := pkg.CustomError{
 			Message:    fmt.Sprintf("Bad Request. Please put valid order model ! %v", err),
 			StatusCode: http.StatusBadRequest,
 		}
@@ -232,7 +233,7 @@ func (h *OrderHandler) CreateOrder(c echo.Context) error {
 	user, err := h.Service.GetUser(orderRequest.UserId, h.Config.HttpClient.UserAPI)
 
 	if err != nil {
-		notFoundErr := pkg.NotFoundError{
+		notFoundErr := pkg.CustomError{
 			Message:    fmt.Sprintf("Not Found Exception: %v", err),
 			StatusCode: http.StatusNotFound,
 		}
@@ -253,7 +254,7 @@ func (h *OrderHandler) CreateOrder(c echo.Context) error {
 	}
 
 	if regularAddressCheck == false || invoiceAddressCheck == false {
-		notFoundErr := pkg.NotFoundError{
+		notFoundErr := pkg.CustomError{
 			Message:    "Not Found Exception: Address not found. Before order processing please put correct address id.",
 			StatusCode: http.StatusNotFound,
 		}
@@ -294,7 +295,7 @@ func (h *OrderHandler) CreateOrder(c echo.Context) error {
 	result, err := h.Service.Insert(order)
 
 	if err != nil {
-		internalServerError := pkg.InternalServerError{
+		internalServerError := pkg.CustomError{
 			Message:    fmt.Sprintf("StatusInternalServerError: {%v} ", err),
 			StatusCode: http.StatusInternalServerError,
 		}
@@ -341,7 +342,7 @@ func (h *OrderHandler) GenericEndpointFromMongo(c echo.Context) error {
 	var orderGetRequest order_api.OrderGetRequest
 
 	if err := c.Bind(&orderGetRequest); err != nil {
-		badRequestErr := pkg.BadRequestError{
+		badRequestErr := pkg.CustomError{
 			Message:    fmt.Sprintf("Bad Request. It cannot be binding! %v", err),
 			StatusCode: http.StatusBadRequest,
 		}
@@ -355,7 +356,7 @@ func (h *OrderHandler) GenericEndpointFromMongo(c echo.Context) error {
 	orderList, err := h.Service.GetOrdersWithFilter(filter, findOptions)
 
 	if err != nil {
-		internalServerErr := pkg.InternalServerError{
+		internalServerErr := pkg.CustomError{
 			Message:    fmt.Sprintf("InternalServerError. %v", err),
 			StatusCode: http.StatusInternalServerError,
 		}
@@ -385,7 +386,7 @@ func (h *OrderHandler) GenericEndpointFromElastic(c echo.Context) error {
 	var orderGetRequest order_api.OrderGetRequest
 
 	if err := c.Bind(&orderGetRequest); err != nil {
-		badRequestErr := pkg.BadRequestError{
+		badRequestErr := pkg.CustomError{
 			Message:    fmt.Sprintf("Bad Request. It cannot be binding! %v", err),
 			StatusCode: http.StatusBadRequest,
 		}
@@ -399,7 +400,7 @@ func (h *OrderHandler) GenericEndpointFromElastic(c echo.Context) error {
 	orderList, err := h.ElasticService.GetFromElasticsearch(elasticQuery)
 
 	if err != nil {
-		internalServerErr := pkg.InternalServerError{
+		internalServerErr := pkg.CustomError{
 			Message:    fmt.Sprintf("InternalServerError. %v", err),
 			StatusCode: http.StatusInternalServerError,
 		}
@@ -441,7 +442,7 @@ func (h *OrderHandler) UpdateOrder(c echo.Context) error {
 
 	// Validate user input using the validator instance
 	if err := h.Validator.Struct(orderUpdateRequest); err != nil {
-		badRequestErr := pkg.BadRequestError{
+		badRequestErr := pkg.CustomError{
 			Message:    fmt.Sprintf("Bad Request. Please put valid order model ! %v", err),
 			StatusCode: http.StatusBadRequest,
 		}
@@ -450,7 +451,7 @@ func (h *OrderHandler) UpdateOrder(c echo.Context) error {
 
 	// Check order using with service
 	if _, err := h.Service.GetOrderById(orderUpdateRequest.ID); err != nil {
-		notFoundErr := pkg.NotFoundError{
+		notFoundErr := pkg.CustomError{
 			Message:    fmt.Sprintf("Not found exception: {%v} with id not found!", orderUpdateRequest.ID),
 			StatusCode: http.StatusNotFound,
 		}
@@ -460,7 +461,7 @@ func (h *OrderHandler) UpdateOrder(c echo.Context) error {
 	// Check user with http.Client
 	user, err := h.Service.GetUser(orderUpdateRequest.UserId, h.Config.HttpClient.UserAPI)
 	if err != nil {
-		notFoundErr := pkg.NotFoundError{
+		notFoundErr := pkg.CustomError{
 			Message:    fmt.Sprintf("User with id (%v) cannot find!", orderUpdateRequest.UserId),
 			StatusCode: http.StatusNotFound,
 		}
@@ -480,7 +481,7 @@ func (h *OrderHandler) UpdateOrder(c echo.Context) error {
 	}
 
 	if regularAddressCheck == false || invoiceAddressCheck == false {
-		notFoundErr := pkg.NotFoundError{
+		notFoundErr := pkg.CustomError{
 			Message:    fmt.Sprintf("Not Found Exception: Address not found. Before order processing please put correct address id."),
 			StatusCode: http.StatusNotFound,
 		}
@@ -522,7 +523,7 @@ func (h *OrderHandler) UpdateOrder(c echo.Context) error {
 	result, err := h.Service.Update(order)
 
 	if err != nil || result == false {
-		internalServerError := pkg.InternalServerError{
+		internalServerError := pkg.CustomError{
 			Message:    fmt.Sprintf("StatusInternalServerError: {%v} ", err),
 			StatusCode: http.StatusInternalServerError,
 		}
@@ -570,7 +571,7 @@ func (h *OrderHandler) DeleteOrder(c echo.Context) error {
 	result, err := h.Service.Delete(query)
 
 	if err != nil || result == false {
-		notFoundErr := pkg.NotFoundError{
+		notFoundErr := pkg.CustomError{
 			Message:    fmt.Sprintf("Not found exception: {%v} with id not found!", query),
 			StatusCode: http.StatusNotFound,
 		}

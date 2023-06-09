@@ -65,7 +65,7 @@ func StartOrderAPI() {
 		Database(config.Database.DatabaseName).
 		Collection(config.Database.OrderCollectionName)
 
-	// Create repo and services (Scope)
+	// Create repo and services (Singleton)
 	OrderRepository := repository.NewOrderRepository(mongoOrderCollection)
 	OrderService := order_api.NewOrderService(OrderRepository)
 	ElasticService := order_api.NewElasticService(&config)

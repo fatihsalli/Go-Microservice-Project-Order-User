@@ -60,7 +60,7 @@ func StartUserAPI() {
 		Database(config.Database.DatabaseName).
 		Collection(config.Database.UserCollectionName)
 
-	// Create repo and services (Scope)
+	// Create repo and services (Singleton)
 	UserRepository := repository.NewUserRepository(mongoUserCollection)
 	UserService := user_api.NewUserService(UserRepository)
 

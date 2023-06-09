@@ -254,6 +254,8 @@ func TestOrderService_Insert_Success(t *testing.T) {
 	// Create a mock instance
 	mockRepo := new(MockOrderRepository)
 
+	// []map olarak yaparak success değilde tüm caseleri karşılayabilirsin
+
 	// Define the input and expected result
 	order := models.Order{
 		ID:     "",
