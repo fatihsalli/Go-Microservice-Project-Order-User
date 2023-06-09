@@ -50,7 +50,7 @@ func NewOrderHandler(e *echo.Echo, service order_api.IOrderService, producer *ka
 // @ID get-all-orders
 // @Produce json
 // @Success 200 {array} models.JSONSuccessResultData
-// @Success 500 {object} pkg.InternalServerError
+// @Success 500 {object} pkg.CustomError
 // @Router /orders [get]
 func (h *OrderHandler) GetAllOrders(c echo.Context) error {
 	orderList, err := h.Service.GetAll()
@@ -106,8 +106,8 @@ func (h *OrderHandler) GetAllOrders(c echo.Context) error {
 // @Produce json
 // @Param id path string true "order ID"
 // @Success 200 {object} order_api.OrderResponse
-// @Success 404 {object} pkg.NotFoundError
-// @Success 500 {object} pkg.InternalServerError
+// @Success 404 {object} pkg.CustomError
+// @Success 500 {object} pkg.CustomError
 // @Router /orders/{id} [get]
 func (h *OrderHandler) GetOrderById(c echo.Context) error {
 	query := c.Param("id")
@@ -162,7 +162,7 @@ func (h *OrderHandler) GetOrderById(c echo.Context) error {
 // @Produce json
 // @Param status path string true "status"
 // @Success 200 {object} order_api.OrderResponse
-// @Success 404 {object} pkg.BadRequestError
+// @Success 404 {object} pkg.CustomError
 // @Router /orders/GraphQLWithStatus/{status} [get]
 func (h *OrderHandler) GraphQLWithStatus(c echo.Context) error {
 	query := c.Param("status")
@@ -202,9 +202,9 @@ func (h *OrderHandler) GraphQLWithStatus(c echo.Context) error {
 // @Produce json
 // @Param data body order_api.OrderCreateRequest true "order data"
 // @Success 201 {object} models.JSONSuccessResultId
-// @Success 400 {object} pkg.BadRequestError
-// @Success 404 {object} pkg.NotFoundError
-// @Success 500 {object} pkg.InternalServerError
+// @Success 400 {object} pkg.CustomError
+// @Success 404 {object} pkg.CustomError
+// @Success 500 {object} pkg.CustomError
 // @Router /orders [post]
 func (h *OrderHandler) CreateOrder(c echo.Context) error {
 	// Get order model from middleware because we bind it within middleware
@@ -335,8 +335,8 @@ func (h *OrderHandler) CreateOrder(c echo.Context) error {
 // @Produce json
 // @Param data body order_api.OrderGetRequest true "order filter data"
 // @Success 200 {object} models.JSONSuccessResultData
-// @Success 400 {object} pkg.BadRequestError
-// @Success 500 {object} pkg.InternalServerError
+// @Success 400 {object} pkg.CustomError
+// @Success 500 {object} pkg.CustomError
 // @Router /orders/GenericEndpointFromMongo [post]
 func (h *OrderHandler) GenericEndpointFromMongo(c echo.Context) error {
 	var orderGetRequest order_api.OrderGetRequest
@@ -379,8 +379,8 @@ func (h *OrderHandler) GenericEndpointFromMongo(c echo.Context) error {
 // @Produce json
 // @Param data body order_api.OrderGetRequest true "order filter data"
 // @Success 200 {object} models.JSONSuccessResultData
-// @Success 400 {object} pkg.BadRequestError
-// @Success 500 {object} pkg.InternalServerError
+// @Success 400 {object} pkg.CustomError
+// @Success 500 {object} pkg.CustomError
 // @Router /orders/GenericEndpointFromElastic [post]
 func (h *OrderHandler) GenericEndpointFromElastic(c echo.Context) error {
 	var orderGetRequest order_api.OrderGetRequest
@@ -423,9 +423,9 @@ func (h *OrderHandler) GenericEndpointFromElastic(c echo.Context) error {
 // @Produce json
 // @Param data body order_api.OrderUpdateRequest true "order data"
 // @Success 200 {object} models.JSONSuccessResultId
-// @Success 400 {object} pkg.BadRequestError
-// @Success 404 {object} pkg.NotFoundError
-// @Success 500 {object} pkg.InternalServerError
+// @Success 400 {object} pkg.CustomError
+// @Success 404 {object} pkg.CustomError
+// @Success 500 {object} pkg.CustomError
 // @Router /orders [put]
 func (h *OrderHandler) UpdateOrder(c echo.Context) error {
 	// Get order model from middleware because we bind it within middleware
@@ -563,7 +563,7 @@ func (h *OrderHandler) UpdateOrder(c echo.Context) error {
 // @Produce json
 // @Param id path string true "order ID"
 // @Success 200 {object} models.JSONSuccessResultId
-// @Success 404 {object} pkg.NotFoundError
+// @Success 404 {object} pkg.CustomError
 // @Router /orders/{id} [delete]
 func (h *OrderHandler) DeleteOrder(c echo.Context) error {
 	query := c.Param("id")
