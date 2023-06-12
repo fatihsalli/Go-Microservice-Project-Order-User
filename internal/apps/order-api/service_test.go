@@ -121,12 +121,161 @@ var ordersList = []models.Order{
 	},
 }
 
-var getAllTestValues = map[string]struct {
+var getOrdersTestValues = map[string]struct {
 	data []models.Order
 	err  error
 }{
-	"success": {ordersList, nil},
-	"fail":    {nil, errors.New("something went wrong")},
+	"success":  {ordersList, nil},
+	"fail-500": {nil, errors.New("something went wrong")},
+}
+
+var getOrderByIdTestValues = map[string]struct {
+	param string
+	data  models.Order
+	err   error
+}{
+	"success":  {"2b45ac31-6906-4e1e-82db-d9bcdbdb2143", ordersList[0], nil},
+	"fail-404": {"2b45ac31-6906-4e1e-82db-d9bcdbdb2141", models.Order{}, errors.New("not found error")},
+	"fail-500": {"2b45ac31-6906-4e1e-82db-d9bcdbdb2141", models.Order{}, errors.New("something went wrong")},
+}
+
+var createOrderTestValues = map[string]struct {
+	payload models.Order
+	data    bool
+	err     error
+}{
+	"success": {models.Order{
+		ID:     "",
+		UserId: "4ae3b4a1-1cab-460e-a1bf-0d3a73f2787f",
+		Status: "Not Shipped",
+		Address: models.Address{
+			ID:       "ddf1e162-d438-4167-b131-bbc7b767fa9d",
+			Address:  "Levent",
+			City:     "İstanbul",
+			District: "Beşiktaş",
+			Type: []string{
+				"Regular",
+			},
+			Default: struct {
+				IsDefaultInvoiceAddress bool `json:"isDefaultInvoiceAddress" bson:"isDefaultInvoiceAddress"`
+				IsDefaultRegularAddress bool `json:"isDefaultRegularAddress" bson:"isDefaultRegularAddress"`
+			}{
+				IsDefaultInvoiceAddress: false,
+				IsDefaultRegularAddress: true,
+			},
+		},
+		InvoiceAddress: models.Address{
+			ID:       "a7d8b4ae-cb77-4bb3-a8e8-accff9075bf3",
+			Address:  "Bulgurlu",
+			City:     "İstanbul",
+			District: "Üsküdar",
+			Type: []string{
+				"Invoice",
+			},
+			Default: struct {
+				IsDefaultInvoiceAddress bool `json:"isDefaultInvoiceAddress" bson:"isDefaultInvoiceAddress"`
+				IsDefaultRegularAddress bool `json:"isDefaultRegularAddress" bson:"isDefaultRegularAddress"`
+			}{
+				IsDefaultInvoiceAddress: true,
+				IsDefaultRegularAddress: false,
+			},
+		},
+		Product: []struct {
+			Name     string  `json:"name" bson:"name"`
+			Quantity int     `json:"quantity" bson:"quantity"`
+			Price    float64 `json:"price" bson:"price"`
+		}{
+			{
+				Name:     "LG Smart Tv",
+				Quantity: 1,
+				Price:    20000.0,
+			},
+			{
+				Name:     "Bosch Filter Coffee Machine",
+				Quantity: 1,
+				Price:    2500.0,
+			},
+		},
+		Total:     0,
+		CreatedAt: time.Time{},
+		UpdatedAt: time.Time{},
+	}, true, nil},
+	"fail-500": {models.Order{
+		ID:     "",
+		UserId: "4ae3b4a1-1cab-460e-a1bf-0d3a73f2787f",
+		Status: "Not Shipped",
+		Address: models.Address{
+			ID:       "ddf1e162-d438-4167-b131-bbc7b767fa9d",
+			Address:  "Levent",
+			City:     "İstanbul",
+			District: "Beşiktaş",
+			Type: []string{
+				"Regular",
+			},
+			Default: struct {
+				IsDefaultInvoiceAddress bool `json:"isDefaultInvoiceAddress" bson:"isDefaultInvoiceAddress"`
+				IsDefaultRegularAddress bool `json:"isDefaultRegularAddress" bson:"isDefaultRegularAddress"`
+			}{
+				IsDefaultInvoiceAddress: false,
+				IsDefaultRegularAddress: true,
+			},
+		},
+		InvoiceAddress: models.Address{
+			ID:       "a7d8b4ae-cb77-4bb3-a8e8-accff9075bf3",
+			Address:  "Bulgurlu",
+			City:     "İstanbul",
+			District: "Üsküdar",
+			Type: []string{
+				"Invoice",
+			},
+			Default: struct {
+				IsDefaultInvoiceAddress bool `json:"isDefaultInvoiceAddress" bson:"isDefaultInvoiceAddress"`
+				IsDefaultRegularAddress bool `json:"isDefaultRegularAddress" bson:"isDefaultRegularAddress"`
+			}{
+				IsDefaultInvoiceAddress: true,
+				IsDefaultRegularAddress: false,
+			},
+		},
+		Product: []struct {
+			Name     string  `json:"name" bson:"name"`
+			Quantity int     `json:"quantity" bson:"quantity"`
+			Price    float64 `json:"price" bson:"price"`
+		}{
+			{
+				Name:     "LG Smart Tv",
+				Quantity: 1,
+				Price:    20000.0,
+			},
+			{
+				Name:     "Bosch Filter Coffee Machine",
+				Quantity: 1,
+				Price:    2500.0,
+			},
+		},
+		Total:     0,
+		CreatedAt: time.Time{},
+		UpdatedAt: time.Time{},
+	}, false, errors.New("something went wrong")},
+}
+
+var updateOrderTestValues = map[string]struct {
+	paramId string
+	data    models.Order
+	err     error
+}{
+	"success":  {"2b45ac31-6906-4e1e-82db-d9bcdbdb2143", ordersList[0], nil},
+	"fail-404": {"2b45ac31-6906-4e1e-82db-d9bcdbdb2141", models.Order{}, errors.New("not found error")},
+	"fail-500": {"2b45ac31-6906-4e1e-82db-d9bcdbdb2141", models.Order{}, errors.New("something went wrong")},
+}
+
+var deleteOrderTestValues = map[string]struct {
+	paramId string
+	data    models.Order
+	err     error
+}{
+	"success":  {"2b45ac31-6906-4e1e-82db-d9bcdbdb2143", ordersList[0], nil},
+	"fail-404": {"2b45ac31-6906-4e1e-82db-d9bcdbdb2141", models.Order{}, errors.New("not found error")},
+	"fail-500": {"2b45ac31-6906-4e1e-82db-d9bcdbdb2141", models.Order{}, errors.New("something went wrong")},
 }
 
 // MockOrderRepository is a mock implementation of IOrderRepository
@@ -183,8 +332,8 @@ func (m *MockOrderRepository) GetOrdersWithFilter(filter bson.M, opt *options.Fi
 	return args.Get(0).([]interface{}), nil
 }
 
-func TestOrderService_GetAll_Success(t *testing.T) {
-	for _, result := range getAllTestValues {
+func TestOrderService_GetAll_SuccessAndFail(t *testing.T) {
+	for _, result := range getOrdersTestValues {
 		// Create a mock instance
 		mockRepo := new(MockOrderRepository)
 
@@ -214,144 +363,73 @@ func TestOrderService_GetAll_Success(t *testing.T) {
 	}
 }
 
-func TestOrderService_GetOrderById_Success(t *testing.T) {
-	// Create a mock instance
-	mockRepo := new(MockOrderRepository)
+func TestOrderService_GetOrderById_SuccessAndFail(t *testing.T) {
+	for _, result := range getOrderByIdTestValues {
+		// Create a mock instance
+		mockRepo := new(MockOrderRepository)
 
-	// Define the expected result
-	mockRepo.On("GetOrderById", "2b45ac31-6906-4e1e-82db-d9bcdbdb2143").Return(ordersList[0], nil)
+		// Define the expected result
+		mockRepo.On("GetOrderById", result.param).Return(result.data, result.err)
 
-	// Create an instance of OrderService with the mock repository
-	orderService := NewOrderService(mockRepo)
+		// Create an instance of OrderService with the mock repository
+		orderService := NewOrderService(mockRepo)
 
-	// Call the GetOrderById method
-	order, err := orderService.GetOrderById("2b45ac31-6906-4e1e-82db-d9bcdbdb2143")
+		// Call the GetOrderById method
+		order, err := orderService.GetOrderById(result.param)
 
-	// Assert the result
-	if err != nil {
-		t.Error(err)
-	}
+		if err != nil {
+			if !errors.Is(err, result.err) {
+				t.Errorf("Expected error: %v, but got: %v", result.err, err)
+			} else {
+				t.Logf("Error message successfully delivered: %v", err)
+			}
+		}
 
-	// Assert the result
-	assert.Equal(t, ordersList[0], order)
+		if err == nil {
+			// Assert the result
+			assert.Equal(t, ordersList[0], order)
+		}
 
-	// Verify that the mock method was called
-	mockRepo.AssertCalled(t, "GetOrderById", "2b45ac31-6906-4e1e-82db-d9bcdbdb2143")
-}
-
-func TestOrderService_GetOrderById_NotFoundFail(t *testing.T) {
-	// Create a mock instance
-	mockRepo := new(MockOrderRepository)
-
-	expectedError := errors.New("not found error")
-
-	// Define the expected result
-	mockRepo.On("GetOrderById", "2b45ac31-6906-4e1e-82db-d9bcdbdb2141").
-		Return(models.Order{}, expectedError)
-
-	// Create an instance of OrderService with the mock repository
-	orderService := NewOrderService(mockRepo)
-
-	// Call the GetOrderById method
-	order, err := orderService.GetOrderById("2b45ac31-6906-4e1e-82db-d9bcdbdb2141")
-
-	// Check error
-	if !errors.Is(err, expectedError) {
-		t.Errorf("Expected error: %v, but got: %v", expectedError, err)
-	}
-
-	// Check nil order model
-	if order.ID != "" {
-		t.Error("Expected empty order model, but got a non-empty model!")
+		// Verify that the mock method was called
+		mockRepo.AssertCalled(t, "GetOrderById", result.param)
 	}
 }
 
-func TestOrderService_Insert_Success(t *testing.T) {
-	// Create a mock instance
-	mockRepo := new(MockOrderRepository)
+func TestOrderService_Insert_SuccessAndFail(t *testing.T) {
+	for _, result := range createOrderTestValues {
+		// Create a mock instance
+		mockRepo := new(MockOrderRepository)
 
-	// Define the input and expected result
-	order := models.Order{
-		ID:     "",
-		UserId: "4ae3b4a1-1cab-460e-a1bf-0d3a73f2787f",
-		Status: "Not Shipped",
-		Address: models.Address{
-			ID:       "ddf1e162-d438-4167-b131-bbc7b767fa9d",
-			Address:  "Levent",
-			City:     "İstanbul",
-			District: "Beşiktaş",
-			Type: []string{
-				"Regular",
-			},
-			Default: struct {
-				IsDefaultInvoiceAddress bool `json:"isDefaultInvoiceAddress" bson:"isDefaultInvoiceAddress"`
-				IsDefaultRegularAddress bool `json:"isDefaultRegularAddress" bson:"isDefaultRegularAddress"`
-			}{
-				IsDefaultInvoiceAddress: false,
-				IsDefaultRegularAddress: true,
-			},
-		},
-		InvoiceAddress: models.Address{
-			ID:       "a7d8b4ae-cb77-4bb3-a8e8-accff9075bf3",
-			Address:  "Bulgurlu",
-			City:     "İstanbul",
-			District: "Üsküdar",
-			Type: []string{
-				"Invoice",
-			},
-			Default: struct {
-				IsDefaultInvoiceAddress bool `json:"isDefaultInvoiceAddress" bson:"isDefaultInvoiceAddress"`
-				IsDefaultRegularAddress bool `json:"isDefaultRegularAddress" bson:"isDefaultRegularAddress"`
-			}{
-				IsDefaultInvoiceAddress: true,
-				IsDefaultRegularAddress: false,
-			},
-		},
-		Product: []struct {
-			Name     string  `json:"name" bson:"name"`
-			Quantity int     `json:"quantity" bson:"quantity"`
-			Price    float64 `json:"price" bson:"price"`
-		}{
-			{
-				Name:     "LG Smart Tv",
-				Quantity: 1,
-				Price:    20000.0,
-			},
-			{
-				Name:     "Bosch Filter Coffee Machine",
-				Quantity: 1,
-				Price:    2500.0,
-			},
-		},
-		Total:     0,
-		CreatedAt: time.Time{},
-		UpdatedAt: time.Time{},
+		// We don't know exact order model because in service we have changed order model
+		mockRepo.On("Insert", mock.AnythingOfType("models.Order")).Return(result.data, result.err)
+
+		// Create an instance of OrderService with the mock repository
+		orderService := NewOrderService(mockRepo)
+
+		// Call the Insert method
+		response, err := orderService.Insert(result.payload)
+
+		if err != nil {
+			if !errors.Is(err, result.err) {
+				t.Errorf("Expected error: %v, but got: %v", result.err, err)
+			} else {
+				t.Logf("Error message successfully delivered: %v", err)
+			}
+		}
+
+		if err == nil {
+			// Assert the result
+			assert.Equal(t, result.payload.UserId, response.UserId)
+			assert.Equal(t, result.payload.Status, response.Status)
+			assert.Equal(t, float64(22500), response.Total)
+			assert.Equal(t, result.payload.Product, response.Product)
+			assert.Equal(t, result.payload.Address, response.Address)
+			assert.Equal(t, result.payload.InvoiceAddress, response.InvoiceAddress)
+		}
+
+		// We don't know exact order model because in service we have changed order model
+		mockRepo.AssertCalled(t, "Insert", mock.AnythingOfType("models.Order"))
 	}
-
-	// We don't know exact order model because in service we have changed order model
-	mockRepo.On("Insert", mock.AnythingOfType("models.Order")).Return(true, nil)
-
-	// Create an instance of OrderService with the mock repository
-	orderService := NewOrderService(mockRepo)
-
-	// Call the Insert method
-	result, err := orderService.Insert(order)
-
-	// Assert the result
-	if err != nil {
-		t.Error(err)
-	}
-
-	// Assert the result
-	assert.Equal(t, order.UserId, result.UserId)
-	assert.Equal(t, order.Status, result.Status)
-	assert.Equal(t, float64(22500), result.Total)
-	assert.Equal(t, order.Product, result.Product)
-	assert.Equal(t, order.Address, result.Address)
-	assert.Equal(t, order.InvoiceAddress, result.InvoiceAddress)
-
-	// We don't know exact order model because in service we have changed order model
-	mockRepo.AssertCalled(t, "Insert", mock.AnythingOfType("models.Order"))
 }
 
 func TestOrderService_Update_Success(t *testing.T) {
