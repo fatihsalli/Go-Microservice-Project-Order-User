@@ -121,6 +121,14 @@ var ordersList = []models.Order{
 	},
 }
 
+var getAllTestValues = map[string]struct {
+	data []models.Order
+	err  error
+}{
+	"success": {ordersList, nil},
+	"fail":    {nil, errors.New("something went wrong")},
+}
+
 // MockOrderRepository is a mock implementation of IOrderRepository
 type MockOrderRepository struct {
 	mock.Mock
@@ -176,26 +184,34 @@ func (m *MockOrderRepository) GetOrdersWithFilter(filter bson.M, opt *options.Fi
 }
 
 func TestOrderService_GetAll_Success(t *testing.T) {
-	// Create a mock instance
-	mockRepo := new(MockOrderRepository)
+	for _, result := range getAllTestValues {
+		// Create a mock instance
+		mockRepo := new(MockOrderRepository)
 
-	mockRepo.On("GetAll").Return(ordersList, nil)
+		mockRepo.On("GetAll").Return(result.data, result.err)
 
-	// Create an instance of OrderService with the mock repository
-	orderService := NewOrderService(mockRepo)
+		// Create an instance of OrderService with the mock repository
+		orderService := NewOrderService(mockRepo)
 
-	// Call the GetAll method
-	orders, err := orderService.GetAll()
+		// Call the GetAll method
+		orders, err := orderService.GetAll()
 
-	if err != nil {
-		t.Error(err)
+		if err != nil {
+			if !errors.Is(err, result.err) {
+				t.Errorf("Expected error: %v, but got: %v", result.err, err)
+			} else {
+				t.Logf("Error message successfully delivered: %v", err)
+			}
+		}
+
+		if err == nil {
+			// Assert the result
+			assert.Equal(t, ordersList, orders)
+		}
+
+		// Verify that the mock method was called
+		mockRepo.AssertCalled(t, "GetAll")
 	}
-
-	// Assert the result
-	assert.Equal(t, ordersList, orders)
-
-	// Verify that the mock method was called
-	mockRepo.AssertCalled(t, "GetAll")
 }
 
 func TestOrderService_GetOrderById_Success(t *testing.T) {
@@ -253,8 +269,6 @@ func TestOrderService_GetOrderById_NotFoundFail(t *testing.T) {
 func TestOrderService_Insert_Success(t *testing.T) {
 	// Create a mock instance
 	mockRepo := new(MockOrderRepository)
-
-	// TODO: []map olarak yaparak success değilde tüm caseleri karşılayabilirsin
 
 	// Define the input and expected result
 	order := models.Order{
