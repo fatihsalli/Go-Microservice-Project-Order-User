@@ -136,7 +136,7 @@ var getOrderByIdTestValues = map[string]struct {
 }{
 	"success":  {"2b45ac31-6906-4e1e-82db-d9bcdbdb2143", ordersList[0], nil},
 	"fail-404": {"2b45ac31-6906-4e1e-82db-d9bcdbdb2141", models.Order{}, errors.New("not found error")},
-	"fail-500": {"2b45ac31-6906-4e1e-82db-d9bcdbdb2141", models.Order{}, errors.New("something went wrong")},
+	"fail-500": {"2b45ac31-6906-4e1e-82db-d9bcdbdb2143", models.Order{}, errors.New("something went wrong")},
 }
 
 var createOrderTestValues = map[string]struct {
@@ -259,23 +259,23 @@ var createOrderTestValues = map[string]struct {
 }
 
 var updateOrderTestValues = map[string]struct {
-	paramId string
-	data    models.Order
+	payload models.Order
+	data    bool
 	err     error
 }{
-	"success":  {"2b45ac31-6906-4e1e-82db-d9bcdbdb2143", ordersList[0], nil},
-	"fail-404": {"2b45ac31-6906-4e1e-82db-d9bcdbdb2141", models.Order{}, errors.New("not found error")},
-	"fail-500": {"2b45ac31-6906-4e1e-82db-d9bcdbdb2141", models.Order{}, errors.New("something went wrong")},
+	"success":  {ordersList[0], true, nil},
+	"fail-404": {ordersList[0], false, errors.New("not found error")},
+	"fail-500": {ordersList[0], false, errors.New("something went wrong")},
 }
 
 var deleteOrderTestValues = map[string]struct {
 	paramId string
-	data    models.Order
+	data    bool
 	err     error
 }{
-	"success":  {"2b45ac31-6906-4e1e-82db-d9bcdbdb2143", ordersList[0], nil},
-	"fail-404": {"2b45ac31-6906-4e1e-82db-d9bcdbdb2141", models.Order{}, errors.New("not found error")},
-	"fail-500": {"2b45ac31-6906-4e1e-82db-d9bcdbdb2141", models.Order{}, errors.New("something went wrong")},
+	"success":  {"2b45ac31-6906-4e1e-82db-d9bcdbdb2143", true, nil},
+	"fail-404": {"2b45ac31-6906-4e1e-82db-d9bcdbdb2141", false, errors.New("not found error")},
+	"fail-500": {"2b45ac31-6906-4e1e-82db-d9bcdbdb2143", false, errors.New("something went wrong")},
 }
 
 // MockOrderRepository is a mock implementation of IOrderRepository
@@ -432,88 +432,68 @@ func TestOrderService_Insert_SuccessAndFail(t *testing.T) {
 	}
 }
 
-func TestOrderService_Update_Success(t *testing.T) {
-	// Create a mock instance
-	mockRepo := new(MockOrderRepository)
+func TestOrderService_Update_SuccessAndFail(t *testing.T) {
+	for _, result := range updateOrderTestValues {
+		// Create a mock instance
+		mockRepo := new(MockOrderRepository)
 
-	// Define the input and expected result
-	order := ordersList[0]
+		// We don't know exact order model because in service we have changed order model
+		mockRepo.On("Update", mock.AnythingOfType("models.Order")).Return(result.data, result.err)
 
-	// We don't know exact order model because in service we have changed order model
-	mockRepo.On("Update", mock.AnythingOfType("models.Order")).Return(true, nil)
+		// Create an instance of OrderService with the mock repository
+		orderService := NewOrderService(mockRepo)
 
-	// Create an instance of OrderService with the mock repository
-	orderService := NewOrderService(mockRepo)
+		// Call the Insert method
+		response, err := orderService.Update(result.payload)
 
-	// Call the Insert method
-	result, err := orderService.Update(order)
+		if err != nil {
+			if !errors.Is(err, result.err) {
+				t.Errorf("Expected error: %v, but got: %v", result.err, err)
+			} else {
+				t.Logf("Error message successfully delivered: %v", err)
+			}
+		}
 
-	// Assert the result
-	if err != nil {
-		t.Error(err)
+		if err == nil {
+			// Assert the result
+			assert.Equal(t, true, response)
+		}
+
+		// We don't know exact order model because in service we have changed order model
+		mockRepo.AssertCalled(t, "Update", mock.AnythingOfType("models.Order"))
 	}
-
-	// Assert the result
-	assert.Equal(t, true, result)
-
-	// We don't know exact order model because in service we have changed order model
-	mockRepo.AssertCalled(t, "Update", mock.AnythingOfType("models.Order"))
 }
 
-func TestOrderService_Delete_Success(t *testing.T) {
-	// Create a mock instance
-	mockRepo := new(MockOrderRepository)
+func TestOrderService_Delete_SuccessAndFail(t *testing.T) {
+	for _, result := range deleteOrderTestValues {
+		// Create a mock instance
+		mockRepo := new(MockOrderRepository)
 
-	id := "2b45ac31-6906-4e1e-82db-d9bcdbdb2143"
+		// We don't know exact order model because in service we have changed order model
+		mockRepo.On("Delete", result.paramId).Return(result.data, result.err)
 
-	// We don't know exact order model because in service we have changed order model
-	mockRepo.On("Delete", id).Return(true, nil)
+		// Create an instance of OrderService with the mock repository
+		orderService := NewOrderService(mockRepo)
 
-	// Create an instance of OrderService with the mock repository
-	orderService := NewOrderService(mockRepo)
+		// Call the Insert method
+		response, err := orderService.Delete(result.paramId)
 
-	// Call the Insert method
-	result, err := orderService.Delete(id)
+		if err != nil {
+			if !errors.Is(err, result.err) {
+				t.Errorf("Expected error: %v, but got: %v", result.err, err)
+			} else {
+				t.Logf("Error message successfully delivered: %v", err)
+			}
+		}
 
-	// Assert the result
-	if err != nil {
-		t.Error(err)
+		if err == nil {
+			// Assert the result
+			assert.Equal(t, true, response)
+		}
+
+		// We don't know exact order model because in service we have changed order model
+		mockRepo.AssertCalled(t, "Delete", result.paramId)
 	}
-
-	// Assert the result
-	assert.Equal(t, true, result)
-
-	// We don't know exact order model because in service we have changed order model
-	mockRepo.AssertCalled(t, "Delete", id)
-}
-
-func TestOrderService_Delete_NotFoundFail(t *testing.T) {
-	// Create a mock instance
-	mockRepo := new(MockOrderRepository)
-
-	expectedError := errors.New("not found error")
-
-	id := "2b45ac31-6906-4e1e-82db-d9bcdbdb2143"
-
-	// We don't know exact order model because in service we have changed order model
-	mockRepo.On("Delete", id).Return(false, expectedError)
-
-	// Create an instance of OrderService with the mock repository
-	orderService := NewOrderService(mockRepo)
-
-	// Call the Insert method
-	result, err := orderService.Delete(id)
-
-	// Check error
-	if !errors.Is(err, expectedError) {
-		t.Errorf("Expected error: %v, but got: %v", expectedError, err)
-	}
-
-	// Assert the result
-	assert.Equal(t, false, result)
-
-	// We don't know exact order model because in service we have changed order model
-	mockRepo.AssertCalled(t, "Delete", id)
 }
 
 func TestOrderService_GetOrdersWithFilter_Success(t *testing.T) {
