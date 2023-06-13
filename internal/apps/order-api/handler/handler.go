@@ -33,10 +33,15 @@ func NewOrderHandler(e *echo.Echo, service order_api.IOrderService, producer *ka
 
 	e.Use(pkg.CustomErrorMiddleware)
 
+	http.HandleFunc("/order", func(w http.ResponseWriter, r *http.Request) {
+		result := graphQL.ExecuteQuery(r.URL.Query().Get("query"), graphQL.Schema)
+		json.NewEncoder(w).Encode(result)
+	})
+
 	//Routes
 	router.GET("", b.GetAllOrders)
 	router.GET("/:id", b.GetOrderById)
-	router.GET("/GraphQLWithStatus/:status", b.GraphQLWithStatus)
+	router.GET("/GraphQL", b.GraphQLWithStatus)
 	router.POST("", b.CreateOrder, pkg.CheckOrderStatus)
 	router.POST("/GenericEndpointFromMongo", b.GenericEndpointFromMongo)
 	router.POST("/GenericEndpointFromElastic", b.GenericEndpointFromElastic)
@@ -163,33 +168,16 @@ func (h *OrderHandler) GetOrderById(c echo.Context) error {
 // @Param status path string true "status"
 // @Success 200 {object} order_api.OrderResponse
 // @Success 404 {object} pkg.CustomError
-// @Router /orders/GraphQLWithStatus/{status} [get]
+// @Router /orders/GraphQL [get]
 func (h *OrderHandler) GraphQLWithStatus(c echo.Context) error {
-	query := c.Param("status")
+	query := c.QueryParam("query")
 
-	params := graphql.Params{
-		Schema:         graphQL.Schema,
-		RequestString:  graphQL.GenerateGraphQLQuery(query),
-		VariableValues: nil,
-	}
-	result := graphql.Do(params)
-
-	if len(result.Errors) > 0 {
-		badRequestError := pkg.CustomError{
-			Message:    fmt.Sprintf("Bad Request. It cannot be reading! %v", result.Errors),
-			StatusCode: http.StatusBadRequest,
-		}
-		return badRequestError
-	}
-
-	// Count orders
-	ordersData := result.Data.(map[string]interface{})
-	orders := ordersData["orders"].([]interface{})
+	result := graphQL.ExecuteQuery(query, graphql.Schema{})
 
 	// Response success result data
 	jsonSuccessResultData := models.JSONSuccessResultData{
-		TotalItemCount: len(orders),
-		Data:           orders,
+		TotalItemCount: 1,
+		Data:           result,
 	}
 
 	c.Logger().Info("Orders are successfully listed.")
